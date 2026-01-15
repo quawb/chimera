@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Unarmed",
+    "max_actions": 2,
+    "effect_text": "-2 to hit Fight roll",
+    "damage": 1,
+    "ap": 0,
+    "points": 0
+  },
+  {
+    "name": "Small Melee Weapon",
+    "max_actions": 3,
+    "effect_text": "",
+    "damage": 1,
+    "ap": 0,
+    "points": 2
+  },
+  {
+    "name": "Powered Weapon",
+    "max_actions": 2,
+    "effect_text": "Reroll one failed Fight roll",
+    "damage": 2,
+    "ap": 0,
+    "points": 2
+  },
+  {
+    "name": "Large Melee Weapon",
+    "max_actions": 1,
+    "effect_text": "",
+    "damage": 3,
+    "ap": 1,
+    "points": 2
+  },
+  {
+    "name": "Whip/Tail",
+    "max_actions": 2,
+    "effect_text": "Can Fight enemies < 1 M",
+    "damage": 1,
+    "ap": 0,
+    "points": 2
+  },
+  {
+    "name": "Horrible Claws & Teeth",
+    "max_actions": 3,
+    "effect_text": "",
+    "damage": 1,
+    "ap": 1,
+    "points": 3
+  }
+]
