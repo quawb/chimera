@@ -12,15 +12,20 @@ DOCS_DIR = Path("docs")
 # Adjust these ONLY when you intentionally change your schema.
 EXPECTED_HEADERS: Dict[str, List[str]] = {
     "accessories.csv": ["name", "type", "max_actions", "effect_text", "points"],
+
+    # Your actual schemas:
+    "commands.csv": ["name", "cp_cost", "effect_text", "limits"],
+    "leader_traits.csv": ["name", "effect_text"],
+    "mutations.csv": ["name", "type", "effect_text", "points"],
+    "psychic_powers.csv": ["name", "power_type", "max_actions", "range", "effect", "horror_generated", "points"],
+    "rules.csv": ["name", "step", "effect_text"],
+    "warband_traits.csv": ["name", "effect_text"],
+
+    # These already matched:
     "shoot.csv": ["name", "max_actions", "effect_text", "damage", "ap", "points"],
     "fight.csv": ["name", "max_actions", "effect_text", "damage", "ap", "points"],
-    "commands.csv": ["name", "type", "max_actions", "effect_text", "points"],
-    "mutations.csv": ["name", "type", "max_actions", "effect_text", "points"],
-    "psychic_powers.csv": ["name", "type", "max_actions", "effect_text", "points"],
-    "leader_traits.csv": ["name", "type", "max_actions", "effect_text", "points"],
-    "warband_traits.csv": ["name", "type", "max_actions", "effect_text", "points"],
-    "rules.csv": ["name", "section", "rule_text"],
 }
+
 
 # Per-file columns that should parse as ints when non-empty.
 INT_COLUMNS: Dict[str, Set[str]] = {
