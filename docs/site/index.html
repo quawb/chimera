@@ -363,7 +363,7 @@ function leaderTraitPoints() { return 0; }
         l.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
 
         const s = document.createElement("select");
-        const tiers = [0, 1, 2, 3];
+        const tiers = [1, 2, 3];
         const table =
           (key === "defense" || key === "will") ? DEF_WILL_TABLE :
           (key === "shoot" || key === "fight") ? SHOOT_FIGHT_TABLE :
