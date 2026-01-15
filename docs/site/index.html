@@ -45,6 +45,21 @@
       </div>
     </div>
 
+      <div class="row" style="margin-top:10px;">
+  <label for="warbandTraitSelect"><strong>Warband Trait</strong></label>
+  <select id="warbandTraitSelect">
+    <option value="">Loading…</option>
+  </select>
+</div>
+
+<div class="row" style="margin-top:10px;">
+  <label for="leaderTraitSelect"><strong>Leader Trait</strong></label>
+  <select id="leaderTraitSelect">
+    <option value="">Loading…</option>
+  </select>
+</div>
+
+      
     <div id="warbandGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-top:14px;"></div>
 
     <div style="margin-top:14px;">
@@ -82,6 +97,10 @@
     warbandGrid: document.getElementById("warbandGrid"),
     warbandTotal: document.getElementById("warbandTotal"),
     warbandCapStatus: document.getElementById("warbandCapStatus"),
+
+    warbandTraitSelect: document.getElementById("warbandTraitSelect"),
+    leaderTraitSelect: document.getElementById("leaderTraitSelect"),
+
 
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
@@ -690,6 +709,13 @@ function leaderTraitPoints() { return 0; }
       warband.version = parsed.version ?? warband.version;
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
+            warband.warbandTraitIdx = (parsed.warbandTraitIdx === "" || parsed.warbandTraitIdx === null || parsed.warbandTraitIdx === undefined)
+        ? "" : String(parsed.warbandTraitIdx);
+
+      warband.leaderTraitIdx = (parsed.leaderTraitIdx === "" || parsed.leaderTraitIdx === null || parsed.leaderTraitIdx === undefined)
+        ? "" : String(parsed.leaderTraitIdx);
+
+
       const defaultMembers = warband.members.map(m => ({
         ...m, weaponIdx: "", sidearmIdx: "", meleeIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: []
       }));
@@ -713,6 +739,11 @@ function leaderTraitPoints() { return 0; }
       });
 
       els.pointCap.value = String(warband.pointCap);
+
+      if (els.warbandTraitSelect) els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
+      if (els.leaderTraitSelect) els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
+
+      
       renderWarband();
       els.ioMsg.textContent = "Loaded warband successfully.";
     } catch (e) {
@@ -736,7 +767,6 @@ function leaderTraitPoints() { return 0; }
       if (!fRes.ok) throw new Error(`HTTP ${fRes.status} when fetching fight.json`);
       meleeWeapons = await fRes.json();
       if (!Array.isArray(meleeWeapons)) throw new Error("fight.json must be an array of objects");
-
       
       const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
       if (!pRes.ok) throw new Error(`HTTP ${pRes.status} when fetching psychic_powers.json`);
@@ -747,6 +777,16 @@ function leaderTraitPoints() { return 0; }
       if (!mRes.ok) throw new Error(`HTTP ${mRes.status} when fetching mutations.json`);
       mutations = await mRes.json();
       if (!Array.isArray(mutations)) throw new Error("mutations.json must be an array of objects");
+
+      const wtRes = await fetch("./data/warband_traits.json", { cache: "no-store" });
+      if (!wtRes.ok) throw new Error(`HTTP ${wtRes.status} when fetching warband_traits.json`);
+      warbandTraits = await wtRes.json();
+      if (!Array.isArray(warbandTraits)) throw new Error("warband_traits.json must be an array of objects");
+
+      const ltRes = await fetch("./data/leader_traits.json", { cache: "no-store" });
+      if (!ltRes.ok) throw new Error(`HTTP ${ltRes.status} when fetching leader_traits.json`);
+      leaderTraits = await ltRes.json();
+      if (!Array.isArray(leaderTraits)) throw new Error("leader_traits.json must be an array of objects");
 
       weapons.sort((a, b) =>
         ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
@@ -769,6 +809,16 @@ function leaderTraitPoints() { return 0; }
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
 
+            warbandTraits.sort((a, b) =>
+        ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
+
+      leaderTraits.sort((a, b) =>
+        ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
+
 
       // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
@@ -783,6 +833,35 @@ function leaderTraitPoints() { return 0; }
         }
       });
       els.loadBtn.addEventListener("click", loadPastedWarband);
+      // Warband Trait select
+      els.warbandTraitSelect.innerHTML =
+        `<option value="">— None —</option>` +
+        warbandTraits.map((t, idx) => {
+          const p = toIntOrNull(t.points) ?? 0;
+          const nm = escapeHtml(t.name ?? "(Unnamed)");
+          return `<option value="${idx}">${nm} (${p} pts)</option>`;
+        }).join("");
+
+      els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
+      els.warbandTraitSelect.addEventListener("change", () => {
+        warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
+        renderWarband();
+      });
+
+      // Leader Trait select
+      els.leaderTraitSelect.innerHTML =
+        `<option value="">— None —</option>` +
+        leaderTraits.map((t, idx) => {
+          const p = toIntOrNull(t.points) ?? 0;
+          const nm = escapeHtml(t.name ?? "(Unnamed)");
+          return `<option value="${idx}">${nm} (${p} pts)</option>`;
+        }).join("");
+
+      els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
+      els.leaderTraitSelect.addEventListener("change", () => {
+        warband.leaderTraitIdx = els.leaderTraitSelect.value === "" ? "" : els.leaderTraitSelect.value;
+        renderWarband();
+      });
 
       renderWarband();
     } catch (err) {
