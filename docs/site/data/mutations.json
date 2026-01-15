@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Not Mutated",
+    "type": "",
+    "effect_text": "",
+    "points": 0
+  },
+  {
+    "name": "Clawed Limbs",
+    "type": "Passive",
+    "effect_text": "Unarmed attacks lose the −2 Fight penalty.",
+    "points": 1
+  },
+  {
+    "name": "Chitin Armor",
+    "type": "Passive",
+    "effect_text": "Add 1 to AC",
+    "points": 1
+  },
+  {
+    "name": "Extra Eyes",
+    "type": "Passive",
+    "effect_text": "Once per round, reroll a single failed Shoot roll.",
+    "points": 1
+  },
+  {
+    "name": "Warped Nerves",
+    "type": "Passive",
+    "effect_text": "Once per round, gain +2 to any one roll, then gain 1 Horror token",
+    "points": 1
+  },
+  {
+    "name": "Regenerative Flesh",
+    "type": "Passive",
+    "effect_text": "At the start of this model's activation, if it has 1 or more Wounds remaining, heal 1 Wound. Each time this triggers, roll a Horror test.",
+    "points": 2
+  },
+  {
+    "name": "Elongated Limbs",
+    "type": "Passive",
+    "effect_text": "Melee attacks may target enemies up to 1 M away.",
+    "points": 2
+  },
+  {
+    "name": "Psychic Scars",
+    "type": "Passive",
+    "effect_text": "Gain +1 Willpower modifier. Start game with 1 Horror token.",
+    "points": 2
+  },
+  {
+    "name": "Monstrous",
+    "type": "Passive",
+    "effect_text": "Add +1 Wound and +1 Damage on Melee attacks. The model cannot benefit from Cover.",
+    "points": 3
+  },
+  {
+    "name": "Unstable Physiology",
+    "type": "Passive",
+    "effect_text": "Once per game, when reduced to 0 Wounds, remain on the table at 1 Wound instead. Immediately gain 1 Horror token. Allied units within 1 do as well",
+    "points": 3
+  }
+]
