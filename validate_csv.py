@@ -30,7 +30,7 @@ EXPECTED_HEADERS: Dict[str, List[str]] = {
 # Per-file columns that should parse as ints when non-empty.
 INT_COLUMNS: Dict[str, Set[str]] = {
     "accessories.csv": {"max_actions", "points"},
-    "shoot.csv": {"max_actions", "damage", "points"},  # 'ap' may be '*' sometimes
+    "shoot.csv": {"max_actions", "damage", "ap", "points"},  # allow numeric AP,  # 'ap' may be '*' sometimes
     "fight.csv": {"max_actions", "damage", "ap", "points"},
     "commands.csv": {"max_actions", "points"},
     "mutations.csv": {"max_actions", "points"},
@@ -41,8 +41,9 @@ INT_COLUMNS: Dict[str, Set[str]] = {
 
 # Allowed special tokens (per column) for non-int fields like AP.
 ALLOWED_TOKENS: Dict[str, Dict[str, Set[str]]] = {
-    "shoot.csv": {"ap": {"*", ""}},
+    "shoot.csv": {"ap": {"*"}},  # allow '*' as a special case; numbers handled by INT_COLUMNS
 }
+
 
 def fail(msg: str) -> None:
     print(f"ERROR: {msg}", file=sys.stderr)
@@ -111,11 +112,17 @@ def main() -> int:
                     val = row[col]
                     if val == "":
                         continue
-                    try:
-                        int(val)
-                    except ValueError:
-                        fail(f"{fname}:{row_num}: column '{col}' should be an integer, got '{val}'.")
-                        ok = False
+                    # Allow special tokens (like '*') even in numeric columns
+allowed = ALLOWED_TOKENS.get(fname, {}).get(col, set())
+if val in allowed:
+    continue
+
+try:
+    int(val)
+except ValueError:
+    fail(f"{fname}:{row_num}: column '{col}' should be an integer, got '{val}'.")
+    ok = False
+
 
                 # Allowed token checks (e.g., shoot.csv ap can be '*' or blank)
                 for col, allowed in ALLOWED_TOKENS.get(fname, {}).items():
