@@ -130,6 +130,85 @@
   // Shoot tier threshold to unlock second sidearm slot
   const SIDEARM_UNLOCK_SHOOT_TIER = 3;
 
+    // === Stat costs + modifiers (hard-coded) ===
+  // Tier -> { mod, cost }
+  // Note: using tiers 0–3 in UI, but rules define Tier 1/2/3. Tier 0 behaves like "untrained".
+  const DEF_WILL_TABLE = {
+    0: { mod: -2, cost: 0 }, // optional; feel free to change
+    1: { mod: 0,  cost: 2 },
+    2: { mod: 2,  cost: 4 },
+    3: { mod: 4,  cost: 8 },
+  };
+
+  const SHOOT_FIGHT_TABLE = {
+    0: { mod: -2, cost: 0 },
+    1: { mod: -2, cost: 0 }, // per your rule: Tier 1 is -2 for 0 points
+    2: { mod: 2,  cost: 3 },
+    3: { mod: 4,  cost: 6 },
+  };
+
+  // Saving throw target by Willpower Tier (never below 10)
+  const SAVE_TARGET_BY_WILL = {
+    0: 14, // optional fallback; adjust if you want Tier 0 handled differently
+    1: 14,
+    2: 13,
+    3: 11,
+  };
+
+  function clampMin(n, min) {
+    return n < min ? min : n;
+  }
+
+  function defenseMod(tier) {
+    return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod;
+  }
+
+  function willMod(tier) {
+    return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod;
+  }
+
+  function shootMod(tier) {
+    return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod;
+  }
+
+  function fightMod(tier) {
+    return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod;
+  }
+
+  function statPointsCost(m) {
+    const d = (DEF_WILL_TABLE[m.defense] ?? DEF_WILL_TABLE[1]).cost;
+    const w = (DEF_WILL_TABLE[m.will] ?? DEF_WILL_TABLE[1]).cost;
+    const s = (SHOOT_FIGHT_TABLE[m.shoot] ?? SHOOT_FIGHT_TABLE[1]).cost;
+    const f = (SHOOT_FIGHT_TABLE[m.fight] ?? SHOOT_FIGHT_TABLE[1]).cost;
+    return d + w + s + f;
+  }
+
+  function woundsTotal(m) {
+    return (m.defense ?? 0) + (m.shoot ?? 0) + (m.fight ?? 0) + (m.will ?? 0);
+  }
+
+  function equipmentCapacity(m) {
+    // Your rule: equal to Defense Tier
+    return m.defense ?? 0;
+  }
+
+  function psychicMutationCapacity(m) {
+    // Your rule: equal to Willpower Tier
+    return m.will ?? 0;
+  }
+
+  function savingThrowTarget(m) {
+    const t = SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1];
+    return clampMin(t, 10);
+  }
+
+  function armorClass(m) {
+    // For now: no item/mutation modifiers wired, so it’s just defense modifier.
+    // Later we’ll add accessory/mutation AC bonuses.
+    return 10 + defenseMod(m.defense ?? 1);
+  }
+
+
   // Warband state: leader + 4 models
   const warband = {
     version: 2,
@@ -170,8 +249,9 @@
   }
 
   function memberTotalPoints(m) {
-    return memberWeaponPoints(m) + memberAccessoryPoints(m);
-  }
+  return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m);
+}
+
 
   function warbandTotalPoints() {
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
@@ -258,6 +338,47 @@
       statsBlock.appendChild(tierSelect("Fight", "fight"));
       statsBlock.appendChild(tierSelect("Willpower", "will"));
       card.appendChild(statsBlock);
+
+            // Derived stats panel
+      const derived = document.createElement("div");
+      derived.style.marginTop = "10px";
+      derived.style.padding = "10px";
+      derived.style.border = "1px solid #eee";
+      derived.style.borderRadius = "10px";
+      derived.style.background = "#fafafa";
+
+      const statLine = (label, value) => {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.gap = "12px";
+        row.style.marginTop = "4px";
+        row.innerHTML = `<span style="color:#444;">${escapeHtml(label)}</span><span style="font-weight:700;">${escapeHtml(value)}</span>`;
+        return row;
+      };
+
+      // Calculations
+      const ac = armorClass(m);
+      const saveT = savingThrowTarget(m);
+      const wounds = woundsTotal(m);
+
+      const eqCap = equipmentCapacity(m);
+      const eqUsed = (m.accessoryIdx || []).length;
+
+      const pmCap = psychicMutationCapacity(m); // willpower-tier based
+      const statCost = statPointsCost(m);
+
+      derived.appendChild(statLine("Armor Class (AC)", String(ac)));
+      derived.appendChild(statLine("Saving Throw Target", String(saveT)));
+      derived.appendChild(statLine("Wounds", String(wounds)));
+
+      derived.appendChild(statLine("Equipment Capacity", `${eqUsed}/${eqCap}`));
+      derived.appendChild(statLine("Psychic/Mutation Capacity", String(pmCap)));
+
+      derived.appendChild(statLine("Stat Points", String(statCost)));
+
+      card.appendChild(derived);
+
 
       // Primary weapon select
       const weaponRow = document.createElement("div");
