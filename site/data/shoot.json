@@ -1,0 +1,66 @@
+[
+  {
+    "name": "No Ranged Weapon",
+    "max_actions": 0,
+    "effect_text": "",
+    "damage": 0,
+    "ap": 0,
+    "points": 0
+  },
+  {
+    "name": "Sidearm",
+    "max_actions": 2,
+    "effect_text": "-2 if Range > 1",
+    "damage": 1,
+    "ap": 0,
+    "points": 0
+  },
+  {
+    "name": "Energy Pistol",
+    "max_actions": 3,
+    "effect_text": "-2 if range > 1\nRange < 1 = -1 AP",
+    "damage": 1,
+    "ap": "*",
+    "points": 1
+  },
+  {
+    "name": "Shotgun",
+    "max_actions": 2,
+    "effect_text": "Range < 1 = -1 AP + 1 Damage\nRange > 1 = -2 to hit x Distance away",
+    "damage": 1,
+    "ap": "*",
+    "points": 2
+  },
+  {
+    "name": "Energy Rifle",
+    "max_actions": 2,
+    "effect_text": "Reroll one failed Shoot hit roll",
+    "damage": 2,
+    "ap": 0,
+    "points": 2
+  },
+  {
+    "name": "Flamer",
+    "max_actions": 2,
+    "effect_text": "Cone AoE",
+    "damage": 2,
+    "ap": 0,
+    "points": 2
+  },
+  {
+    "name": "Sniper Rifle",
+    "max_actions": 1,
+    "effect_text": "Must Aim1, Cannot Target Range < 1, ignores Range based To Hit penalities",
+    "damage": 2,
+    "ap": 1,
+    "points": 3
+  },
+  {
+    "name": "Rocket Launcher",
+    "max_actions": 1,
+    "effect_text": "Must Aim2, Cannot Target Range < 1, \nBlast AoE",
+    "damage": 3,
+    "ap": 0,
+    "points": 3
+  }
+]
