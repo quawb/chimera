@@ -134,13 +134,17 @@ def main() -> int:
 
 
 
-                # Allowed token checks (e.g., shoot.csv ap can be '*' or blank)
+                # Allowed token checks (ONLY for columns that are NOT numeric)
+                numeric_cols = INT_COLUMNS.get(fname, set())
                 for col, allowed in ALLOWED_TOKENS.get(fname, {}).items():
-                    if col in row and row[col] not in allowed:
+                    if col in numeric_cols:
+                        continue  # numeric columns are validated above
+                    if col in row and row[col] != "" and row[col] not in allowed:
                         fail(
                             f"{fname}:{row_num}: column '{col}' has '{row[col]}' but allowed: {sorted(allowed)}"
                         )
                         ok = False
+
 
         print(f"OK: {fname}")
 
