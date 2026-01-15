@@ -341,6 +341,12 @@
       derived.appendChild(statLine("Equipment Capacity", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
       derived.appendChild(statLine("Psychic/Mutation Capacity", String(psychicMutationCapacity(m))));
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
+      
+      derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
+      derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
+      derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
+      derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
+
 
       card.appendChild(derived);
 
