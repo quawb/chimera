@@ -105,23 +105,33 @@ def main() -> int:
                             ok = False
                         seen_names.add(key)
 
-                # Int parsing checks
+                                # Int parsing checks
                 for col in INT_COLUMNS.get(fname, set()):
                     if col not in row:
                         continue
                     val = row[col]
                     if val == "":
                         continue
-                    # Allow special tokens (like '*') even in numeric columns
-allowed = ALLOWED_TOKENS.get(fname, {}).get(col, set())
-if val in allowed:
-    continue
 
-try:
-    int(val)
-except ValueError:
-    fail(f"{fname}:{row_num}: column '{col}' should be an integer, got '{val}'.")
-    ok = False
+                    # Allow special tokens (like '*') even in numeric columns
+                    allowed = ALLOWED_TOKENS.get(fname, {}).get(col, set())
+                    if val in allowed:
+                        continue
+
+                    try:
+                        int(val)
+                    except ValueError:
+                        fail(f"{fname}:{row_num}: column '{col}' should be an integer, got '{val}'.")
+                        ok = False
+
+                # Allowed token checks for non-numeric columns
+                for col, allowed in ALLOWED_TOKENS.get(fname, {}).items():
+                    if col in row and row[col] != "" and row[col] not in allowed and col not in INT_COLUMNS.get(fname, set()):
+                        fail(
+                            f"{fname}:{row_num}: column '{col}' has '{row[col]}' but allowed: {sorted(allowed)}"
+                        )
+                        ok = False
+
 
 
                 # Allowed token checks (e.g., shoot.csv ap can be '*' or blank)
