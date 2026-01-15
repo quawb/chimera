@@ -308,7 +308,25 @@
         l.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
 
         const s = document.createElement("select");
-        s.innerHTML = [0, 1, 2, 3].map(n => `<option value="${n}">${n}</option>`).join("");
+        
+                const tiers = [1, 2, 3];
+
+        const table =
+          (key === "defense" || key === "will") ? DEF_WILL_TABLE :
+          (key === "shoot" || key === "fight") ? SHOOT_FIGHT_TABLE :
+          null;
+
+        s.innerHTML = tiers.map(t => {
+          const entry = table?.[t];
+          const mod = entry?.mod ?? 0;
+          const cost = entry?.cost ?? 0;
+
+          // Example: "Tier 2 (+2, 4 pts)"
+          const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+          return `<option value="${t}">Tier ${t} (${modStr}, ${cost} pts)</option>`;
+        }).join("");
+
+        
         s.value = String(m[key] ?? 0);
 
         s.addEventListener("change", () => {
