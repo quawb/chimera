@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Cyborgs",
+    "effect_text": "All members of the Warband can purchase 1 additional piece of equipment costing 1 point for free"
+  },
+  {
+    "name": "Undead",
+    "effect_text": "When a model's hit points are reduced to 0 for the first time, bring the model back to 1 Wounds"
+  },
+  {
+    "name": "Horrible Chorus",
+    "effect_text": "All models in this warband gain Horrible Scream for free. Cannot purchase equipment. Nonleaders cannot purchase other Psychic Powers. Each model may use Horrible Scream once per round."
+  },
+  {
+    "name": "Blood Thirsty",
+    "effect_text": "Once per round, when an enemy within LoS drops to or below half Wounds, one model may make a free Move or Charge toward that enemy and a free Fight action"
+  },
+  {
+    "name": "Combat Drugs",
+    "effect_text": "Once per round, one model may gain +2 to one roll of their choice, then gains 1 Horror. If the roll is successful, the model may also immediately make a free Move action."
+  },
+  {
+    "name": "Overwatch Protocol",
+    "effect_text": "Once per round, after an enemy finishes a Move in LoS of two or more allied models, one model may make a free Shoot action at −1. If the attack hits, the target gains 1 Horror token."
+  },
+  {
+    "name": "Augmented",
+    "effect_text": "Models may reroll 1s on Fight or Shoot rolls (choose at creation)."
+  },
+  {
+    "name": "Relentless Fury",
+    "effect_text": "When a model fails a Fight roll, it may reroll the attack. If the reroll also fails, it may reroll a third time, but gains 1 Horror for each reroll."
+  },
+  {
+    "name": "Brutal Precision",
+    "effect_text": "Models gain +2 to Fight rolls against Engaged enemies. Additionally, when a model takes an enemy Out of Action in Engage, it may immediately make a free Move 1 action."
+  },
+  {
+    "name": "Opportunists",
+    "effect_text": "Once per round, when an enemy model is taken Out of Action, one nearby ally may immediately make a free Shoot or Fight action."
+  },
+  {
+    "name": "Clear Orders",
+    "effect_text": "Once per round, a model may remove Exhausted at the end of its activation but gains 1 Horror. This may be done even if the model was already activated this round."
+  }
+]
