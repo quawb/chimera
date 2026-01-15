@@ -1,0 +1,12 @@
+name,type,effect_text,points
+Not Mutated,,,0
+Clawed Limbs,Passive,Unarmed attacks lose the −2 Fight penalty.,1
+Chitin Armor,Passive,Add 1 to AC,1
+Extra Eyes,Passive,"Once per round, reroll a single failed Shoot roll.",1
+Warped Nerves,Passive,"Once per round, gain +2 to any one roll, then gain 1 Horror token",1
+Regenerative Flesh,Passive,"At the start of this model’s activation, if it has 1 or more Wounds remaining, heal 1 Wound.
+Each time this triggers, roll a Horror test.",2
+Elongated Limbs,Passive,Melee attacks may target enemies up to 1 M away.,2
+Psychic Scars,Passive,Gain +1 Willpower modifier. Start game with 1 Horror token.,2
+Monstrous,Passive,Add +1 Wound and +1 Damage on Melee attacks. The model cannot benefit from Cover.,3
+Unstable Physiology,Passive,"Once per game, when reduced to 0 Wounds, remain on the table at 1 Wound instead. Immediately gain 1 Horror token. Allied units within 1 do as well",3

@@ -1,0 +1,13 @@
+name,cp_cost,effect_text,limits
+Power Up,1,Choose one attribute roll (+2) for a model.,Once per activation.
+Counter Strike,1,"As defender, take Fight Action against a Charging Model",Once per round.
+Overwatch,1,"After a target moves, make a single Shoot action against it.",Once per round.
+Stabilize,1,Reduce 1 Horror from a model within 1 M.,Always usable.
+Dodge,1,"After a Shoot action is declared against a model, move it 1 M.","If target leaves LoS, action is lost."
+Regroup,1,Add 2 to next Initiative roll for the player.,Once per round.
+Re-roll,1,Re-roll any failed roll.,Once per activation.
+Shield Wall,1,Give all allies within 1 M of Leader +1 AC until your next activation.,Requires positioning; costs 1 CP.
+Command Inspire,1,One ally may immediately take a free Move or Recover Horror action.,Must be in LoS of the leader or designated commander.
+All-Out Strike,1,One model makes a Fight or Shoot action at +1 Damage or +1 AP.,Model gains 1 Horror token. Once per round.
+Push Forward,1,Move 1–2 allies up to 1 M toward an enemy.,Cannot move through engaged enemies.
+Focused Will,1,Force a single enemy model to reroll its Willpower test.,Once per round; target must be in LoS.

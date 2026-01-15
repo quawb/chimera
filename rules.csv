@@ -1,0 +1,72 @@
+name,step,effect_text
+Round Structure,1. Initiative,Roll d20 + Willpower. Highest chooses player order.
+Round Structure,2. Activation,Activate Unexhausted 1 model → up to 3 actions → mark as Exhausted. Alternative activation with other players.
+Round Structure,3. Maintenance,"All models Exhausted → remove Exhausted, reset Command Points = 3, start next round."
+Actions,Move / Charge,Advance toward or engage enemy
+Actions,Shoot,Roll Shoot vs AC
+Actions,Fight,Roll Fight vs AC
+Actions,Disengage,Enemy may make 1 opportunity attack
+Actions,Psychic Power," Roll WP vs AC, cannot Aim, Natural 1 backfires"
+Actions,Use Item,"Use equipped item (Attack or Effect, these items can only be used once per turn)"
+Actions,Aim,1 action = +1 Shoot; 2 consecutive actions +3 Shoot; cannot Aim if Suppressed unless Heavy Cover
+Actions,Recover Horror,"Remove 1 Horror token, once per activation"
+To-Hit Modifiers,Light Cover,−1 Thematic or (units >2 Away)
+To-Hit Modifiers,Heavy Cover,−3 Thematic or (units >3 Away)
+To-Hit Modifiers,High Ground,Add 1 AP
+To-Hit Modifiers,Suppressed / Pinned,-2 Shoot
+To-Hit Modifiers,Charge,Add +1 Fight and +1 AP on first attack after Charging
+To-Hit Modifiers,Reroll,"A reroll ability can be used to reoll 1 failed roll, unless trait allows more."
+Firing & Combat,Natural 1,"Critical hit on wrong target (If target engaged)
+Failed hit (not natural 1) on engaged target will hit other unit"
+Firing & Combat,Natural 20,"Automatic hit, +1 damage, target may Saving Throw only if Heavy Cover"
+Firing & Combat,Saving Throw,d20 + Willpower vs Threshold
+Firing & Combat,0 HP,Model is taken out
+Movement,Action Distance,"1 action ≈ 6"""
+Movement,Full Movement,All 3 actions can be spent on movement
+Movement,Restrictions,No penalties/restrictions
+Psychic Powers,Cost,Max 1 activation per power
+Psychic Powers,Roll,"WP Hit vs AC, cannot Aim"
+Psychic Powers,Natural 1,Backfires on caster
+Horror,Auto-hit,Roll Willpower vs Saving Threshold; fail → gain 1 Horror token
+Horror,Token Effect,"−1 to all rolls per token, max 5"
+Horror,Limit,1 token per model per round
+Warband Setup,Objectives,"Hidden: Primary (5 VP), Secondary (2 VP), optional Tertiary (1 VP)"
+Warband Setup,Composition,"1 Leader (≤20 pts), Followers (≤15 pts each)"
+Warband Setup,Point Limit,As agreed by players (Suggested: 75)
+Warband Setup,Trait,Pick one Leader Trait and one Warband Trait
+Warband Setup,Ranged Weapon,"A model may purchase a total number of 1 Ranged Weapon. If they have Shoot Tier 3, they can purcahse a Sidearm or Pistol in addition to another weapon"
+Warband Setup,Close Combat,Can Purchase Max One Close Combat Weapon
+Warband Setup,Accessories,A model may purchase a total number of Accessories equal to its Defense Tier (1–3).
+Warband Setup,Psychic and Mutations,A model may purchase a total number of Psychic Powers and Mutations equal to its Willpower Tier (1–3).
+Armor Class (AC),Target number to hit this model,"10 + Defense Modifier
++ Item/Mutation Moditifers"
+Saving Throw,Roll to negate damage / effects,"Based on Willpower Tier:
+• Tier 1 → 14
+• Tier 2 → 13
+• Tier 3 → 11
+Saving Throw can never be below 10"
+Wounds,Total health,Equal to the sum of all stat Tiers
+Points,Model cost,"Sum of:
+• Stat point costs
+• Equipment
+• Weapons
+• Psychic Powers
+• Mutations"
+Equipment Capacity,How many Items a model can Purchase from Item shop,Equal to Defense Tier
+Psychic / Mutation Capacity,How many powers or mutations allowed,Equal to Willpower Tier
+Defenese,Tier 1/2/3,"0 Modifier for 2 Points
++2 Modifier for 4 Points
++4 Modified for 8 Points
+Affects Armor Class and Accessory Slots"
+Willpower,Tier 1/2/3,"0 Modifier for 2 Points
++2 Modifier for 4 Points
++4 Modified for 8 Points
+Affects Saving Throw and Psychic/Mutation Slots"
+Shoot,Tier 1/2/3,"-2 Modifier for 0 Points
++2 Modifier for 3 Points
++4 Modifier for 6 Points
+Ranged attack rolls"
+Fight,Tier 1/2/3,"-2 Modifier for 0 Points
++2 Modifier for 3 Points
++4 Modifier for 6 Points
+Melee attack rolls"

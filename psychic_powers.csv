@@ -1,0 +1,14 @@
+name,power_type,max_actions,range,effect,horror_generated,points
+No Psychic Powers,,,,,,0
+Fear,Attack,1,1 M,Each enemy model within 1  M who loses its opposed Willpower roll must move 1 M away from the psychic.,1,1
+Heal,Effect,1,Self / 1 M / LoS,1 model within 1 M of this model and in LoS heals d4,0,1
+Inspire,Effect,1,LoS,Target Ally can make a free Move or Recover Horror action,0,1
+Exhaust,Attack,1,LoS,The target loses one action on its next activation instead of taking damage.,0,1
+Overchannel,Effect,1,Self,"This model may immediately use any Psychic  Power it knows, even if it has already been used this activation. After resolving the power, this model automatically gains 1 Horror token.",1,1
+Psychic Feedback,Passive,0,Self,"When this model successfully deals damage with a Psychic Attack or Mutation, the target gains 1  Horror token,  and this model then gains 1 Horror token.",1,1
+Horrible Scream,Attack,1,LoS,"LoS, Auto hit Blast AoE, Save or gain 1 Horror",1,2
+Mind Control,Attack,1,LoS,Targeted enemy takes one action of the psychic’s choice.,0,2
+Divination,Effect,1,LoS,Choose any model in LoS either gain +2 or -2 for all their actions this round.,0,2
+Blink,Effect,1,Any,Place the psychic anywhere on the board.,0,2
+Mind Stab,Attack,1,1 M,Target 1 enemy model within 1 M. Roll with -3 AP,0,3
+Growth,Effect,1,Self,Pick a or b:  a. Spawn a Bio Spawn from Caster b. Shape Bio Spawn into Mimic -OR- Shape Mimic into an Abomination,0,3
