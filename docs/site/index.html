@@ -228,6 +228,55 @@
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
   }
 
+    function makeCollapsible(titleText, initiallyOpen = false) {
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "12px";
+    wrap.style.border = "1px solid #eee";
+    wrap.style.borderRadius = "10px";
+    wrap.style.overflow = "hidden";
+
+    const header = document.createElement("button");
+    header.type = "button";
+    header.style.width = "100%";
+    header.style.textAlign = "left";
+    header.style.padding = "10px 12px";
+    header.style.border = "0";
+    header.style.background = "#f7f7f7";
+    header.style.cursor = "pointer";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.gap = "10px";
+    header.style.fontWeight = "800";
+
+    const title = document.createElement("span");
+    title.textContent = titleText;
+
+    const chevron = document.createElement("span");
+    chevron.textContent = initiallyOpen ? "▾" : "▸";
+    chevron.style.opacity = "0.8";
+
+    header.appendChild(title);
+    header.appendChild(chevron);
+
+    const body = document.createElement("div");
+    body.style.padding = "10px 12px";
+    body.style.display = initiallyOpen ? "block" : "none";
+    body.style.background = "#fff";
+
+    header.addEventListener("click", () => {
+      const open = body.style.display !== "none";
+      body.style.display = open ? "none" : "block";
+      chevron.textContent = open ? "▸" : "▾";
+    });
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+
+    return { wrap, body };
+  }
+
+  
   function setIoVisible(vis, title) {
     els.ioArea.style.display = vis ? "block" : "none";
     if (title) els.ioTitle.textContent = title;
@@ -410,9 +459,9 @@
       }
 
       // Accessories
-      const accWrap = document.createElement("div");
-      accWrap.style.marginTop = "12px";
-      accWrap.innerHTML = "<strong>Accessories</strong>";
+      const accSection = makeCollapsible("Accessories", false);
+      const accWrap = accSection.body;
+
 
       const accCap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
       const accUsed = (m.accessoryIdx || []).length;
@@ -459,12 +508,13 @@
       });
 
       accWrap.appendChild(list);
-      card.appendChild(accWrap);
+      card.appendChild(accSection.wrap);
+
 
       // Psychic Powers + Mutations
-      const psiWrap = document.createElement("div");
-      psiWrap.style.marginTop = "12px";
-      psiWrap.innerHTML = "<strong>Psychic Powers + Mutations</strong>";
+      const psiSection = makeCollapsible("Psychic Powers + Mutations", false);
+      const psiWrap = psiSection.body;
+
 
       const pmCap = psychicMutationCapacity(m);
       const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
@@ -557,7 +607,7 @@
       });
 
       psiWrap.appendChild(mutList);
-      card.appendChild(psiWrap);
+      card.appendChild(psiSection.wrap);
 
       els.warbandGrid.appendChild(card);
     });
