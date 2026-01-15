@@ -118,25 +118,15 @@
   let weapons = [];
   let accessories = [];
   let psychicPowers = [];
-  let mutations = []:
+  let mutations = [];
 
   // === Rules (hardwired for now, easy to change) ===
-  // Defense tier -> accessory capacity (count of accessories allowed)
-  const DEFENSE_TO_ACC_CAP = {
-    0: 0,
-    1: 1,
-    2: 2,
-    3: 3
-  };
-
-  // Shoot tier threshold to unlock second sidearm slot
+  const DEFENSE_TO_ACC_CAP = { 0: 0, 1: 1, 2: 2, 3: 3 };
   const SIDEARM_UNLOCK_SHOOT_TIER = 3;
 
-    // === Stat costs + modifiers (hard-coded) ===
-  // Tier -> { mod, cost }
-  // Note: using tiers 0–3 in UI, but rules define Tier 1/2/3. Tier 0 behaves like "untrained".
+  // === Stat costs + modifiers (hard-coded) ===
   const DEF_WILL_TABLE = {
-    0: { mod: -2, cost: 0 }, // optional; feel free to change
+    0: { mod: -2, cost: 0 },
     1: { mod: 0,  cost: 2 },
     2: { mod: 2,  cost: 4 },
     3: { mod: 4,  cost: 8 },
@@ -144,38 +134,19 @@
 
   const SHOOT_FIGHT_TABLE = {
     0: { mod: -2, cost: 0 },
-    1: { mod: -2, cost: 0 }, // per your rule: Tier 1 is -2 for 0 points
+    1: { mod: -2, cost: 0 },
     2: { mod: 2,  cost: 3 },
     3: { mod: 4,  cost: 6 },
   };
 
-  // Saving throw target by Willpower Tier (never below 10)
-  const SAVE_TARGET_BY_WILL = {
-    0: 14, // optional fallback; adjust if you want Tier 0 handled differently
-    1: 14,
-    2: 13,
-    3: 11,
-  };
+  const SAVE_TARGET_BY_WILL = { 0: 14, 1: 14, 2: 13, 3: 11 };
 
-  function clampMin(n, min) {
-    return n < min ? min : n;
-  }
+  function clampMin(n, min) { return n < min ? min : n; }
 
-  function defenseMod(tier) {
-    return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod;
-  }
-
-  function willMod(tier) {
-    return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod;
-  }
-
-  function shootMod(tier) {
-    return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod;
-  }
-
-  function fightMod(tier) {
-    return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod;
-  }
+  function defenseMod(tier) { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
+  function willMod(tier)    { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
+  function shootMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
+  function fightMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
 
   function statPointsCost(m) {
     const d = (DEF_WILL_TABLE[m.defense] ?? DEF_WILL_TABLE[1]).cost;
@@ -189,38 +160,21 @@
     return (m.defense ?? 0) + (m.shoot ?? 0) + (m.fight ?? 0) + (m.will ?? 0);
   }
 
-  function equipmentCapacity(m) {
-    // Your rule: equal to Defense Tier
-    return m.defense ?? 0;
-  }
-
-  function psychicMutationCapacity(m) {
-    // Your rule: equal to Willpower Tier
-    return m.will ?? 0;
-  }
-
-  function savingThrowTarget(m) {
-    const t = SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1];
-    return clampMin(t, 10);
-  }
-
-  function armorClass(m) {
-    // For now: no item/mutation modifiers wired, so it’s just defense modifier.
-    // Later we’ll add accessory/mutation AC bonuses.
-    return 10 + defenseMod(m.defense ?? 1);
-  }
-
+  function equipmentCapacity(m) { return m.defense ?? 0; }
+  function psychicMutationCapacity(m) { return m.will ?? 0; }
+  function savingThrowTarget(m) { return clampMin((SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1]), 10); }
+  function armorClass(m) { return 10 + defenseMod(m.defense ?? 1); }
 
   // Warband state: leader + 4 models
   const warband = {
-    version: 2,
+    version: 3,
     pointCap: 75,
     members: [
-      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: [] },
-      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
-      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
-      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
-      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
+      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
+      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
+      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
+      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
+      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
     ]
   };
 
@@ -242,22 +196,6 @@
   }
 
   function memberAccessoryPoints(m) {
-    function memberPsiMutPoints(m) {
-  let sum = 0;
-
-  for (const idx of (m.psychicIdx || [])) {
-    const p = psychicPowers[Number(idx)];
-    sum += (toIntOrNull(p?.points) ?? 0);
-  }
-
-  for (const idx of (m.mutationIdx || [])) {
-    const mu = mutations[Number(idx)];
-    sum += (toIntOrNull(mu?.points) ?? 0);
-  }
-
-  return sum;
-}
-
     let sum = 0;
     for (const idx of (m.accessoryIdx || [])) {
       const a = accessories[Number(idx)];
@@ -266,11 +204,25 @@
     return sum;
   }
 
+  function memberPsiMutPoints(m) {
+    let sum = 0;
+
+    for (const idx of (m.psychicIdx || [])) {
+      const p = psychicPowers[Number(idx)];
+      sum += (toIntOrNull(p?.points) ?? 0);
+    }
+
+    for (const idx of (m.mutationIdx || [])) {
+      const mu = mutations[Number(idx)];
+      sum += (toIntOrNull(mu?.points) ?? 0);
+    }
+
+    return sum;
+  }
+
   function memberTotalPoints(m) {
-  return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
-}
-
-
+    return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
+  }
 
   function warbandTotalPoints() {
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
@@ -283,10 +235,7 @@
   }
 
   function renderWarband() {
-    // Point cap
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
-
-    // Clear + rebuild grid
     els.warbandGrid.innerHTML = "";
 
     warband.members.forEach((m, memberIndex) => {
@@ -295,7 +244,7 @@
       card.style.borderRadius = "10px";
       card.style.padding = "14px";
 
-      // Header: role + points
+      // Header
       const header = document.createElement("div");
       header.style.display = "flex";
       header.style.justifyContent = "space-between";
@@ -315,11 +264,11 @@
       header.appendChild(pts);
       card.appendChild(header);
 
-      // Stat tier helpers
+      // Tier select helper (shows Tier + mod + cost)
       function tierSelect(label, key) {
         const wrap = document.createElement("div");
         wrap.style.display = "grid";
-        wrap.style.gridTemplateColumns = "1fr 80px";
+        wrap.style.gridTemplateColumns = "1fr 140px";
         wrap.style.gap = "8px";
         wrap.style.alignItems = "center";
 
@@ -327,9 +276,7 @@
         l.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
 
         const s = document.createElement("select");
-        
-                const tiers = [1, 2, 3];
-
+        const tiers = [0, 1, 2, 3];
         const table =
           (key === "defense" || key === "will") ? DEF_WILL_TABLE :
           (key === "shoot" || key === "fight") ? SHOOT_FIGHT_TABLE :
@@ -339,19 +286,14 @@
           const entry = table?.[t];
           const mod = entry?.mod ?? 0;
           const cost = entry?.cost ?? 0;
-
-          // Example: "Tier 2 (+2, 4 pts)"
           const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
           return `<option value="${t}">Tier ${t} (${modStr}, ${cost} pts)</option>`;
         }).join("");
 
-        
         s.value = String(m[key] ?? 0);
 
         s.addEventListener("change", () => {
           m[key] = Number(s.value);
-
-          // If shoot tier drops below unlock, clear sidearm selection
           if (key === "shoot" && (m.shoot ?? 0) < SIDEARM_UNLOCK_SHOOT_TIER) {
             m.sidearmIdx = "";
           }
@@ -369,14 +311,13 @@
       statsBlock.style.display = "grid";
       statsBlock.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
       statsBlock.style.gap = "10px";
-
       statsBlock.appendChild(tierSelect("Defense", "defense"));
       statsBlock.appendChild(tierSelect("Shoot", "shoot"));
       statsBlock.appendChild(tierSelect("Fight", "fight"));
       statsBlock.appendChild(tierSelect("Willpower", "will"));
       card.appendChild(statsBlock);
 
-            // Derived stats panel
+      // Derived stats panel
       const derived = document.createElement("div");
       derived.style.marginTop = "10px";
       derived.style.padding = "10px";
@@ -394,33 +335,14 @@
         return row;
       };
 
-      // Calculations
-      const ac = armorClass(m);
-      const saveT = savingThrowTarget(m);
-      const wounds = woundsTotal(m);
-
-      const eqCap = equipmentCapacity(m);
-      const eqUsed = (m.accessoryIdx || []).length;
-
-      const pmCap = psychicMutationCapacity(m); // willpower-tier based
-      const statCost = statPointsCost(m);
-
-      derived.appendChild(statLine("Armor Class (AC)", String(ac)));
-      derived.appendChild(statLine("Saving Throw Target", String(saveT)));
-      derived.appendChild(statLine("Wounds", String(wounds)));
-      derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
-derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
-derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
-derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
-
-
-      derived.appendChild(statLine("Equipment Capacity", `${eqUsed}/${eqCap}`));
-      derived.appendChild(statLine("Psychic/Mutation Capacity", String(pmCap)));
-
-      derived.appendChild(statLine("Stat Points", String(statCost)));
+      derived.appendChild(statLine("Armor Class (AC)", String(armorClass(m))));
+      derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
+      derived.appendChild(statLine("Wounds", String(woundsTotal(m))));
+      derived.appendChild(statLine("Equipment Capacity", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
+      derived.appendChild(statLine("Psychic/Mutation Capacity", String(psychicMutationCapacity(m))));
+      derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
 
       card.appendChild(derived);
-
 
       // Primary weapon select
       const weaponRow = document.createElement("div");
@@ -453,7 +375,6 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
         sidearmRow.style.marginTop = "10px";
         sidearmRow.innerHTML = "<strong>Sidearm (Shoot Tier 3+)</strong>";
 
-        // TEMP: detect sidearms by name (later: add category column in shoot.csv)
         const sidearms = weapons
           .map((w, idx) => ({ w, idx }))
           .filter(x =>
@@ -482,19 +403,19 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
         card.appendChild(sidearmRow);
       }
 
-      // Accessories (checkboxes)
+      // Accessories
       const accWrap = document.createElement("div");
       accWrap.style.marginTop = "12px";
       accWrap.innerHTML = "<strong>Accessories</strong>";
 
-      const cap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
-      const used = (m.accessoryIdx || []).length;
+      const accCap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
+      const accUsed = (m.accessoryIdx || []).length;
 
       const capLine = document.createElement("div");
       capLine.style.marginTop = "6px";
-      capLine.innerHTML = used > cap
-        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${used}/${cap}</span>`
-        : `<span style="color:#444;">Capacity: ${used}/${cap}</span>`;
+      capLine.innerHTML = accUsed > accCap
+        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${accUsed}/${accCap}</span>`
+        : `<span style="color:#444;">Capacity: ${accUsed}/${accCap}</span>`;
       accWrap.appendChild(capLine);
 
       const list = document.createElement("div");
@@ -534,22 +455,21 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       accWrap.appendChild(list);
       card.appendChild(accWrap);
 
-            // Psychic Powers + Mutations (combined capacity = Willpower tier)
+      // Psychic Powers + Mutations
       const psiWrap = document.createElement("div");
       psiWrap.style.marginTop = "12px";
       psiWrap.innerHTML = "<strong>Psychic Powers + Mutations</strong>";
 
-      const capPM = psychicMutationCapacity(m);
-      const usedPM = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
+      const pmCap = psychicMutationCapacity(m);
+      const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
 
       const pmLine = document.createElement("div");
       pmLine.style.marginTop = "6px";
-      pmLine.innerHTML = usedPM > capPM
-        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${usedPM}/${capPM}</span>`
-        : `<span style="color:#444;">Capacity: ${usedPM}/${capPM}</span>`;
+      pmLine.innerHTML = pmUsed > pmCap
+        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${pmUsed}/${pmCap}</span>`
+        : `<span style="color:#444;">Capacity: ${pmUsed}/${pmCap}</span>`;
       psiWrap.appendChild(pmLine);
 
-      // Psychic list
       const psyTitle = document.createElement("div");
       psyTitle.style.marginTop = "8px";
       psyTitle.innerHTML = "<strong style='font-size:13px;'>Psychic Powers</strong>";
@@ -591,7 +511,6 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
 
       psiWrap.appendChild(psyList);
 
-      // Mutation list
       const mutTitle = document.createElement("div");
       mutTitle.style.marginTop = "10px";
       mutTitle.innerHTML = "<strong style='font-size:13px;'>Mutations</strong>";
@@ -634,11 +553,9 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       psiWrap.appendChild(mutList);
       card.appendChild(psiWrap);
 
-
       els.warbandGrid.appendChild(card);
     });
 
-    // Warband totals
     const total = warbandTotalPoints();
     els.warbandTotal.textContent = String(total);
 
@@ -672,7 +589,9 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       warband.version = parsed.version ?? warband.version;
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
-      const defaultMembers = warband.members.map(m => ({ ...m, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] }));
+      const defaultMembers = warband.members.map(m => ({
+        ...m, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: []
+      }));
       const incoming = parsed.members.slice(0, defaultMembers.length);
 
       warband.members = defaultMembers.map((def, i) => {
@@ -688,8 +607,6 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
           accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           psychicIdx: Array.isArray(inc.psychicIdx) ? inc.psychicIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           mutationIdx: Array.isArray(inc.mutationIdx) ? inc.mutationIdx.map(Number).filter(n => Number.isFinite(n)) : [],
-
-        
         };
       });
 
@@ -711,8 +628,9 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       const aRes = await fetch("./data/accessories.json", { cache: "no-store" });
       if (!aRes.ok) throw new Error(`HTTP ${aRes.status} when fetching accessories.json`);
       accessories = await aRes.json();
-      
-            const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
+      if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
+
+      const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
       if (!pRes.ok) throw new Error(`HTTP ${pRes.status} when fetching psychic_powers.json`);
       psychicPowers = await pRes.json();
       if (!Array.isArray(psychicPowers)) throw new Error("psychic_powers.json must be an array of objects");
@@ -722,9 +640,6 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       mutations = await mRes.json();
       if (!Array.isArray(mutations)) throw new Error("mutations.json must be an array of objects");
 
-      
-      if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
-
       weapons.sort((a, b) =>
         ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
@@ -733,8 +648,16 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
         ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
+      psychicPowers.sort((a, b) =>
+        ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
+      mutations.sort((a, b) =>
+        ((toIntOrNull(b.points) ?? 0) - (toIntOrNull(a.points) ?? 0)) ||
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
 
-      // Wire IO buttons
+      // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
       els.importBtn.addEventListener("click", importWarbandUI);
       els.closeIoBtn.addEventListener("click", () => setIoVisible(false));
@@ -748,9 +671,7 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       });
       els.loadBtn.addEventListener("click", loadPastedWarband);
 
-      // Initial render
       renderWarband();
-
     } catch (err) {
       els.errorCard.style.display = "block";
       els.errorText.textContent = String(err);
