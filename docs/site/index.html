@@ -24,27 +24,14 @@
   <p class="sub">Loads <code>data/shoot.json</code> and <code>data/accessories.json</code>. Select a weapon + accessories and see points update.</p>
 . Select a ranged weapon and see stats + points update.</p>
 
-  <div class="row">
-    <label for="weaponSelect"><strong>Ranged Weapon</strong></label>
-    <select id="weaponSelect">
-      <option value="">Loading…</option>
-    </select>
-  </div>
+
 
   <div class="row">
     <label for="pointCap"><strong>Point Cap</strong></label>
-    <input id="pointCap" type="number" value="10" min="0" step="1" />
+    <input id="pointCap" type="number" value="75" min="0" step="1" />
   </div>
 
-    <div class="row" style="align-items:start;">
-    <label><strong>Accessories</strong></label>
-    <div>
-      <div id="accessoryList">Loading…</div>
-      <div style="margin-top:10px; color:#444;">
-        Selected: <span id="selectedAccessories">—</span>
-      </div>
-    </div>
-  </div>
+
 
     <div class="card">
     <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
@@ -81,19 +68,7 @@
   </div>
 
 
-  <div class="card" id="weaponCard" style="display:none;">
-    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <div style="font-size:18px; font-weight:700;" id="weaponName"></div>
-        <div style="color:#444; margin-top:4px;" id="weaponEffect"></div>
-        <div style="margin-top:10px;" id="weaponBadges"></div>
-      </div>
-      <div style="text-align:right; min-width:180px;">
-        <div style="font-size:14px; color:#444;">Total Points</div>
-        <div style="font-size:28px; font-weight:800;" id="totalPoints">0</div>
-        <div id="capStatus" style="margin-top:6px;"></div>
-      </div>
-    </div>
+
 
     <div class="grid">
       <div><strong>Max Actions</strong><div id="statActions">—</div></div>
@@ -116,25 +91,10 @@
 
 <script>
   const els = {
-    weaponSelect: document.getElementById("weaponSelect"),
     pointCap: document.getElementById("pointCap"),
-    weaponCard: document.getElementById("weaponCard"),
-    weaponName: document.getElementById("weaponName"),
-    weaponEffect: document.getElementById("weaponEffect"),
-    weaponBadges: document.getElementById("weaponBadges"),
-    totalPoints: document.getElementById("totalPoints"),
-    capStatus: document.getElementById("capStatus"),
-    statActions: document.getElementById("statActions"),
-    statDamage: document.getElementById("statDamage"),
-    statAP: document.getElementById("statAP"),
-    statPoints: document.getElementById("statPoints"),
-    statRaw: document.getElementById("statRaw"),
-    statNotes: document.getElementById("statNotes"),
+
     errorCard: document.getElementById("errorCard"),
     errorText: document.getElementById("errorText"),
-    accessoryList: document.getElementById("accessoryList"),
-    selectedAccessories: document.getElementById("selectedAccessories"),
-    statAccPoints: document.getElementById("statAccPoints"),
 
     warbandGrid: document.getElementById("warbandGrid"),
     warbandTotal: document.getElementById("warbandTotal"),
@@ -350,43 +310,25 @@
         return String(a.name ?? "").localeCompare(String(b.name ?? ""));
       });
 
-      // Populate weapons dropdown
-      els.weaponSelect.innerHTML = `<option value="">— Select —</option>`;
-      weapons.forEach((w, idx) => {
-        const p = toIntOrNull(w.points) ?? 0;
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = `${w.name ?? "(Unnamed)"} (${p} pts)`;
-        els.weaponSelect.appendChild(opt);
-      });
 
       // Render accessories list
       renderAccessories();
 
-      // Wire events
-      els.weaponSelect.addEventListener("change", () => {
-        const idx = els.weaponSelect.value;
-        const weapon = idx === "" ? null : weapons[Number(idx)];
-        renderWeapon(weapon);
-      });
 
       els.pointCap.addEventListener("input", () => {
         const idx = els.weaponSelect.value;
         const weapon = idx === "" ? null : weapons[Number(idx)];
         renderWeapon(weapon);
       });
-
-      // Default select first weapon
-      if (weapons.length > 0) els.weaponSelect.value = "0";
-      renderWeapon(weapons[0] ?? null);
       
+
       // Initialize warband
       warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
       renderWarband();
 
+
     } catch (err) {
       els.errorCard.style.display = "block";
-      els.weaponSelect.innerHTML = `<option value="">(failed to load)</option>`;
       els.errorText.textContent = String(err);
       console.error(err);
     }
