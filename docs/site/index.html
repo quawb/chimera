@@ -134,19 +134,46 @@
     version: 1,
     pointCap: 75,
     members: [
-      { role: "Leader", weaponIdx: "", accessoryIdx: [] },
-      { role: "Model 1", weaponIdx: "", accessoryIdx: [] },
-      { role: "Model 2", weaponIdx: "", accessoryIdx: [] },
-      { role: "Model 3", weaponIdx: "", accessoryIdx: [] },
-      { role: "Model 4", weaponIdx: "", accessoryIdx: [] },
+      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
+      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
+      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
+      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
+      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
     ]
+
   };
 
-  function memberWeaponPoints(m) {
-    if (m.weaponIdx === "" || m.weaponIdx === null || m.weaponIdx === undefined) return 0;
-    const w = weapons[Number(m.weaponIdx)];
-    return toIntOrNull(w?.points) ?? 0;
+  // === Rules (hardwired for now) ===
+  // Defense tier -> accessory capacity (number of accessories allowed)
+  const DEFENSE_TO_ACC_CAP = {
+    0: 0,
+    1: 1,
+    2: 2,
+    3: 3
+  };
+
+  // Sidearm unlock threshold
+  const SIDEARM_UNLOCK_SHOOT_TIER = 3;
+
+
+    function memberWeaponPoints(m) {
+    let sum = 0;
+
+    if (m.weaponIdx !== "" && m.weaponIdx !== null && m.weaponIdx !== undefined) {
+      const w = weapons[Number(m.weaponIdx)];
+      sum += toIntOrNull(w?.points) ?? 0;
+    }
+
+    // Sidearm points
+    if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER &&
+        m.sidearmIdx !== "" && m.sidearmIdx !== null && m.sidearmIdx !== undefined) {
+      const s = weapons[Number(m.sidearmIdx)];
+      sum += toIntOrNull(s?.points) ?? 0;
+    }
+
+    return sum;
   }
+
 
   function memberAccessoryPoints(m) {
     let sum = 0;
@@ -172,6 +199,34 @@
   }
 
   function renderWarband() {
+
+        function tierSelect(label, key) {
+        const wrap = document.createElement("div");
+        wrap.style.display = "grid";
+        wrap.style.gridTemplateColumns = "1fr 80px";
+        wrap.style.gap = "8px";
+        wrap.style.alignItems = "center";
+        wrap.style.marginTop = "6px";
+
+        const l = document.createElement("div");
+        l.innerHTML = `<strong>${label}</strong>`;
+        const s = document.createElement("select");
+        s.innerHTML = [0,1,2,3].map(n => `<option value="${n}">${n}</option>`).join("");
+        s.value = String(m[key] ?? 0);
+        s.addEventListener("change", () => {
+          m[key] = Number(s.value);
+          // If shoot tier drops below unlock, clear sidearm
+          if (key === "shoot" && m.shoot < SIDEARM_UNLOCK_SHOOT_TIER) {
+            m.sidearmIdx = "";
+          }
+          renderWarband();
+        });
+
+        wrap.appendChild(l);
+        wrap.appendChild(s);
+        return wrap;
+      }
+
     // Point cap
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
 
@@ -202,6 +257,20 @@
       header.appendChild(title);
       header.appendChild(pts);
 
+      const statsBlock = document.createElement("div");
+      statsBlock.style.marginTop = "10px";
+      statsBlock.style.display = "grid";
+      statsBlock.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      statsBlock.style.gap = "10px";
+
+      statsBlock.appendChild(tierSelect("Defense", "defense"));
+      statsBlock.appendChild(tierSelect("Shoot", "shoot"));
+      statsBlock.appendChild(tierSelect("Fight", "fight"));
+      statsBlock.appendChild(tierSelect("Willpower", "will"));
+
+      card.appendChild(statsBlock);
+
+
       // Weapon select
       const weaponRow = document.createElement("div");
       weaponRow.style.marginTop = "10px";
@@ -225,6 +294,19 @@
       weaponRow.appendChild(sel);
 
       // Accessories
+
+      const cap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
+      const used = (m.accessoryIdx || []).length;
+
+      const capLine = document.createElement("div");
+      capLine.style.marginTop = "6px";
+      capLine.innerHTML = used > cap
+        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${used}/${cap}</span>`
+        : `<span style="color:#444;">Capacity: ${used}/${cap}</span>`;
+
+      accWrap.appendChild(capLine);
+
+      
       const accWrap = document.createElement("div");
       accWrap.style.marginTop = "10px";
       accWrap.innerHTML = "<strong>Accessories</strong>";
@@ -267,6 +349,43 @@
 
       card.appendChild(header);
       card.appendChild(weaponRow);
+
+// SECONDARY SIDEARM (Shoot Tier 3+)
+if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
+  const sidearmRow = document.createElement("div");
+  sidearmRow.style.marginTop = "10px";
+  sidearmRow.innerHTML = "<strong>Sidearm (Shoot Tier 3+)</strong>";
+
+  // Temporary rule: sidearms identified by name
+  const sidearms = weapons
+    .map((w, idx) => ({ w, idx }))
+    .filter(x =>
+      String(x.w.name ?? "").toLowerCase().includes("sidearm") ||
+      String(x.w.name ?? "").toLowerCase().includes("pistol")
+    );
+
+  const sideSel = document.createElement("select");
+  sideSel.style.width = "100%";
+  sideSel.style.marginTop = "6px";
+  sideSel.innerHTML =
+    `<option value="">— None —</option>` +
+    sidearms.map(x => {
+      const p = toIntOrNull(x.w.points) ?? 0;
+      const nm = escapeHtml(x.w.name ?? "(Unnamed)");
+      return `<option value="${x.idx}">${nm} (${p} pts)</option>`;
+    }).join("");
+
+  sideSel.value = m.sidearmIdx === "" ? "" : String(m.sidearmIdx);
+  sideSel.addEventListener("change", () => {
+    m.sidearmIdx = sideSel.value === "" ? "" : sideSel.value;
+    renderWarband();
+  });
+
+  sidearmRow.appendChild(sideSel);
+  card.appendChild(sidearmRow);
+}
+
+      
       card.appendChild(accWrap);
 
       els.warbandGrid.appendChild(card);
@@ -298,6 +417,15 @@
 
   function loadPastedWarband() {
     try {
+
+     sidearmIdx: (inc.sidearmIdx === "" || inc.sidearmIdx === null || inc.sidearmIdx === undefined) ? "" : String(inc.sidearmIdx),
+
+                 defense: toIntOrNull(inc.defense) ?? def.defense,
+          shoot: toIntOrNull(inc.shoot) ?? def.shoot,
+          fight: toIntOrNull(inc.fight) ?? def.fight,
+          will: toIntOrNull(inc.will) ?? def.will,
+
+      
       const parsed = JSON.parse(els.ioText.value);
       if (!parsed || typeof parsed !== "object") throw new Error("Not an object");
       if (!Array.isArray(parsed.members)) throw new Error("Missing members[]");
