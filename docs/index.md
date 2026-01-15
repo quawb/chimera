@@ -1,6 +1,6 @@
-# Chimera Skirmish
+# The Chimera System
 
-A narrative sci-fi horror skirmish game.
+A narrative sci-fi horror skirmish game. 
 
 ## Contents
 - [Core Rules](rules.md)
