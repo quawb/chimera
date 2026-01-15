@@ -130,62 +130,6 @@
       .replaceAll("'", "&#039;");
   }
 
-  function renderWeapon(weapon) {
-    if (!weapon) {
-      els.weaponCard.style.display = "none";
-      return;
-    }
-    els.weaponCard.style.display = "block";
-
-    const name = weapon.name ?? "(Unnamed)";
-    const effect = weapon.effect_text ?? "";
-    const maxActions = weapon.max_actions ?? "";
-    const damage = weapon.damage ?? "";
-    const ap = weapon.ap ?? "";
-    const points = weapon.points ?? "";
-
-    // Stats
-    els.weaponName.textContent = name;
-    els.weaponEffect.textContent = effect;
-    els.statActions.textContent = maxActions === "" ? "—" : maxActions;
-    els.statDamage.textContent = damage === "" ? "—" : damage;
-    els.statAP.textContent = ap === "" ? "—" : ap;
-    els.statPoints.textContent = points === "" ? "—" : points;
-    els.statRaw.innerHTML = `<code>${escapeHtml(JSON.stringify(weapon))}</code>`;
-
-    // Badges
-    const badges = [];
-    if (String(ap).trim() === "*") badges.push("Variable AP");
-    if (effect.toLowerCase().includes("aoe")) badges.push("AoE");
-    if (effect.toLowerCase().includes("blast")) badges.push("Blast");
-    if (effect.toLowerCase().includes("cone")) badges.push("Cone");
-    if (effect.toLowerCase().includes("reroll")) badges.push("Reroll");
-    els.weaponBadges.innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join("");
-
-        // Total points = weapon + accessories
-    const wp = toIntOrNull(points) ?? 0;
-    const apoints = accessoryPointsTotal();
-    const total = wp + apoints;
-
-    els.statAccPoints.textContent = String(apoints);
-    els.totalPoints.textContent = String(total);
-    renderSelectedAccessoriesText();
-
-
-    // Cap status
-    const cap = toIntOrNull(els.pointCap.value) ?? 0;
-    if (total > cap) {
-      els.capStatus.innerHTML = `<span class="warn">Over cap by ${total - cap}</span>`;
-    } else {
-      els.capStatus.innerHTML = `<span class="ok">Within cap (${cap - total} left)</span>`;
-    }
-
-    // Notes
-    const notes = [];
-    if (String(name).toLowerCase().includes("no ")) notes.push("This looks like a 'no weapon' option.");
-    if (String(maxActions).trim() === "0") notes.push("Max Actions is 0 (is that intended?).");
-    els.statNotes.textContent = notes.length ? notes.join(" ") : "—";
-  }
 
    let weapons = [];
   let accessories = [];
@@ -214,11 +158,6 @@
     return sum;
   }
 
-  function renderAccessories() {
-    if (!Array.isArray(accessories) || accessories.length === 0) {
-      els.accessoryList.textContent = "(no accessories loaded)";
-      return;
-    }
 
     // Build checkbox list
     const wrap = document.createElement("div");
@@ -239,9 +178,8 @@
         else selectedAccessoryIdx.delete(idx);
 
         // re-render current weapon card totals
-        const widx = els.weaponSelect.value;
+
         const weapon = widx === "" ? null : weapons[Number(widx)];
-        renderWeapon(weapon);
       });
 
       const label = document.createElement("label");
@@ -265,74 +203,47 @@
       wrap.appendChild(line);
     });
 
-    els.accessoryList.innerHTML = "";
-    els.accessoryList.appendChild(wrap);
   }
 
-  function renderSelectedAccessoriesText() {
-    if (selectedAccessoryIdx.size === 0) {
-      els.selectedAccessories.textContent = "—";
-      return;
-    }
-    const names = [...selectedAccessoryIdx]
-      .map(i => accessories[i]?.name)
-      .filter(Boolean);
-    els.selectedAccessories.textContent = names.join(", ");
-  }
 
   async function loadData() {
-    try {
-      // Load weapons
-      const wRes = await fetch("./data/shoot.json", { cache: "no-store" });
-      if (!wRes.ok) throw new Error(`HTTP ${wRes.status} when fetching shoot.json`);
-      weapons = await wRes.json();
-      if (!Array.isArray(weapons)) throw new Error("shoot.json must be an array of objects");
+  try {
+    const wRes = await fetch("./data/shoot.json", { cache: "no-store" });
+    if (!wRes.ok) throw new Error(`HTTP ${wRes.status} when fetching shoot.json`);
+    weapons = await wRes.json();
+    if (!Array.isArray(weapons)) throw new Error("shoot.json must be an array of objects");
 
-      // Load accessories
-      const aRes = await fetch("./data/accessories.json", { cache: "no-store" });
-      if (!aRes.ok) throw new Error(`HTTP ${aRes.status} when fetching accessories.json`);
-      accessories = await aRes.json();
-      if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
+    const aRes = await fetch("./data/accessories.json", { cache: "no-store" });
+    if (!aRes.ok) throw new Error(`HTTP ${aRes.status} when fetching accessories.json`);
+    accessories = await aRes.json();
+    if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
 
-      // Sort weapons by points then name
-      weapons.sort((a, b) => {
-        const pa = toIntOrNull(a.points) ?? 0;
-        const pb = toIntOrNull(b.points) ?? 0;
-        if (pa !== pb) return pa - pb;
-        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
-      });
+    // Sort weapons/accessories for nicer UI
+    weapons.sort((a, b) => {
+      const pa = toIntOrNull(a.points) ?? 0;
+      const pb = toIntOrNull(b.points) ?? 0;
+      if (pa !== pb) return pa - pb;
+      return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+    });
 
-      // Sort accessories by points then name
-      accessories.sort((a, b) => {
-        const pa = toIntOrNull(a.points) ?? 0;
-        const pb = toIntOrNull(b.points) ?? 0;
-        if (pa !== pb) return pa - pb;
-        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
-      });
+    accessories.sort((a, b) => {
+      const pa = toIntOrNull(a.points) ?? 0;
+      const pb = toIntOrNull(b.points) ?? 0;
+      if (pa !== pb) return pa - pb;
+      return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+    });
 
+    // Initialize warband
+    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+    renderWarband();
 
-      // Render accessories list
-      renderAccessories();
-
-
-      els.pointCap.addEventListener("input", () => {
-        const idx = els.weaponSelect.value;
-        const weapon = idx === "" ? null : weapons[Number(idx)];
-        renderWeapon(weapon);
-      });
-      
-
-      // Initialize warband
-      warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
-      renderWarband();
-
-
-    } catch (err) {
-      els.errorCard.style.display = "block";
-      els.errorText.textContent = String(err);
-      console.error(err);
-    }
+  } catch (err) {
+    els.errorCard.style.display = "block";
+    els.errorText.textContent = String(err);
+    console.error(err);
   }
+}
+
 
   function memberWeaponPoints(m) {
     if (m.weaponIdx === "" || m.weaponIdx === null || m.weaponIdx === undefined) return 0;
