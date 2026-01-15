@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chimera — Warband Builder (Prototype)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.35; }
+    h1 { margin: 0 0 8px; }
+    .sub { color: #444; margin: 0 0 24px; }
+    .row { display: grid; grid-template-columns: 240px 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
+    select, input { font-size: 16px; padding: 8px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; max-width: 820px; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .pill { display: inline-block; border: 1px solid #ddd; border-radius: 999px; padding: 4px 10px; margin: 4px 6px 0 0; font-size: 14px; }
+    .warn { color: #8a1f11; font-weight: 600; }
+    .ok { color: #0b5; font-weight: 600; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+
+<body>
+  <h1>Chimera Builder (Prototype)</h1>
+  <p class="sub">Loads <code>site/data/shoot.json</code>. Select a ranged weapon and see stats + points update.</p>
+
+  <div class="row">
+    <label for="weaponSelect"><strong>Ranged Weapon</strong></label>
+    <select id="weaponSelect">
+      <option value="">Loading…</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label for="pointCap"><strong>Point Cap</strong></label>
+    <input id="pointCap" type="number" value="10" min="0" step="1" />
+  </div>
+
+  <div class="card" id="weaponCard" style="display:none;">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:18px; font-weight:700;" id="weaponName"></div>
+        <div style="color:#444; margin-top:4px;" id="weaponEffect"></div>
+        <div style="margin-top:10px;" id="weaponBadges"></div>
+      </div>
+      <div style="text-align:right; min-width:180px;">
+        <div style="font-size:14px; color:#444;">Total Points</div>
+        <div style="font-size:28px; font-weight:800;" id="totalPoints">0</div>
+        <div id="capStatus" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div><strong>Max Actions</strong><div id="statActions">—</div></div>
+      <div><strong>Damage</strong><div id="statDamage">—</div></div>
+      <div><strong>AP</strong><div id="statAP">—</div></div>
+      <div><strong>Points</strong><div id="statPoints">—</div></div>
+      <div><strong>Raw Row</strong><div id="statRaw">—</div></div>
+      <div><strong>Notes</strong><div id="statNotes">—</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="errorCard" style="display:none;">
+    <div class="warn">Could not load shoot.json</div>
+    <p id="errorText" style="margin:8px 0 0;"></p>
+    <p style="margin:8px 0 0;">
+      Expected path: <code>site/data/shoot.json</code>
+    </p>
+  </div>
+
+<script>
+  const els = {
+    weaponSelect: document.getElementById("weaponSelect"),
+    pointCap: document.getElementById("pointCap"),
+    weaponCard: document.getElementById("weaponCard"),
+    weaponName: document.getElementById("weaponName"),
+    weaponEffect: document.getElementById("weaponEffect"),
+    weaponBadges: document.getElementById("weaponBadges"),
+    totalPoints: document.getElementById("totalPoints"),
+    capStatus: document.getElementById("capStatus"),
+    statActions: document.getElementById("statActions"),
+    statDamage: document.getElementById("statDamage"),
+    statAP: document.getElementById("statAP"),
+    statPoints: document.getElementById("statPoints"),
+    statRaw: document.getElementById("statRaw"),
+    statNotes: document.getElementById("statNotes"),
+    errorCard: document.getElementById("errorCard"),
+    errorText: document.getElementById("errorText"),
+  };
+
+  /** Parse an int from a CSV/JSON string. Returns null if blank/unparseable. */
+  function toIntOrNull(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderWeapon(weapon) {
+    if (!weapon) {
+      els.weaponCard.style.display = "none";
+      return;
+    }
+    els.weaponCard.style.display = "block";
+
+    const name = weapon.name ?? "(Unnamed)";
+    const effect = weapon.effect_text ?? "";
+    const maxActions = weapon.max_actions ?? "";
+    const damage = weapon.damage ?? "";
+    const ap = weapon.ap ?? "";
+    const points = weapon.points ?? "";
+
+    // Stats
+    els.weaponName.textContent = name;
+    els.weaponEffect.textContent = effect;
+    els.statActions.textContent = maxActions === "" ? "—" : maxActions;
+    els.statDamage.textContent = damage === "" ? "—" : damage;
+    els.statAP.textContent = ap === "" ? "—" : ap;
+    els.statPoints.textContent = points === "" ? "—" : points;
+    els.statRaw.innerHTML = `<code>${escapeHtml(JSON.stringify(weapon))}</code>`;
+
+    // Badges
+    const badges = [];
+    if (String(ap).trim() === "*") badges.push("Variable AP");
+    if (effect.toLowerCase().includes("aoe")) badges.push("AoE");
+    if (effect.toLowerCase().includes("blast")) badges.push("Blast");
+    if (effect.toLowerCase().includes("cone")) badges.push("Cone");
+    if (effect.toLowerCase().includes("reroll")) badges.push("Reroll");
+    els.weaponBadges.innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join("");
+
+    // Total points (for now: just weapon points)
+    const p = toIntOrNull(points) ?? 0;
+    els.totalPoints.textContent = String(p);
+
+    // Cap status
+    const cap = toIntOrNull(els.pointCap.value) ?? 0;
+    if (p > cap) {
+      els.capStatus.innerHTML = `<span class="warn">Over cap by ${p - cap}</span>`;
+    } else {
+      els.capStatus.innerHTML = `<span class="ok">Within cap (${cap - p} left)</span>`;
+    }
+
+    // Notes
+    const notes = [];
+    if (String(name).toLowerCase().includes("no ")) notes.push("This looks like a 'no weapon' option.");
+    if (String(maxActions).trim() === "0") notes.push("Max Actions is 0 (is that intended?).");
+    els.statNotes.textContent = notes.length ? notes.join(" ") : "—";
+  }
+
+  async function loadWeapons() {
+    try {
+      const res = await fetch("./data/shoot.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} when fetching shoot.json`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("shoot.json must be an array of objects");
+
+      // Sort by points then name (both are strings currently)
+      data.sort((a, b) => {
+        const pa = toIntOrNull(a.points) ?? 0;
+        const pb = toIntOrNull(b.points) ?? 0;
+        if (pa !== pb) return pa - pb;
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+      });
+
+      // Populate dropdown
+      els.weaponSelect.innerHTML = `<option value="">— Select —</option>`;
+      data.forEach((w, idx) => {
+        const p = toIntOrNull(w.points) ?? 0;
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = `${w.name ?? "(Unnamed)"} (${p} pts)`;
+        els.weaponSelect.appendChild(opt);
+      });
+
+      // Wire events
+      els.weaponSelect.addEventListener("change", () => {
+        const idx = els.weaponSelect.value;
+        const weapon = idx === "" ? null : data[Number(idx)];
+        renderWeapon(weapon);
+      });
+      els.pointCap.addEventListener("input", () => {
+        const idx = els.weaponSelect.value;
+        const weapon = idx === "" ? null : data[Number(idx)];
+        renderWeapon(weapon);
+      });
+
+      // Default select first real weapon (optional)
+      // If you prefer no default, delete these two lines:
+      if (data.length > 0) els.weaponSelect.value = "0";
+      renderWeapon(data[0] ?? null);
+
+    } catch (err) {
+      els.errorCard.style.display = "block";
+      els.weaponSelect.innerHTML = `<option value="">(failed to load)</option>`;
+      els.errorText.textContent = String(err);
+      console.error(err);
+    }
+  }
+
+  loadWeapons();
+</script>
+</body>
+</html>
