@@ -120,6 +120,9 @@
   let psychicPowers = [];
   let mutations = [];
   let meleeWeapons = [];
+  let warbandTraits = [];
+  let leaderTraits = [];
+
 
   // === Rules (hardwired for now, easy to change) ===
   const DEFENSE_TO_ACC_CAP = { 0: 0, 1: 1, 2: 2, 3: 3 };
@@ -170,6 +173,9 @@
   const warband = {
     version: 3,
     pointCap: 75,
+    warbandTraitIdx: "",
+    leaderTraitIdx: "",
+
     members: [
       { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
       { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
@@ -235,6 +241,11 @@
   function warbandTotalPoints() {
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
   }
+
+function warbandTraitPoints() { return 0; }
+function leaderTraitPoints() { return 0; }
+
+  
 
     function makeCollapsible(titleText, initiallyOpen = false) {
     const wrap = document.createElement("div");
