@@ -389,6 +389,11 @@
       derived.appendChild(statLine("Armor Class (AC)", String(ac)));
       derived.appendChild(statLine("Saving Throw Target", String(saveT)));
       derived.appendChild(statLine("Wounds", String(wounds)));
+      derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
+derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
+derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
+derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
+
 
       derived.appendChild(statLine("Equipment Capacity", `${eqUsed}/${eqCap}`));
       derived.appendChild(statLine("Psychic/Mutation Capacity", String(pmCap)));
