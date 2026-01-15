@@ -46,6 +46,40 @@
     </div>
   </div>
 
+    <div class="card">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div>
+        <div style="font-size:18px; font-weight:800;">Warband</div>
+        <div style="color:#444; margin-top:4px;">Leader + 4 models. Each model has its own weapon + accessories.</div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="exportBtn" type="button">Export Warband</button>
+        <button id="importBtn" type="button">Import Warband</button>
+      </div>
+    </div>
+
+    <div id="warbandGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-top:14px;"></div>
+
+    <div style="margin-top:14px;">
+      <div style="font-size:14px; color:#444;">Warband Total</div>
+      <div style="font-size:28px; font-weight:900;" id="warbandTotal">0</div>
+      <div id="warbandCapStatus" style="margin-top:6px;"></div>
+    </div>
+
+    <div id="ioArea" style="display:none; margin-top:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong id="ioTitle">Export / Import</strong>
+        <button id="closeIoBtn" type="button">Close</button>
+      </div>
+      <textarea id="ioText" rows="10" style="width:100%; margin-top:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; padding:10px;"></textarea>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button id="copyBtn" type="button">Copy</button>
+        <button id="loadBtn" type="button">Load Pasted JSON</button>
+      </div>
+      <div id="ioMsg" style="margin-top:8px; color:#444;"></div>
+    </div>
+  </div>
+
 
   <div class="card" id="weaponCard" style="display:none;">
     <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -101,6 +135,20 @@
     accessoryList: document.getElementById("accessoryList"),
     selectedAccessories: document.getElementById("selectedAccessories"),
     statAccPoints: document.getElementById("statAccPoints"),
+
+    warbandGrid: document.getElementById("warbandGrid"),
+    warbandTotal: document.getElementById("warbandTotal"),
+    warbandCapStatus: document.getElementById("warbandCapStatus"),
+
+    exportBtn: document.getElementById("exportBtn"),
+    importBtn: document.getElementById("importBtn"),
+    ioArea: document.getElementById("ioArea"),
+    ioTitle: document.getElementById("ioTitle"),
+    ioText: document.getElementById("ioText"),
+    copyBtn: document.getElementById("copyBtn"),
+    loadBtn: document.getElementById("loadBtn"),
+    closeIoBtn: document.getElementById("closeIoBtn"),
+    ioMsg: document.getElementById("ioMsg"),
 
   };
 
@@ -182,6 +230,19 @@
    let weapons = [];
   let accessories = [];
   const selectedAccessoryIdx = new Set(); // indexes into accessories array
+
+    // Warband state: leader + 4 models
+  const warband = {
+    version: 1,
+    pointCap: 15,
+    members: [
+      { role: "Leader", weaponIdx: "", accessoryIdx: [] },
+      { role: "Model 1", weaponIdx: "", accessoryIdx: [] },
+      { role: "Model 2", weaponIdx: "", accessoryIdx: [] },
+      { role: "Model 3", weaponIdx: "", accessoryIdx: [] },
+      { role: "Model 4", weaponIdx: "", accessoryIdx: [] },
+    ]
+  };
 
   function accessoryPointsTotal() {
     let sum = 0;
@@ -318,6 +379,10 @@
       // Default select first weapon
       if (weapons.length > 0) els.weaponSelect.value = "0";
       renderWeapon(weapons[0] ?? null);
+      
+      // Initialize warband
+      warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+      renderWarband();
 
     } catch (err) {
       els.errorCard.style.display = "block";
@@ -327,8 +392,216 @@
     }
   }
 
+  function memberWeaponPoints(m) {
+    if (m.weaponIdx === "" || m.weaponIdx === null || m.weaponIdx === undefined) return 0;
+    const w = weapons[Number(m.weaponIdx)];
+    return toIntOrNull(w?.points) ?? 0;
+  }
+
+  function memberAccessoryPoints(m) {
+    let sum = 0;
+    for (const idx of (m.accessoryIdx || [])) {
+      const a = accessories[Number(idx)];
+      sum += (toIntOrNull(a?.points) ?? 0);
+    }
+    return sum;
+  }
+
+  function memberTotalPoints(m) {
+    return memberWeaponPoints(m) + memberAccessoryPoints(m);
+  }
+
+  function warbandTotalPoints() {
+    return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
+  }
+
+  function setIoVisible(vis, title) {
+    els.ioArea.style.display = vis ? "block" : "none";
+    if (title) els.ioTitle.textContent = title;
+    els.ioMsg.textContent = "";
+  }
+
+  function renderWarband() {
+    // sync point cap from input
+    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+
+    els.warbandGrid.innerHTML = "";
+
+    warband.members.forEach((m, memberIndex) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const header = document.createElement("div");
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.alignItems = "baseline";
+      header.style.gap = "10px";
+
+      const title = document.createElement("div");
+      title.style.fontWeight = "900";
+      title.style.fontSize = "16px";
+      title.textContent = m.role;
+
+      const pts = document.createElement("div");
+      pts.style.fontWeight = "800";
+      pts.textContent = `${memberTotalPoints(m)} pts`;
+
+      header.appendChild(title);
+      header.appendChild(pts);
+
+      // Weapon select
+      const weaponRow = document.createElement("div");
+      weaponRow.style.marginTop = "10px";
+
+      const weaponLabel = document.createElement("div");
+      weaponLabel.innerHTML = "<strong>Ranged Weapon</strong>";
+      weaponRow.appendChild(weaponLabel);
+
+      const sel = document.createElement("select");
+      sel.style.width = "100%";
+      sel.innerHTML = `<option value="">— None —</option>` + weapons.map((w, idx) => {
+        const p = toIntOrNull(w.points) ?? 0;
+        const nm = escapeHtml(w.name ?? "(Unnamed)");
+        return `<option value="${idx}">${nm} (${p} pts)</option>`;
+      }).join("");
+
+      sel.value = m.weaponIdx === "" ? "" : String(m.weaponIdx);
+      sel.addEventListener("change", () => {
+        m.weaponIdx = sel.value === "" ? "" : sel.value;
+        renderWarband();
+      });
+
+      weaponRow.appendChild(sel);
+
+      // Accessories list (checkboxes)
+      const accWrap = document.createElement("div");
+      accWrap.style.marginTop = "10px";
+      accWrap.innerHTML = "<strong>Accessories</strong>";
+
+      const list = document.createElement("div");
+      list.style.marginTop = "6px";
+
+      const selected = new Set((m.accessoryIdx || []).map(String));
+      accessories.forEach((a, idx) => {
+        const p = toIntOrNull(a.points) ?? 0;
+        const name = a.name ?? "(Unnamed)";
+        const id = `m${memberIndex}_a${idx}`;
+
+        const line = document.createElement("div");
+        line.style.marginBottom = "6px";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = id;
+        cb.checked = selected.has(String(idx));
+        cb.addEventListener("change", () => {
+          const s = new Set((m.accessoryIdx || []).map(String));
+          if (cb.checked) s.add(String(idx));
+          else s.delete(String(idx));
+          m.accessoryIdx = [...s].map(Number);
+          renderWarband();
+        });
+
+        const lbl = document.createElement("label");
+        lbl.htmlFor = id;
+        lbl.style.cursor = "pointer";
+        lbl.textContent = ` ${name} (${p} pts)`;
+
+        line.appendChild(cb);
+        line.appendChild(lbl);
+        list.appendChild(line);
+      });
+
+      accWrap.appendChild(list);
+
+      // Small preview text
+      const preview = document.createElement("div");
+      preview.style.marginTop = "10px";
+      preview.style.color = "#444";
+
+      const w = m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)];
+      const wName = w?.name ? String(w.name) : "None";
+      const accNames = (m.accessoryIdx || []).map(i => accessories[i]?.name).filter(Boolean);
+      preview.textContent = `Weapon: ${wName} | Accessories: ${accNames.length ? accNames.join(", ") : "—"}`;
+
+      card.appendChild(header);
+      card.appendChild(weaponRow);
+      card.appendChild(accWrap);
+      card.appendChild(preview);
+
+      els.warbandGrid.appendChild(card);
+    });
+
+    const total = warbandTotalPoints();
+    els.warbandTotal.textContent = String(total);
+
+    const cap = warband.pointCap;
+    if (total > cap) {
+      els.warbandCapStatus.innerHTML = `<span class="warn">Over cap by ${total - cap}</span>`;
+    } else {
+      els.warbandCapStatus.innerHTML = `<span class="ok">Within cap (${cap - total} left)</span>`;
+    }
+  }
+
+  function exportWarband() {
+    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+    const payload = JSON.stringify(warband, null, 2);
+    setIoVisible(true, "Export Warband");
+    els.ioText.value = payload;
+    els.ioMsg.textContent = "Copy this JSON to save/share the warband.";
+  }
+
+  function importWarbandUI() {
+    setIoVisible(true, "Import Warband");
+    els.ioText.value = "";
+    els.ioMsg.textContent = "Paste a previously exported warband JSON, then click “Load Pasted JSON”.";
+  }
+
+  function loadPastedWarband() {
+    try {
+      const parsed = JSON.parse(els.ioText.value);
+      if (!parsed || typeof parsed !== "object") throw new Error("Not an object");
+      if (!Array.isArray(parsed.members)) throw new Error("Missing members[]");
+
+      // Minimal validation + normalize
+      warband.version = parsed.version ?? 1;
+      warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? 0);
+
+      // Keep exactly 5 slots (leader + 4)
+      const defaultMembers = warband.members.map(m => ({ ...m, weaponIdx: "", accessoryIdx: [] }));
+      const incoming = parsed.members.slice(0, defaultMembers.length);
+
+      warband.members = defaultMembers.map((def, i) => {
+        const inc = incoming[i] ?? {};
+        return {
+          role: def.role,
+          weaponIdx: (inc.weaponIdx === "" || inc.weaponIdx === null || inc.weaponIdx === undefined) ? "" : String(inc.weaponIdx),
+          accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(n => Number.isFinite(n)) : [],
+        };
+      });
+
+      els.pointCap.value = String(warband.pointCap);
+      renderWarband();
+      els.ioMsg.textContent = "Loaded warband successfully.";
+    } catch (e) {
+      els.ioMsg.textContent = `Import failed: ${String(e.message || e)}`;
+    }
+  }
 
     loadData();
+        els.exportBtn.addEventListener("click", exportWarband);
+      els.importBtn.addEventListener("click", importWarbandUI);
+      els.closeIoBtn.addEventListener("click", () => setIoVisible(false));
+      els.copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(els.ioText.value);
+          els.ioMsg.textContent = "Copied to clipboard.";
+        } catch {
+          els.ioMsg.textContent = "Could not copy automatically — select all and copy manually.";
+        }
+      });
+      els.loadBtn.addEventListener("click", loadPastedWarband);
+
 </script>
 </body>
 </html>
