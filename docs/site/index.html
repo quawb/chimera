@@ -839,7 +839,7 @@ function leaderTraitPoints() { return 0; }
         warbandTraits.map((t, idx) => {
           const p = toIntOrNull(t.points) ?? 0;
           const nm = escapeHtml(t.name ?? "(Unnamed)");
-          return `<option value="${idx}">${nm} (${p} pts)</option>`;
+          return `<option value="${idx}">${nm}</option>`;
         }).join("");
 
       els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
@@ -854,7 +854,7 @@ function leaderTraitPoints() { return 0; }
         leaderTraits.map((t, idx) => {
           const p = toIntOrNull(t.points) ?? 0;
           const nm = escapeHtml(t.name ?? "(Unnamed)");
-          return `<option value="${idx}">${nm} (${p} pts)</option>`;
+          return `<option value="${idx}">${nm}</option>`;
         }).join("");
 
       els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
