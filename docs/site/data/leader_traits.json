@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Monstrous",
+    "effect_text": "Enemy models in LoS of the leader must take a Horror test at the start of the Leader's activation. Fails produce a −1 Horror token. The leader may gain 1 Horror to force one additional Horror test on a model within 1 M."
+  },
+  {
+    "name": "Sorcerer",
+    "effect_text": "Your leader can purchase two Psychic Powers costing 1 for free Recasting the same Psychic Power in a round costs 1 Command Point."
+  },
+  {
+    "name": "Executioner",
+    "effect_text": "Once per round, at the end of the Leader's activation, they may make a free Fight or Shoot action. This attack ignores penalties for range or engagement once per round."
+  },
+  {
+    "name": "Unrelenting Advance",
+    "effect_text": "Once per round, at the end of the Leader's activation, up to 2 Allies in LoS may make a free Move action. These moves cannot end in Engagement and cannot be Charges. If the move brings them within 1 M of an enemy, the move may trigger a free Horror test."
+  },
+  {
+    "name": "Condemn",
+    "effect_text": "Use 1 action to Mark an Enemy until the end of the round. At the end of the Leader's activation, up to 2 Allies in LoS of the marked enemy may make a free Fight or Shoot action against it. Each ally may only make one attack this way per round with +1 AP."
+  },
+  {
+    "name": "Kill Order",
+    "effect_text": "Once per round, when the Leader takes an enemy Out of Action, one ally in LoS may immediately take a free Shoot or Fight action."
+  },
+  {
+    "name": "Relentless Commander",
+    "effect_text": "The Leader may gain 1 Horror to remove Exhausted and act again (max once per round)."
+  },
+  {
+    "name": "Priority Target",
+    "effect_text": "Once per round, choose one enemy model. Allies gain +1 to hit against that model until the end of the round."
+  },
+  {
+    "name": "Bodyguard Protocol",
+    "effect_text": "When an ally within 1 Move is hit, the Leader may take the hit instead. If the leader takes the hit, the attacking model gains 1 Horror token."
+  },
+  {
+    "name": "Mind Leash",
+    "effect_text": "Once per round, when an enemy fails a Horror test in LoS, the Leader may force that model to Move 1. If it moves adjacent to another ally, it takes 1 damage."
+  }
+]
