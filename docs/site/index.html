@@ -21,7 +21,8 @@
 
 <body>
   <h1>Chimera Builder (Prototype)</h1>
-  <p class="sub">Loads <code>site/data/shoot.json</code>. Select a ranged weapon and see stats + points update.</p>
+  <p class="sub">Loads <code>data/shoot.json</code> and <code>data/accessories.json</code>. Select a weapon + accessories and see points update.</p>
+. Select a ranged weapon and see stats + points update.</p>
 
   <div class="row">
     <label for="weaponSelect"><strong>Ranged Weapon</strong></label>
@@ -34,6 +35,17 @@
     <label for="pointCap"><strong>Point Cap</strong></label>
     <input id="pointCap" type="number" value="10" min="0" step="1" />
   </div>
+
+    <div class="row" style="align-items:start;">
+    <label><strong>Accessories</strong></label>
+    <div>
+      <div id="accessoryList">Loading…</div>
+      <div style="margin-top:10px; color:#444;">
+        Selected: <span id="selectedAccessories">—</span>
+      </div>
+    </div>
+  </div>
+
 
   <div class="card" id="weaponCard" style="display:none;">
     <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -54,6 +66,7 @@
       <div><strong>Damage</strong><div id="statDamage">—</div></div>
       <div><strong>AP</strong><div id="statAP">—</div></div>
       <div><strong>Points</strong><div id="statPoints">—</div></div>
+      <div><strong>Accessory Points</strong><div id="statAccPoints">—</div></div>
       <div><strong>Raw Row</strong><div id="statRaw">—</div></div>
       <div><strong>Notes</strong><div id="statNotes">—</div></div>
     </div>
@@ -85,6 +98,10 @@
     statNotes: document.getElementById("statNotes"),
     errorCard: document.getElementById("errorCard"),
     errorText: document.getElementById("errorText"),
+    accessoryList: document.getElementById("accessoryList"),
+    selectedAccessories: document.getElementById("selectedAccessories"),
+    statAccPoints: document.getElementById("statAccPoints"),
+
   };
 
   /** Parse an int from a CSV/JSON string. Returns null if blank/unparseable. */
@@ -137,16 +154,22 @@
     if (effect.toLowerCase().includes("reroll")) badges.push("Reroll");
     els.weaponBadges.innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join("");
 
-    // Total points (for now: just weapon points)
-    const p = toIntOrNull(points) ?? 0;
-    els.totalPoints.textContent = String(p);
+        // Total points = weapon + accessories
+    const wp = toIntOrNull(points) ?? 0;
+    const apoints = accessoryPointsTotal();
+    const total = wp + apoints;
+
+    els.statAccPoints.textContent = String(apoints);
+    els.totalPoints.textContent = String(total);
+    renderSelectedAccessoriesText();
+
 
     // Cap status
     const cap = toIntOrNull(els.pointCap.value) ?? 0;
-    if (p > cap) {
-      els.capStatus.innerHTML = `<span class="warn">Over cap by ${p - cap}</span>`;
+    if (total > cap) {
+      els.capStatus.innerHTML = `<span class="warn">Over cap by ${total - cap}</span>`;
     } else {
-      els.capStatus.innerHTML = `<span class="ok">Within cap (${cap - p} left)</span>`;
+      els.capStatus.innerHTML = `<span class="ok">Within cap (${cap - total} left)</span>`;
     }
 
     // Notes
@@ -156,24 +179,119 @@
     els.statNotes.textContent = notes.length ? notes.join(" ") : "—";
   }
 
-  async function loadWeapons() {
-    try {
-      const res = await fetch("./data/shoot.json", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} when fetching shoot.json`);
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("shoot.json must be an array of objects");
+   let weapons = [];
+  let accessories = [];
+  const selectedAccessoryIdx = new Set(); // indexes into accessories array
 
-      // Sort by points then name (both are strings currently)
-      data.sort((a, b) => {
+  function accessoryPointsTotal() {
+    let sum = 0;
+    for (const idx of selectedAccessoryIdx) {
+      const a = accessories[idx];
+      const p = toIntOrNull(a?.points) ?? 0;
+      sum += p;
+    }
+    return sum;
+  }
+
+  function renderAccessories() {
+    if (!Array.isArray(accessories) || accessories.length === 0) {
+      els.accessoryList.textContent = "(no accessories loaded)";
+      return;
+    }
+
+    // Build checkbox list
+    const wrap = document.createElement("div");
+    accessories.forEach((a, idx) => {
+      const name = a.name ?? "(Unnamed)";
+      const p = toIntOrNull(a.points) ?? 0;
+      const id = `acc_${idx}`;
+
+      const line = document.createElement("div");
+      line.style.marginBottom = "6px";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = id;
+      cb.checked = selectedAccessoryIdx.has(idx);
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedAccessoryIdx.add(idx);
+        else selectedAccessoryIdx.delete(idx);
+
+        // re-render current weapon card totals
+        const widx = els.weaponSelect.value;
+        const weapon = widx === "" ? null : weapons[Number(widx)];
+        renderWeapon(weapon);
+      });
+
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.style.cursor = "pointer";
+
+      // Small formatting: "Name (X pts)"
+      label.textContent = ` ${name} (${p} pts)`;
+
+      // Optional: show type as a badge-like hint
+      if (a.type) {
+        const t = document.createElement("span");
+        t.className = "pill";
+        t.textContent = String(a.type);
+        t.style.marginLeft = "8px";
+        label.appendChild(t);
+      }
+
+      line.appendChild(cb);
+      line.appendChild(label);
+      wrap.appendChild(line);
+    });
+
+    els.accessoryList.innerHTML = "";
+    els.accessoryList.appendChild(wrap);
+  }
+
+  function renderSelectedAccessoriesText() {
+    if (selectedAccessoryIdx.size === 0) {
+      els.selectedAccessories.textContent = "—";
+      return;
+    }
+    const names = [...selectedAccessoryIdx]
+      .map(i => accessories[i]?.name)
+      .filter(Boolean);
+    els.selectedAccessories.textContent = names.join(", ");
+  }
+
+  async function loadData() {
+    try {
+      // Load weapons
+      const wRes = await fetch("./data/shoot.json", { cache: "no-store" });
+      if (!wRes.ok) throw new Error(`HTTP ${wRes.status} when fetching shoot.json`);
+      weapons = await wRes.json();
+      if (!Array.isArray(weapons)) throw new Error("shoot.json must be an array of objects");
+
+      // Load accessories
+      const aRes = await fetch("./data/accessories.json", { cache: "no-store" });
+      if (!aRes.ok) throw new Error(`HTTP ${aRes.status} when fetching accessories.json`);
+      accessories = await aRes.json();
+      if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
+
+      // Sort weapons by points then name
+      weapons.sort((a, b) => {
         const pa = toIntOrNull(a.points) ?? 0;
         const pb = toIntOrNull(b.points) ?? 0;
         if (pa !== pb) return pa - pb;
         return String(a.name ?? "").localeCompare(String(b.name ?? ""));
       });
 
-      // Populate dropdown
+      // Sort accessories by points then name
+      accessories.sort((a, b) => {
+        const pa = toIntOrNull(a.points) ?? 0;
+        const pb = toIntOrNull(b.points) ?? 0;
+        if (pa !== pb) return pa - pb;
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+      });
+
+      // Populate weapons dropdown
       els.weaponSelect.innerHTML = `<option value="">— Select —</option>`;
-      data.forEach((w, idx) => {
+      weapons.forEach((w, idx) => {
         const p = toIntOrNull(w.points) ?? 0;
         const opt = document.createElement("option");
         opt.value = String(idx);
@@ -181,22 +299,25 @@
         els.weaponSelect.appendChild(opt);
       });
 
+      // Render accessories list
+      renderAccessories();
+
       // Wire events
       els.weaponSelect.addEventListener("change", () => {
         const idx = els.weaponSelect.value;
-        const weapon = idx === "" ? null : data[Number(idx)];
-        renderWeapon(weapon);
-      });
-      els.pointCap.addEventListener("input", () => {
-        const idx = els.weaponSelect.value;
-        const weapon = idx === "" ? null : data[Number(idx)];
+        const weapon = idx === "" ? null : weapons[Number(idx)];
         renderWeapon(weapon);
       });
 
-      // Default select first real weapon (optional)
-      // If you prefer no default, delete these two lines:
-      if (data.length > 0) els.weaponSelect.value = "0";
-      renderWeapon(data[0] ?? null);
+      els.pointCap.addEventListener("input", () => {
+        const idx = els.weaponSelect.value;
+        const weapon = idx === "" ? null : weapons[Number(idx)];
+        renderWeapon(weapon);
+      });
+
+      // Default select first weapon
+      if (weapons.length > 0) els.weaponSelect.value = "0";
+      renderWeapon(weapons[0] ?? null);
 
     } catch (err) {
       els.errorCard.style.display = "block";
@@ -206,7 +327,8 @@
     }
   }
 
-  loadWeapons();
+
+    loadData();
 </script>
 </body>
 </html>
