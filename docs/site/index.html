@@ -119,6 +119,7 @@
   let accessories = [];
   let psychicPowers = [];
   let mutations = [];
+  let meleeWeapons = [];
 
   // === Rules (hardwired for now, easy to change) ===
   const DEFENSE_TO_ACC_CAP = { 0: 0, 1: 1, 2: 2, 3: 3 };
@@ -170,11 +171,11 @@
     version: 3,
     pointCap: 75,
     members: [
-      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
-      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
-      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
-      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
-      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] },
+      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
+      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
+      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
     ]
   };
 
@@ -192,6 +193,13 @@
       sum += toIntOrNull(s?.points) ?? 0;
     }
 
+        // Melee weapon points
+    if (m.meleeIdx !== "" && m.meleeIdx !== null && m.meleeIdx !== undefined) {
+      const mw = meleeWeapons[Number(m.meleeIdx)];
+      sum += toIntOrNull(mw?.points) ?? 0;
+    }
+
+    
     return sum;
   }
 
@@ -458,6 +466,32 @@
         card.appendChild(sidearmRow);
       }
 
+            // Melee weapon select
+      const meleeSection = document.createElement("div");
+      meleeSection.style.marginTop = "12px";
+      meleeSection.innerHTML = "<strong>Melee Weapon</strong>";
+
+      const meleeSel = document.createElement("select");
+      meleeSel.style.width = "100%";
+      meleeSel.style.marginTop = "6px";
+      meleeSel.innerHTML =
+        `<option value="">— None —</option>` +
+        meleeWeapons.map((w, idx) => {
+          const p = toIntOrNull(w.points) ?? 0;
+          const nm = escapeHtml(w.name ?? "(Unnamed)");
+          return `<option value="${idx}">${nm} (${p} pts)</option>`;
+        }).join("");
+
+      meleeSel.value = m.meleeIdx === "" ? "" : String(m.meleeIdx);
+      meleeSel.addEventListener("change", () => {
+        m.meleeIdx = meleeSel.value === "" ? "" : meleeSel.value;
+        renderWarband();
+      });
+
+      meleeSection.appendChild(meleeSel);
+      card.appendChild(meleeSection);
+
+
       // Accessories
       const accSection = makeCollapsible("Accessories", false);
       const accWrap = accSection.body;
@@ -646,7 +680,7 @@
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
       const defaultMembers = warband.members.map(m => ({
-        ...m, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: []
+        ...m, weaponIdx: "", sidearmIdx: "", meleeIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: []
       }));
       const incoming = parsed.members.slice(0, defaultMembers.length);
 
@@ -660,6 +694,7 @@
           will: toIntOrNull(inc.will) ?? def.will,
           weaponIdx: (inc.weaponIdx === "" || inc.weaponIdx === null || inc.weaponIdx === undefined) ? "" : String(inc.weaponIdx),
           sidearmIdx: (inc.sidearmIdx === "" || inc.sidearmIdx === null || inc.sidearmIdx === undefined) ? "" : String(inc.sidearmIdx),
+          meleeIdx: (inc.meleeIdx === "" || inc.meleeIdx === null || inc.meleeIdx === undefined) ? "" : String(inc.meleeIdx),
           accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           psychicIdx: Array.isArray(inc.psychicIdx) ? inc.psychicIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           mutationIdx: Array.isArray(inc.mutationIdx) ? inc.mutationIdx.map(Number).filter(n => Number.isFinite(n)) : [],
@@ -686,6 +721,12 @@
       accessories = await aRes.json();
       if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
 
+      const fRes = await fetch("./data/fight.json", { cache: "no-store" });
+      if (!fRes.ok) throw new Error(`HTTP ${fRes.status} when fetching fight.json`);
+      meleeWeapons = await fRes.json();
+      if (!Array.isArray(meleeWeapons)) throw new Error("fight.json must be an array of objects");
+
+      
       const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
       if (!pRes.ok) throw new Error(`HTTP ${pRes.status} when fetching psychic_powers.json`);
       psychicPowers = await pRes.json();
@@ -712,6 +753,11 @@
         ((toIntOrNull(b.points) ?? 0) - (toIntOrNull(a.points) ?? 0)) ||
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
+      meleeWeapons.sort((a, b) =>
+        ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
+
 
       // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
