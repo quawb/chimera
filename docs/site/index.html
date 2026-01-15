@@ -117,6 +117,8 @@
   // Data tables (loaded from JSON)
   let weapons = [];
   let accessories = [];
+  let psychicPowers = [];
+  let mutations = []:
 
   // === Rules (hardwired for now, easy to change) ===
   // Defense tier -> accessory capacity (count of accessories allowed)
@@ -214,11 +216,11 @@
     version: 2,
     pointCap: 75,
     members: [
-      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
-      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
-      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
-      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
-      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] },
+      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: [] },
+      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
+      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
+      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
+      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [],psychicIdx: [], mutationIdx: []  },
     ]
   };
 
@@ -240,6 +242,22 @@
   }
 
   function memberAccessoryPoints(m) {
+    function memberPsiMutPoints(m) {
+  let sum = 0;
+
+  for (const idx of (m.psychicIdx || [])) {
+    const p = psychicPowers[Number(idx)];
+    sum += (toIntOrNull(p?.points) ?? 0);
+  }
+
+  for (const idx of (m.mutationIdx || [])) {
+    const mu = mutations[Number(idx)];
+    sum += (toIntOrNull(mu?.points) ?? 0);
+  }
+
+  return sum;
+}
+
     let sum = 0;
     for (const idx of (m.accessoryIdx || [])) {
       const a = accessories[Number(idx)];
@@ -249,8 +267,9 @@
   }
 
   function memberTotalPoints(m) {
-  return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m);
+  return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
 }
+
 
 
   function warbandTotalPoints() {
@@ -515,6 +534,107 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       accWrap.appendChild(list);
       card.appendChild(accWrap);
 
+            // Psychic Powers + Mutations (combined capacity = Willpower tier)
+      const psiWrap = document.createElement("div");
+      psiWrap.style.marginTop = "12px";
+      psiWrap.innerHTML = "<strong>Psychic Powers + Mutations</strong>";
+
+      const capPM = psychicMutationCapacity(m);
+      const usedPM = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
+
+      const pmLine = document.createElement("div");
+      pmLine.style.marginTop = "6px";
+      pmLine.innerHTML = usedPM > capPM
+        ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${usedPM}/${capPM}</span>`
+        : `<span style="color:#444;">Capacity: ${usedPM}/${capPM}</span>`;
+      psiWrap.appendChild(pmLine);
+
+      // Psychic list
+      const psyTitle = document.createElement("div");
+      psyTitle.style.marginTop = "8px";
+      psyTitle.innerHTML = "<strong style='font-size:13px;'>Psychic Powers</strong>";
+      psiWrap.appendChild(psyTitle);
+
+      const psyList = document.createElement("div");
+      psyList.style.marginTop = "6px";
+
+      const psySelected = new Set((m.psychicIdx || []).map(String));
+      psychicPowers.forEach((p, idx) => {
+        const pts = toIntOrNull(p.points) ?? 0;
+        const name = p.name ?? "(Unnamed)";
+        const id = `m${memberIndex}_psy${idx}`;
+
+        const line = document.createElement("div");
+        line.style.marginBottom = "6px";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = id;
+        cb.checked = psySelected.has(String(idx));
+        cb.addEventListener("change", () => {
+          const s = new Set((m.psychicIdx || []).map(String));
+          if (cb.checked) s.add(String(idx));
+          else s.delete(String(idx));
+          m.psychicIdx = [...s].map(Number);
+          renderWarband();
+        });
+
+        const lbl = document.createElement("label");
+        lbl.htmlFor = id;
+        lbl.style.cursor = "pointer";
+        lbl.textContent = ` ${name} (${pts} pts)`;
+
+        line.appendChild(cb);
+        line.appendChild(lbl);
+        psyList.appendChild(line);
+      });
+
+      psiWrap.appendChild(psyList);
+
+      // Mutation list
+      const mutTitle = document.createElement("div");
+      mutTitle.style.marginTop = "10px";
+      mutTitle.innerHTML = "<strong style='font-size:13px;'>Mutations</strong>";
+      psiWrap.appendChild(mutTitle);
+
+      const mutList = document.createElement("div");
+      mutList.style.marginTop = "6px";
+
+      const mutSelected = new Set((m.mutationIdx || []).map(String));
+      mutations.forEach((mu, idx) => {
+        const pts = toIntOrNull(mu.points) ?? 0;
+        const name = mu.name ?? "(Unnamed)";
+        const id = `m${memberIndex}_mut${idx}`;
+
+        const line = document.createElement("div");
+        line.style.marginBottom = "6px";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = id;
+        cb.checked = mutSelected.has(String(idx));
+        cb.addEventListener("change", () => {
+          const s = new Set((m.mutationIdx || []).map(String));
+          if (cb.checked) s.add(String(idx));
+          else s.delete(String(idx));
+          m.mutationIdx = [...s].map(Number);
+          renderWarband();
+        });
+
+        const lbl = document.createElement("label");
+        lbl.htmlFor = id;
+        lbl.style.cursor = "pointer";
+        lbl.textContent = ` ${name} (${pts} pts)`;
+
+        line.appendChild(cb);
+        line.appendChild(lbl);
+        mutList.appendChild(line);
+      });
+
+      psiWrap.appendChild(mutList);
+      card.appendChild(psiWrap);
+
+
       els.warbandGrid.appendChild(card);
     });
 
@@ -552,7 +672,7 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       warband.version = parsed.version ?? warband.version;
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
-      const defaultMembers = warband.members.map(m => ({ ...m, weaponIdx: "", sidearmIdx: "", accessoryIdx: [] }));
+      const defaultMembers = warband.members.map(m => ({ ...m, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [] }));
       const incoming = parsed.members.slice(0, defaultMembers.length);
 
       warband.members = defaultMembers.map((def, i) => {
@@ -566,6 +686,10 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
           weaponIdx: (inc.weaponIdx === "" || inc.weaponIdx === null || inc.weaponIdx === undefined) ? "" : String(inc.weaponIdx),
           sidearmIdx: (inc.sidearmIdx === "" || inc.sidearmIdx === null || inc.sidearmIdx === undefined) ? "" : String(inc.sidearmIdx),
           accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(n => Number.isFinite(n)) : [],
+          psychicIdx: Array.isArray(inc.psychicIdx) ? inc.psychicIdx.map(Number).filter(n => Number.isFinite(n)) : [],
+          mutationIdx: Array.isArray(inc.mutationIdx) ? inc.mutationIdx.map(Number).filter(n => Number.isFinite(n)) : [],
+
+        
         };
       });
 
@@ -587,6 +711,18 @@ derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
       const aRes = await fetch("./data/accessories.json", { cache: "no-store" });
       if (!aRes.ok) throw new Error(`HTTP ${aRes.status} when fetching accessories.json`);
       accessories = await aRes.json();
+      
+            const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
+      if (!pRes.ok) throw new Error(`HTTP ${pRes.status} when fetching psychic_powers.json`);
+      psychicPowers = await pRes.json();
+      if (!Array.isArray(psychicPowers)) throw new Error("psychic_powers.json must be an array of objects");
+
+      const mRes = await fetch("./data/mutations.json", { cache: "no-store" });
+      if (!mRes.ok) throw new Error(`HTTP ${mRes.status} when fetching mutations.json`);
+      mutations = await mRes.json();
+      if (!Array.isArray(mutations)) throw new Error("mutations.json must be an array of objects");
+
+      
       if (!Array.isArray(accessories)) throw new Error("accessories.json must be an array of objects");
 
       weapons.sort((a, b) =>
