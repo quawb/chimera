@@ -1,0 +1,79 @@
+[
+  {
+    "name": "No Items",
+    "type": "None",
+    "max_actions": 0,
+    "effect_text": "",
+    "points": 0
+  },
+  {
+    "name": "Grenades",
+    "type": "Attack",
+    "max_actions": 1,
+    "effect_text": "Targets point up to 1 M from attacker, Blast AOE, +2 to Shoot, 1 AP, 1 Damage",
+    "points": 1
+  },
+  {
+    "name": "Heavy Armor",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "Armor Class +1",
+    "points": 1
+  },
+  {
+    "name": "Jump Pack",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "The model can ignore terrain and other models when taking Move actions",
+    "points": 1
+  },
+  {
+    "name": "Medkit",
+    "type": "Effect",
+    "max_actions": 1,
+    "effect_text": "1 model touching this model heals d4 Wounds or Horror",
+    "points": 1
+  },
+  {
+    "name": "Cybernetics",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "Fight roll +1",
+    "points": 2
+  },
+  {
+    "name": "Psychic Focus",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "Willpower Rolls +1",
+    "points": 2
+  },
+  {
+    "name": "Stealth Suit",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "If this model's base touches a piece of terrain, enemy models do not have LoS unless they are within 1 M of the stealthy model",
+    "points": 2
+  },
+  {
+    "name": "Targeting Reticule",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "Shoot rolls + 1",
+    "points": 2
+  },
+  {
+    "name": "Reinforced Weapon",
+    "type": "Passive",
+    "max_actions": 0,
+    "effect_text": "Reroll Fight hit roll Once per round",
+    "points": 2
+  },
+  {
+    "name": "Overcharged Cell",
+    "type": "Effect",
+    "max_actions": 1,
+    "effect_text": "Use item to overcharge weapon: On a natural 1, that weapon is destroyed.\n+1 AP, +1 Damage, add Blast for this activation",
+    "points": 2
+  }
+]
