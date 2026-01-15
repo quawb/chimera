@@ -13,3 +13,4 @@ jobs:
         with:
           python-version: "3.11"
       - run: python validate_csv.py
+      - run: python build_data.py
