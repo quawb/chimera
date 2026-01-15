@@ -1,0 +1,119 @@
+[
+  {
+    "name": "No Psychic Powers",
+    "power_type": "",
+    "max_actions": 0,
+    "range": "",
+    "effect": "",
+    "horror_generated": 0,
+    "points": 0
+  },
+  {
+    "name": "Fear",
+    "power_type": "Attack",
+    "max_actions": 1,
+    "range": "1 M",
+    "effect": "Each enemy model within 1 M who loses its opposed Willpower roll must move 1 M away from the psychic.",
+    "horror_generated": 1,
+    "points": 1
+  },
+  {
+    "name": "Heal",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "Self / 1 M / LoS",
+    "effect": "1 model within 1 M of this model and in LoS heals d4",
+    "horror_generated": 0,
+    "points": 1
+  },
+  {
+    "name": "Inspire",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "LoS",
+    "effect": "Target Ally can make a free Move or Recover Horror action",
+    "horror_generated": 0,
+    "points": 1
+  },
+  {
+    "name": "Exhaust",
+    "power_type": "Attack",
+    "max_actions": 1,
+    "range": "LoS",
+    "effect": "The target loses one action on its next activation instead of taking damage.",
+    "horror_generated": 0,
+    "points": 1
+  },
+  {
+    "name": "Overchannel",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "Self",
+    "effect": "This model may immediately use any Psychic Power it knows, even if it has already been used this activation. After resolving the power, this model automatically gains 1 Horror token.",
+    "horror_generated": 1,
+    "points": 1
+  },
+  {
+    "name": "Psychic Feedback",
+    "power_type": "Passive",
+    "max_actions": 0,
+    "range": "Self",
+    "effect": "When this model successfully deals damage with a Psychic Attack or Mutation, the target gains 1 Horror token, and this model then gains 1 Horror token.",
+    "horror_generated": 1,
+    "points": 1
+  },
+  {
+    "name": "Horrible Scream",
+    "power_type": "Attack",
+    "max_actions": 1,
+    "range": "LoS",
+    "effect": "LoS, Auto hit Blast AoE, Save or gain 1 Horror",
+    "horror_generated": 1,
+    "points": 2
+  },
+  {
+    "name": "Mind Control",
+    "power_type": "Attack",
+    "max_actions": 1,
+    "range": "LoS",
+    "effect": "Targeted enemy takes one action of the psychic's choice.",
+    "horror_generated": 0,
+    "points": 2
+  },
+  {
+    "name": "Divination",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "LoS",
+    "effect": "Choose any model in LoS either gain +2 or -2 for all their actions this round.",
+    "horror_generated": 0,
+    "points": 2
+  },
+  {
+    "name": "Blink",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "Any",
+    "effect": "Place the psychic anywhere on the board.",
+    "horror_generated": 0,
+    "points": 2
+  },
+  {
+    "name": "Mind Stab",
+    "power_type": "Attack",
+    "max_actions": 1,
+    "range": "1 M",
+    "effect": "Target 1 enemy model within 1 M. Roll with -3 AP",
+    "horror_generated": 0,
+    "points": 3
+  },
+  {
+    "name": "Growth",
+    "power_type": "Effect",
+    "max_actions": 1,
+    "range": "Self",
+    "effect": "Pick a or b: a. Spawn a Bio Spawn from Caster b. Shape Bio Spawn into Mimic -OR- Shape Mimic into an Abomination",
+    "horror_generated": 0,
+    "points": 0
+  }
+]
