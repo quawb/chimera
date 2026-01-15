@@ -354,8 +354,8 @@ function leaderTraitPoints() { return 0; }
       // Tier select helper (shows Tier + mod + cost)
       function tierSelect(label, key) {
         const wrap = document.createElement("div");
-        wrap.style.display = "grid";
-        wrap.style.gridTemplateColumns = "1fr 140px";
+        wrap.style.display = "flex";
+        wrap.style.flexDirection = "column";
         wrap.style.gap = "8px";
         wrap.style.alignItems = "center";
 
@@ -363,6 +363,7 @@ function leaderTraitPoints() { return 0; }
         l.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
 
         const s = document.createElement("select");
+        s.style.width = "100%";
         const tiers = [1, 2, 3];
         const table =
           (key === "defense" || key === "will") ? DEF_WILL_TABLE :
@@ -396,7 +397,7 @@ function leaderTraitPoints() { return 0; }
       const statsBlock = document.createElement("div");
       statsBlock.style.marginTop = "10px";
       statsBlock.style.display = "grid";
-      statsBlock.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      statsBlock.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
       statsBlock.style.gap = "10px";
       statsBlock.appendChild(tierSelect("Defense", "defense"));
       statsBlock.appendChild(tierSelect("Shoot", "shoot"));
