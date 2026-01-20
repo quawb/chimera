@@ -337,6 +337,16 @@
     return sum;
   }
 
+function clearMemberLoadout(m) {
+  m.weaponIdx = "";
+  m.sidearmIdx = "";
+  m.meleeIdx = "";
+  m.accessoryIdx = [];
+  m.psychicIdx = [];
+  m.mutationIdx = [];
+}
+
+  
   function memberTotalPoints(m) {
     return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
   }
@@ -427,13 +437,35 @@ function leaderTraitPoints() { return 0; }
       title.style.fontSize = "16px";
       title.textContent = m.role;
 
-      const pts = document.createElement("div");
-      pts.style.fontWeight = "800";
-      pts.textContent = `${memberTotalPoints(m)} pts`;
+     const right = document.createElement("div");
+right.style.display = "flex";
+right.style.alignItems = "center";
+right.style.gap = "10px";
 
-      header.appendChild(title);
-      header.appendChild(pts);
-      card.appendChild(header);
+const pts = document.createElement("div");
+pts.style.fontWeight = "800";
+pts.textContent = `${memberTotalPoints(m)} pts`;
+
+const clearBtn = document.createElement("button");
+clearBtn.type = "button";
+clearBtn.textContent = "Clear Loadout";
+clearBtn.style.padding = "6px 10px";
+clearBtn.style.borderRadius = "10px";
+clearBtn.style.border = "1px solid #ddd";
+clearBtn.style.background = "#fff";
+clearBtn.style.cursor = "pointer";
+clearBtn.addEventListener("click", () => {
+  clearMemberLoadout(m);
+  renderWarband();
+});
+
+right.appendChild(pts);
+right.appendChild(clearBtn);
+
+header.appendChild(title);
+header.appendChild(right);
+card.appendChild(header);
+
 
       // Tier select helper (shows Tier + mod + cost)
       function tierSelect(label, key) {
