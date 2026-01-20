@@ -103,6 +103,9 @@
     warbandTraitSelect: document.getElementById("warbandTraitSelect"),
     leaderTraitSelect: document.getElementById("leaderTraitSelect"),
 
+    warbandTraitDesc: document.getElementById("warbandTraitDesc"),
+    leaderTraitDesc: document.getElementById("leaderTraitDesc"),
+
 
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
@@ -746,6 +749,8 @@ function leaderTraitPoints() { return 0; }
       if (els.warbandTraitSelect) els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
       if (els.leaderTraitSelect) els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
 
+      renderTraitDescriptions();
+
       
       renderWarband();
       els.ioMsg.textContent = "Loaded warband successfully.";
@@ -753,6 +758,32 @@ function leaderTraitPoints() { return 0; }
       els.ioMsg.textContent = `Import failed: ${String(e.message || e)}`;
     }
   }
+
+  function traitDescription(obj) {
+  const txt = obj?.effect_text ?? obj?.effect ?? obj?.rule_text ?? "";
+  return String(txt ?? "").trim();
+}
+function renderTraitDescriptions() {
+  // Warband
+  if (els.warbandTraitDesc) {
+    if (warband.warbandTraitIdx === "") {
+      els.warbandTraitDesc.textContent = "";
+    } else {
+      const t = warbandTraits[Number(warband.warbandTraitIdx)];
+      els.warbandTraitDesc.textContent = traitDescription(t) || "—";
+    }
+  }
+
+  // Leader
+  if (els.leaderTraitDesc) {
+    if (warband.leaderTraitIdx === "") {
+      els.leaderTraitDesc.textContent = "";
+    } else {
+      const t = leaderTraits[Number(warband.leaderTraitIdx)];
+      els.leaderTraitDesc.textContent = traitDescription(t) || "—";
+    }
+  }
+}
 
   async function loadData() {
     try {
@@ -822,6 +853,7 @@ function leaderTraitPoints() { return 0; }
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
 
+      
 
       // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
@@ -846,10 +878,14 @@ function leaderTraitPoints() { return 0; }
         }).join("");
 
       els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
+      renderTraitDescriptions();
+
       els.warbandTraitSelect.addEventListener("change", () => {
-        warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
-        renderWarband();
-      });
+  warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
+  renderTraitDescriptions();
+  renderWarband();
+});
+
 
       // Leader Trait select
       els.leaderTraitSelect.innerHTML =
@@ -861,10 +897,14 @@ function leaderTraitPoints() { return 0; }
         }).join("");
 
       els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
+      renderTraitDescriptions();
+      
       els.leaderTraitSelect.addEventListener("change", () => {
-        warband.leaderTraitIdx = els.leaderTraitSelect.value === "" ? "" : els.leaderTraitSelect.value;
-        renderWarband();
-      });
+  warband.leaderTraitIdx = els.leaderTraitSelect.value === "" ? "" : els.leaderTraitSelect.value;
+  renderTraitDescriptions();
+  renderWarband();
+});
+
 
       renderWarband();
     } catch (err) {
@@ -874,6 +914,7 @@ function leaderTraitPoints() { return 0; }
     }
   }
 
+  
   loadData();
 </script>
 
