@@ -134,6 +134,89 @@
       .replaceAll("'", "&#039;");
   }
 
+    function getTextField(obj, keys) {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") return String(v);
+    }
+    return "";
+  }
+
+  function makeDetailsBox(title, item, fieldSpecs) {
+    const box = document.createElement("div");
+    box.style.marginTop = "8px";
+    box.style.padding = "8px 10px";
+    box.style.border = "1px solid #eee";
+    box.style.borderRadius = "10px";
+    box.style.background = "#fafafa";
+    box.style.fontSize = "13px";
+
+    const head = document.createElement("div");
+    head.style.fontWeight = "900";
+    head.textContent = title;
+    box.appendChild(head);
+
+    if (!item) {
+      const none = document.createElement("div");
+      none.style.marginTop = "6px";
+      none.style.color = "#666";
+      none.textContent = "—";
+      box.appendChild(none);
+      return box;
+    }
+
+    const rows = document.createElement("div");
+    rows.style.marginTop = "6px";
+    rows.style.display = "grid";
+    rows.style.gridTemplateColumns = "120px 1fr";
+    rows.style.gap = "4px 10px";
+
+    for (const spec of fieldSpecs) {
+      const raw = (typeof spec.value === "function") ? spec.value(item) : item?.[spec.value];
+      if (raw === undefined || raw === null || String(raw).trim() === "") continue;
+
+      const label = document.createElement("div");
+      label.style.color = "#555";
+      label.textContent = spec.label;
+
+      const val = document.createElement("div");
+      val.style.fontWeight = "600";
+      val.textContent = String(raw);
+
+      rows.appendChild(label);
+      rows.appendChild(val);
+    }
+
+    // Effect text (common across your tables)
+    const effect = getTextField(item, ["effect_text", "effect", "rule_text", "limits"]);
+    if (effect) {
+      const label = document.createElement("div");
+      label.style.color = "#555";
+      label.textContent = "Effect";
+
+      const val = document.createElement("div");
+      val.style.fontWeight = "600";
+      val.style.whiteSpace = "pre-wrap";
+      val.textContent = effect;
+
+      rows.appendChild(label);
+      rows.appendChild(val);
+    }
+
+    if (!rows.childNodes.length) {
+      const none = document.createElement("div");
+      none.style.marginTop = "6px";
+      none.style.color = "#666";
+      none.textContent = "—";
+      box.appendChild(none);
+      return box;
+    }
+
+    box.appendChild(rows);
+    return box;
+  }
+
+
   // Data tables (loaded from JSON)
   let weapons = [];
   let accessories = [];
@@ -464,6 +547,16 @@ function leaderTraitPoints() { return 0; }
       weaponRow.appendChild(sel);
       card.appendChild(weaponRow);
 
+            // Ranged weapon details (under the dropdown)
+      const selectedRanged = (m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)]);
+      card.appendChild(makeDetailsBox("Ranged Weapon Details", selectedRanged, [
+        { label: "Max Actions", value: "max_actions" },
+        { label: "Damage", value: "damage" },
+        { label: "AP", value: "ap" },
+        { label: "Points", value: "points" },
+      ]));
+
+
       // Secondary sidearm select (Shoot >= 3)
       if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
         const sidearmRow = document.createElement("div");
@@ -496,6 +589,15 @@ function leaderTraitPoints() { return 0; }
 
         sidearmRow.appendChild(sideSel);
         card.appendChild(sidearmRow);
+
+        const selectedSidearm = (m.sidearmIdx === "" ? null : weapons[Number(m.sidearmIdx)]);
+        card.appendChild(makeDetailsBox("Sidearm Details", selectedSidearm, [
+          { label: "Max Actions", value: "max_actions" },
+          { label: "Damage", value: "damage" },
+          { label: "AP", value: "ap" },
+          { label: "Points", value: "points" },
+        ]));
+
       }
 
             // Melee weapon select
@@ -523,6 +625,14 @@ function leaderTraitPoints() { return 0; }
       meleeSection.appendChild(meleeSel);
       card.appendChild(meleeSection);
 
+            const selectedMelee = (m.meleeIdx === "" ? null : meleeWeapons[Number(m.meleeIdx)]);
+      card.appendChild(makeDetailsBox("Melee Weapon Details", selectedMelee, [
+        { label: "Max Actions", value: "max_actions" },
+        { label: "Damage", value: "damage" },   // shown only if fight.json has it
+        { label: "AP", value: "ap" },           // shown only if fight.json has it
+        { label: "Points", value: "points" },
+      ]));
+
 
       // Accessories
       const accSection = makeCollapsible("Accessories", false);
@@ -538,6 +648,47 @@ function leaderTraitPoints() { return 0; }
         ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${accUsed}/${accCap}</span>`
         : `<span style="color:#444;">Capacity: ${accUsed}/${accCap}</span>`;
       accWrap.appendChild(capLine);
+
+      // Selected accessories summary
+      const selectedAcc = (m.accessoryIdx || [])
+        .map(i => accessories[Number(i)])
+        .filter(Boolean);
+
+      const accSummaryBox = document.createElement("div");
+      accSummaryBox.style.marginTop = "8px";
+      accSummaryBox.style.padding = "8px 10px";
+      accSummaryBox.style.border = "1px solid #eee";
+      accSummaryBox.style.borderRadius = "10px";
+      accSummaryBox.style.background = "#fafafa";
+      accSummaryBox.style.fontSize = "13px";
+
+      const accHead = document.createElement("div");
+      accHead.style.fontWeight = "900";
+      accHead.textContent = "Selected Accessories";
+      accSummaryBox.appendChild(accHead);
+
+      if (!selectedAcc.length) {
+        const none = document.createElement("div");
+        none.style.marginTop = "6px";
+        none.style.color = "#666";
+        none.textContent = "—";
+        accSummaryBox.appendChild(none);
+      } else {
+        selectedAcc.forEach(a => {
+          const line = document.createElement("div");
+          line.style.marginTop = "6px";
+          line.style.whiteSpace = "pre-wrap";
+          const nm = a.name ?? "(Unnamed)";
+          const pts = toIntOrNull(a.points) ?? 0;
+          const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
+          line.textContent = `${nm} (${pts} pts) — ${eff || ""}`.trim();
+          accSummaryBox.appendChild(line);
+        });
+      }
+
+      accWrap.appendChild(accSummaryBox);
+
+      
 
       const list = document.createElement("div");
       list.style.marginTop = "6px";
@@ -592,6 +743,65 @@ function leaderTraitPoints() { return 0; }
         : `<span style="color:#444;">Capacity: ${pmUsed}/${pmCap}</span>`;
       psiWrap.appendChild(pmLine);
 
+      // Selected Psychic + Mutations summary
+      const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
+      const selectedMut = (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
+
+      const pmSummary = document.createElement("div");
+      pmSummary.style.marginTop = "8px";
+      pmSummary.style.padding = "8px 10px";
+      pmSummary.style.border = "1px solid #eee";
+      pmSummary.style.borderRadius = "10px";
+      pmSummary.style.background = "#fafafa";
+      pmSummary.style.fontSize = "13px";
+
+      const pmHead = document.createElement("div");
+      pmHead.style.fontWeight = "900";
+      pmHead.textContent = "Selected Powers / Mutations";
+      pmSummary.appendChild(pmHead);
+
+      const addGroup = (groupTitle, arr) => {
+        const t = document.createElement("div");
+        t.style.marginTop = "8px";
+        t.style.fontWeight = "800";
+        t.textContent = groupTitle;
+        pmSummary.appendChild(t);
+
+        if (!arr.length) {
+          const none = document.createElement("div");
+          none.style.marginTop = "4px";
+          none.style.color = "#666";
+          none.textContent = "—";
+          pmSummary.appendChild(none);
+          return;
+        }
+
+        arr.forEach(obj => {
+          const line = document.createElement("div");
+          line.style.marginTop = "6px";
+          line.style.whiteSpace = "pre-wrap";
+
+          const nm = obj.name ?? "(Unnamed)";
+          const pts = toIntOrNull(obj.points) ?? 0;
+
+          // For psychic powers, include a couple useful columns if present
+          const extra =
+            getTextField(obj, ["power_type", "type"]) ||
+            getTextField(obj, ["range"]) ||
+            "";
+
+          const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
+          line.textContent = `${nm} (${pts} pts)${extra ? " — " + extra : ""}${eff ? " — " + eff : ""}`.trim();
+          pmSummary.appendChild(line);
+        });
+      };
+
+      addGroup("Psychic Powers", selectedPsy);
+      addGroup("Mutations", selectedMut);
+
+      psiWrap.appendChild(pmSummary);
+
+      
       const psyTitle = document.createElement("div");
       psyTitle.style.marginTop = "8px";
       psyTitle.innerHTML = "<strong style='font-size:13px;'>Psychic Powers</strong>";
