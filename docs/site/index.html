@@ -16,6 +16,36 @@
     .warn { color: #8a1f11; font-weight: 600; }
     .ok { color: #0b5; font-weight: 600; }
     code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+
+    <style>
+  /* Make the warband grid truly responsive */
+  #warbandGrid{
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    align-items: start;
+  }
+
+  /* Prevent any card content from overflowing into other columns */
+  #warbandGrid > div {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Make inputs/selects behave inside narrow cards */
+  #warbandGrid input,
+  #warbandGrid select,
+  #warbandGrid button {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Make the header area wrap instead of pushing outside the card */
+  #warbandGrid > div > div:first-child {
+    flex-wrap: wrap;
+  }
+</style>
+
   </style>
 </head>
 
@@ -454,8 +484,7 @@ const nameInput = document.createElement("input");
 nameInput.type = "text";
 nameInput.placeholder = `${m.role} name`;
 nameInput.value = m.name ?? "";
-nameInput.style.width = "240px";
-nameInput.style.maxWidth = "100%";
+nameInput.style.width = "100%";
 nameInput.addEventListener("input", () => {
   m.name = nameInput.value;
 });
