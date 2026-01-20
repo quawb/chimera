@@ -21,9 +21,6 @@
 
 <body>
   <h1>Chimera Builder (Prototype)</h1>
-  <p class="sub">Loads <code>data/shoot.json</code> and <code>data/accessories.json</code>. Select a weapon + accessories and see points update.</p>
-. Select a ranged weapon and see stats + points update.</p>
-
 
 
   <div class="row">
@@ -45,6 +42,12 @@
       </div>
     </div>
 
+<div class="row" style="margin-top:10px;">
+  <label for="warbandName"><strong>Warband Name</strong></label>
+  <input id="warbandName" type="text" placeholder="e.g., The Quawb Cult" style="width:100%;" />
+</div>
+
+      
       <div class="row" style="margin-top:10px;">
   <label for="warbandTraitSelect"><strong>Warband Trait</strong></label>
   <select id="warbandTraitSelect"></select>
@@ -91,6 +94,10 @@
 
 <script>
   const els = {
+
+    warbandName: document.getElementById("warbandName"),
+
+    
     pointCap: document.getElementById("pointCap"),
     warbandGrid: document.getElementById("warbandGrid"),
     warbandTotal: document.getElementById("warbandTotal"),
@@ -275,16 +282,17 @@
   // Warband state: leader + 4 models
   const warband = {
     version: 3,
+    name: "Unnamed Warband",
     pointCap: 75,
     warbandTraitIdx: "",
     leaderTraitIdx: "",
 
     members: [
-      { role: "Leader", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
-      { role: "Model 1", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
-      { role: "Model 2", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
-      { role: "Model 3", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
-      { role: "Model 4", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Leader", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
+      { role: "Model 1", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
+      { role: "Model 2", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Model 3", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Model 4", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
     ]
   };
 
@@ -432,10 +440,29 @@ function leaderTraitPoints() { return 0; }
       header.style.alignItems = "baseline";
       header.style.gap = "10px";
 
-      const title = document.createElement("div");
-      title.style.fontWeight = "900";
-      title.style.fontSize = "16px";
-      title.textContent = m.role;
+const title = document.createElement("div");
+title.style.display = "flex";
+title.style.flexDirection = "column";
+title.style.gap = "6px";
+
+const roleLine = document.createElement("div");
+roleLine.style.fontWeight = "900";
+roleLine.style.fontSize = "16px";
+roleLine.textContent = m.role;
+
+const nameInput = document.createElement("input");
+nameInput.type = "text";
+nameInput.placeholder = `${m.role} name`;
+nameInput.value = m.name ?? "";
+nameInput.style.width = "240px";
+nameInput.style.maxWidth = "100%";
+nameInput.addEventListener("input", () => {
+  m.name = nameInput.value;
+});
+
+title.appendChild(roleLine);
+title.appendChild(nameInput);
+
 
      const right = document.createElement("div");
 right.style.display = "flex";
@@ -959,6 +986,10 @@ card.appendChild(header);
       warband.version = parsed.version ?? warband.version;
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
+            warband.name = String(parsed.name ?? warband.name ?? "");
+      if (els.warbandName) els.warbandName.value = warband.name ?? "";
+
+
             warband.warbandTraitIdx = (parsed.warbandTraitIdx === "" || parsed.warbandTraitIdx === null || parsed.warbandTraitIdx === undefined)
         ? "" : String(parsed.warbandTraitIdx);
 
@@ -975,6 +1006,7 @@ card.appendChild(header);
         const inc = incoming[i] ?? {};
         return {
           role: def.role,
+          name: String(inc.name ?? def.name ?? ""),
           defense: toIntOrNull(inc.defense) ?? def.defense,
           shoot: toIntOrNull(inc.shoot) ?? def.shoot,
           fight: toIntOrNull(inc.fight) ?? def.fight,
@@ -1148,6 +1180,15 @@ function renderTraitDescriptions() {
   renderTraitDescriptions();
   renderWarband();
 });
+
+
+            // Warband name input
+      if (els.warbandName) {
+        els.warbandName.value = warband.name ?? "";
+        els.warbandName.addEventListener("input", () => {
+          warband.name = els.warbandName.value;
+        });
+      }
 
 
       renderWarband();
