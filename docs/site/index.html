@@ -655,12 +655,12 @@ function leaderTraitPoints() { return 0; }
         .filter(Boolean);
 
       const accSummaryBox = document.createElement("div");
-      accSummaryBox.style.marginTop = "8px";
+      accSummaryBox.style.marginTop = "10px";
       accSummaryBox.style.padding = "8px 10px";
       accSummaryBox.style.border = "1px solid #eee";
       accSummaryBox.style.borderRadius = "10px";
       accSummaryBox.style.background = "#fafafa";
-      accSummaryBox.style.fontSize = "13px";
+      accSummaryBox.style.fontSize = "12px";
 
       const accHead = document.createElement("div");
       accHead.style.fontWeight = "900";
@@ -686,7 +686,8 @@ function leaderTraitPoints() { return 0; }
         });
       }
 
-      accWrap.appendChild(accSummaryBox);
+// (we will append this outside, below)
+
 
       
 
@@ -726,6 +727,8 @@ function leaderTraitPoints() { return 0; }
 
       accWrap.appendChild(list);
       card.appendChild(accSection.wrap);
+      card.appendChild(accSummaryBox);
+
 
 
       // Psychic Powers + Mutations
@@ -799,7 +802,8 @@ function leaderTraitPoints() { return 0; }
       addGroup("Psychic Powers", selectedPsy);
       addGroup("Mutations", selectedMut);
 
-      psiWrap.appendChild(pmSummary);
+  // (we will append this outside, below)
+
 
       
       const psyTitle = document.createElement("div");
@@ -884,6 +888,8 @@ function leaderTraitPoints() { return 0; }
 
       psiWrap.appendChild(mutList);
       card.appendChild(psiSection.wrap);
+      card.appendChild(pmSummary);
+
 
       els.warbandGrid.appendChild(card);
     });
