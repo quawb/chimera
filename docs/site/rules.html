@@ -115,8 +115,20 @@
       // Sort sections alphabetically (you can change later)
       const sections = [...bySection.keys()].sort((a,b)=>a.localeCompare(b));
 
+      // If a hash is present, show only that section (unless #all)
+      const hash = (location.hash || "").replace("#", "");
+      const showAll = !hash || hash === "all";
+      const activeSectionId = showAll ? "" : hash;
+
       // Build TOC
       els.toc.innerHTML = "";
+
+      // "All" link
+      const all = document.createElement("a");
+      all.href = `#all`;
+      all.innerHTML = `<strong>All Sections</strong><br><small>${filtered.length} rule(s)</small>`;
+      els.toc.appendChild(all);
+
       sections.forEach(sec => {
         const id = slugify(sec);
         const a = document.createElement("a");
@@ -125,10 +137,14 @@
         els.toc.appendChild(a);
       });
 
+
       // Build content
       els.content.innerHTML = "";
       sections.forEach(sec => {
         const id = slugify(sec);
+        
+        if (!showAll && id !== activeSectionId) return;
+        
         const block = document.createElement("section");
         block.className = "section";
         block.id = id;
@@ -164,11 +180,6 @@
       const n = filtered.length;
       els.count.textContent = q ? `${n} matching rule(s)` : `${n} total rule(s)`;
 
-      // If user loaded with a hash, scroll into view after render
-      if (location.hash) {
-        const target = document.getElementById(location.hash.slice(1));
-        if (target) target.scrollIntoView({ block: "start" });
-      }
     }
 
     async function loadRules() {
