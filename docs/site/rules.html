@@ -1,1 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chimera — Rules</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.35; }
+    header { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+    h1 { margin: 0; }
+    .sub { color:#444; margin: 6px 0 0; }
+    a { color: inherit; }
+    .layout { display:grid; grid-template-columns: 280px 1fr; gap: 16px; margin-top: 18px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    .panel { border:1px solid #ddd; border-radius: 12px; padding: 12px; background:#fff; }
+    input { font-size: 14px; padding: 8px 10px; width:100%; box-sizing:border-box; }
+
+    .toc a { display:block; padding: 6px 8px; border-radius: 10px; text-decoration:none; }
+    .toc a:hover { background:#f3f3f3; }
+    .toc small { color:#666; }
+
+    .section { border:1px solid #eee; border-radius: 14px; padding: 14px; margin-bottom: 12px; background:#fafafa; }
+    .section h2 { margin: 0 0 8px; font-size: 18px; }
+    .rule { background:#fff; border:1px solid #eee; border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+    .step { font-weight: 900; margin:0; }
+    .text { margin: 6px 0 0; white-space: pre-wrap; }
+
+    .muted { color:#666; font-size: 13px; }
+    .error { color:#8a1f11; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Rules</h1>
+      <div class="sub">Loads <code>data/rules.json</code></div>
+    </div>
+    <div class="panel" style="padding:10px 12px; min-width: 260px;">
+      <div class="muted" style="margin-bottom:6px;">Search</div>
+      <input id="search" type="text" placeholder="Type to filter rules…" />
+      <div id="count" class="muted" style="margin-top:8px;"></div>
+      <div class="muted" style="margin-top:10px;">
+        <a href="./index.html">← Back to Builder</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <div style="font-weight:900; margin-bottom:8px;">Sections</div>
+      <div id="toc" class="toc"></div>
+    </aside>
+
+    <main>
+      <div id="error" class="error" style="display:none;"></div>
+      <div id="content"></div>
+    </main>
+  </div>
+
+  <script>
+    const els = {
+      search: document.getElementById("search"),
+      toc: document.getElementById("toc"),
+      content: document.getElementById("content"),
+      count: document.getElementById("count"),
+      error: document.getElementById("error"),
+    };
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function slugify(s) {
+      return String(s ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]+/g, "-")
+        .replaceAll(/(^-|-$)/g, "");
+    }
+
+    function stepOrder(step) {
+      // Pull a leading number like "1. Initiative" -> 1
+      const m = String(step ?? "").trim().match(/^(\d+)\./);
+      return m ? Number(m[1]) : 9999;
+    }
+
+    function norm(s) { return String(s ?? "").toLowerCase(); }
+
+    let rules = []; // raw array
+
+    function render() {
+      const q = norm(els.search.value).trim();
+
+      // Filter rules (by name/step/effect_text)
+      const filtered = rules.filter(r => {
+        if (!q) return true;
+        const hay = `${r.name ?? ""} ${r.step ?? ""} ${r.effect_text ?? ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      // Group by name
+      const bySection = new Map();
+      for (const r of filtered) {
+        const section = String(r.name ?? "Other").trim() || "Other";
+        if (!bySection.has(section)) bySection.set(section, []);
+        bySection.get(section).push(r);
+      }
+
+      // Sort sections alphabetically (you can change later)
+      const sections = [...bySection.keys()].sort((a,b)=>a.localeCompare(b));
+
+      // Build TOC
+      els.toc.innerHTML = "";
+      sections.forEach(sec => {
+        const id = slugify(sec);
+        const a = document.createElement("a");
+        a.href = `#${id}`;
+        a.innerHTML = `<strong>${escapeHtml(sec)}</strong><br><small>${bySection.get(sec).length} rule(s)</small>`;
+        els.toc.appendChild(a);
+      });
+
+      // Build content
+      els.content.innerHTML = "";
+      sections.forEach(sec => {
+        const id = slugify(sec);
+        const block = document.createElement("section");
+        block.className = "section";
+        block.id = id;
+
+        const h2 = document.createElement("h2");
+        h2.innerHTML = `${escapeHtml(sec)} <span class="muted" style="font-weight:700;">(<a href="#${id}">link</a>)</span>`;
+        block.appendChild(h2);
+
+        const items = bySection.get(sec)
+          .slice()
+          .sort((a,b) => stepOrder(a.step) - stepOrder(b.step) || String(a.step ?? "").localeCompare(String(b.step ?? "")));
+
+        items.forEach(r => {
+          const card = document.createElement("div");
+          card.className = "rule";
+
+          const step = document.createElement("p");
+          step.className = "step";
+          step.textContent = r.step ?? "—";
+
+          const text = document.createElement("p");
+          text.className = "text";
+          text.textContent = r.effect_text ?? "";
+
+          card.appendChild(step);
+          card.appendChild(text);
+          block.appendChild(card);
+        });
+
+        els.content.appendChild(block);
+      });
+
+      const n = filtered.length;
+      els.count.textContent = q ? `${n} matching rule(s)` : `${n} total rule(s)`;
+
+      // If user loaded with a hash, scroll into view after render
+      if (location.hash) {
+        const target = document.getElementById(location.hash.slice(1));
+        if (target) target.scrollIntoView({ block: "start" });
+      }
+    }
+
+    async function loadRules() {
+      try {
+        const res = await fetch("./data/rules.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status} when fetching rules.json`);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("rules.json must be an array of objects");
+
+        // Normalize just in case
+        rules = data.map(r => ({
+          name: r.name ?? "",
+          step: r.step ?? "",
+          effect_text: r.effect_text ?? ""
+        }));
+
+        els.search.addEventListener("input", render);
+        window.addEventListener("hashchange", render);
+
+        render();
+      } catch (e) {
+        els.error.style.display = "block";
+        els.error.textContent = `Could not load rules: ${String(e.message || e)}`;
+      }
+    }
+
+    loadRules();
+  </script>
+</body>
+</html>
 
