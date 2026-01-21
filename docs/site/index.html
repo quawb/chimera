@@ -95,6 +95,38 @@
   font-size: 14px;
 }
 
+    /* --- Compact mode --- */
+body.compact {
+  margin: 16px;
+}
+
+body.compact .row {
+  grid-template-columns: 180px 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+body.compact select,
+body.compact input {
+  font-size: 14px;
+  padding: 6px 8px;
+}
+
+body.compact #warbandGrid {
+  gap: 10px;
+}
+
+/* Each card in the grid (your cards are divs appended into warbandGrid) */
+body.compact #warbandGrid > div {
+  padding: 10px !important;
+}
+
+/* Tighten spacing inside cards */
+body.compact #warbandGrid > div > div {
+  margin-top: 8px !important;
+}
+
+
     
 </style>
 
@@ -110,6 +142,13 @@
     <input id="pointCap" type="number" value="75" min="0" step="1" />
   </div>
 
+<div class="row" style="margin-top:10px;">
+  <label><strong>Display</strong></label>
+  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+    <input id="compactToggle" type="checkbox" />
+    Compact mode
+  </label>
+</div>
 
 
     <div class="card">
@@ -176,6 +215,8 @@
 
 <script>
   const els = {
+
+    compactToggle: document.getElementById("compactToggle"),
 
     warbandName: document.getElementById("warbandName"),
 
@@ -478,6 +519,29 @@ function makeSelectedAccessoriesSummary(m) {
       { role: "Model 4", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
     ]
   };
+
+  
+
+  const uiPrefs = {
+  compact: false
+};
+
+
+  
+  function applyCompactMode(on) {
+  uiPrefs.compact = !!on;
+  document.body.classList.toggle("compact", uiPrefs.compact);
+  try { localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0"); } catch {}
+}
+
+function loadCompactPref() {
+  try {
+    const v = localStorage.getItem("chimera_compact");
+    if (v === "1") uiPrefs.compact = true;
+  } catch {}
+}
+
+
 
     // Remember which collapsibles are open per member index
     const openPanelsByMember = new Map(); 
@@ -1381,6 +1445,20 @@ function renderTraitDescriptions() {
       els.warbandTraitSelect.addEventListener("change", () => {
   warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
   renderTraitDescriptions();
+
+      // Compact mode toggle (persisted)
+      loadCompactPref();
+      applyCompactMode(uiPrefs.compact);
+
+      if (els.compactToggle) {
+        els.compactToggle.checked = uiPrefs.compact;
+        els.compactToggle.addEventListener("change", () => {
+          applyCompactMode(els.compactToggle.checked);
+        });
+      }
+
+
+        
   renderWarband();
 });
 
