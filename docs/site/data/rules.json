@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Round Structure",
+    "step": "1. Initiative",
+    "effect_text": "Roll d20 + Willpower. Highest chooses player order."
+  },
+  {
+    "name": "Round Structure",
+    "step": "2. Activation",
+    "effect_text": "Activate Unexhausted 1 model → up to 3 actions → mark as Exhausted. Alternative activation with other players."
+  },
+  {
+    "name": "Round Structure",
+    "step": "3. Maintenance",
+    "effect_text": "All models Exhausted → remove Exhausted, reset Command Points = 3, start next round."
+  },
+  {
+    "name": "Actions",
+    "step": "Move / Charge",
+    "effect_text": "Advance toward or engage enemy"
+  },
+  {
+    "name": "Actions",
+    "step": "Shoot",
+    "effect_text": "Roll Shoot vs AC"
+  },
+  {
+    "name": "Actions",
+    "step": "Fight",
+    "effect_text": "Roll Fight vs AC"
+  },
+  {
+    "name": "Actions",
+    "step": "Disengage",
+    "effect_text": "Enemy may make 1 opportunity attack"
+  },
+  {
+    "name": "Actions",
+    "step": "Psychic Power",
+    "effect_text": "Roll WP vs AC, cannot Aim, Natural 1 backfires"
+  },
+  {
+    "name": "Actions",
+    "step": "Use Item",
+    "effect_text": "Use equipped item (Attack or Effect, these items can only be used once per turn)"
+  },
+  {
+    "name": "Actions",
+    "step": "Aim",
+    "effect_text": "1 action = +1 Shoot; 2 consecutive actions +3 Shoot; cannot Aim if Suppressed unless Heavy Cover"
+  },
+  {
+    "name": "Actions",
+    "step": "Recover Horror",
+    "effect_text": "Remove 1 Horror token, once per activation"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "Light Cover",
+    "effect_text": "−1 Thematic or (units >2 Away)"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "Heavy Cover",
+    "effect_text": "−3 Thematic or (units >3 Away)"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "High Ground",
+    "effect_text": "Add 1 AP"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "Suppressed / Pinned",
+    "effect_text": "-2 Shoot"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "Charge",
+    "effect_text": "Add +1 Fight and +1 AP on first attack after Charging"
+  },
+  {
+    "name": "To-Hit Modifiers",
+    "step": "Reroll",
+    "effect_text": "A reroll ability can be used to reoll 1 failed roll, unless trait allows more."
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "Natural 1",
+    "effect_text": "Critical hit on wrong target (If target engaged) Failed hit (not natural 1) on engaged target will hit other unit"
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "Natural 20",
+    "effect_text": "Automatic hit, +1 damage, target may Saving Throw only if Heavy Cover"
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "Saving Throw",
+    "effect_text": "d20 + Willpower vs Threshold"
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "0 HP",
+    "effect_text": "Model is taken out"
+  },
+  {
+    "name": "Movement",
+    "step": "Action Distance",
+    "effect_text": "1 action ≈ 6\""
+  },
+  {
+    "name": "Movement",
+    "step": "Full Movement",
+    "effect_text": "All 3 actions can be spent on movement"
+  },
+  {
+    "name": "Movement",
+    "step": "Restrictions",
+    "effect_text": "No penalties/restrictions"
+  },
+  {
+    "name": "Psychic Powers",
+    "step": "Cost",
+    "effect_text": "Max 1 activation per power"
+  },
+  {
+    "name": "Psychic Powers",
+    "step": "Roll",
+    "effect_text": "WP Hit vs AC, cannot Aim"
+  },
+  {
+    "name": "Psychic Powers",
+    "step": "Natural 1",
+    "effect_text": "Backfires on caster"
+  },
+  {
+    "name": "Horror",
+    "step": "Auto-hit",
+    "effect_text": "Roll Willpower vs Saving Threshold; fail → gain 1 Horror token"
+  },
+  {
+    "name": "Horror",
+    "step": "Token Effect",
+    "effect_text": "−1 to all rolls per token, max 5"
+  },
+  {
+    "name": "Horror",
+    "step": "Limit",
+    "effect_text": "1 token per model per round"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Objectives",
+    "effect_text": "Hidden: Primary (5 VP), Secondary (2 VP), optional Tertiary (1 VP)"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Composition",
+    "effect_text": "1 Leader (≤20 pts), Followers (≤15 pts each)"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Point Limit",
+    "effect_text": "As agreed by players (Suggested: 75)"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Trait",
+    "effect_text": "Pick one Leader Trait and one Warband Trait"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Ranged Weapon",
+    "effect_text": "A model may purchase a total number of 1 Ranged Weapon. If they have Shoot Tier 3, they can purcahse a Sidearm or Pistol in addition to another weapon"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Close Combat",
+    "effect_text": "Can Purchase Max One Close Combat Weapon"
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Accessories",
+    "effect_text": "A model may purchase a total number of Accessories equal to its Defense Tier (1–3)."
+  },
+  {
+    "name": "Warband Setup",
+    "step": "Psychic and Mutations",
+    "effect_text": "A model may purchase a total number of Psychic Powers and Mutations equal to its Willpower Tier (1–3)."
+  },
+  {
+    "name": "Armor Class (AC)",
+    "step": "Target number to hit this model",
+    "effect_text": "10 + Defense Modifier + Item/Mutation Moditifer"
+  },
+  {
+    "name": "Saving Throw",
+    "step": "Roll to negate damage / effects",
+    "effect_text": "Based on Willpower Tier: • Tier 1 → 14 • Tier 2 → 13 • Tier 3 → 11 Saving Throw can never be below 10"
+  },
+  {
+    "name": "Wounds",
+    "step": "Total health",
+    "effect_text": "Equal to the sum of all stat Tiers"
+  },
+  {
+    "name": "Points",
+    "step": "Model cost",
+    "effect_text": "Sum of: • Stat point costs • Equipment • Weapons • Psychic Powers • Mutations"
+  },
+  {
+    "name": "Equipment Capacity",
+    "step": "How many Items a model can Purchase from Item shop",
+    "effect_text": "Equal to Defense Tier"
+  },
+  {
+    "name": "Psychic / Mutation Capacity",
+    "step": "How many powers or mutations allowed",
+    "effect_text": "Equal to Willpower Tier"
+  },
+  {
+    "name": "Defenese",
+    "step": "Tier 1/2/3",
+    "effect_text": "0 Modifier for 2 Points +2 Modifier for 4 Points +4 Modified for 8 Points Affects Armor Class and Accessory Slots"
+  },
+  {
+    "name": "Willpower",
+    "step": "Tier 1/2/3",
+    "effect_text": "0 Modifier for 2 Points +2 Modifier for 4 Points +4 Modified for 8 Points Affects Saving Throw and Psychic/Mutation Slots"
+  },
+  {
+    "name": "Shoot",
+    "step": "Tier 1/2/3",
+    "effect_text": "-2 Modifier for 0 Points +2 Modifier for 3 Points +4 Modifier for 6 Points Ranged attack rolls"
+  },
+  {
+    "name": "Fight",
+    "step": "Tier 1/2/3",
+    "effect_text": "-2 Modifier for 0 Points +2 Modifier for 3 Points +4 Modifier for 6 Points Melee attack rolls"
+  }
+]
