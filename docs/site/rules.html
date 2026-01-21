@@ -20,6 +20,12 @@
     .toc a:hover { background:#f3f3f3; }
     .toc small { color:#666; }
 
+    .toc a.active {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+}
+
+
     .section { border:1px solid #eee; border-radius: 14px; padding: 14px; margin-bottom: 12px; background:#fafafa; }
     .section h2 { margin: 0 0 8px; font-size: 18px; }
     .rule { background:#fff; border:1px solid #eee; border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
@@ -126,6 +132,7 @@
       // "All" link
       const all = document.createElement("a");
       all.href = `#all`;
+      all.dataset.sectionId = "all";
       all.innerHTML = `<strong>All Sections</strong><br><small>${filtered.length} rule(s)</small>`;
       els.toc.appendChild(all);
 
@@ -133,6 +140,7 @@
         const id = slugify(sec);
         const a = document.createElement("a");
         a.href = `#${id}`;
+        a.dataset.sectionId = id;
         a.innerHTML = `<strong>${escapeHtml(sec)}</strong><br><small>${bySection.get(sec).length} rule(s)</small>`;
         els.toc.appendChild(a);
       });
@@ -176,6 +184,13 @@
 
         els.content.appendChild(block);
       });
+
+            // Highlight active section in TOC
+      const activeId = (showAll ? "all" : activeSectionId);
+      [...els.toc.querySelectorAll("a")].forEach(link => {
+        link.classList.toggle("active", link.dataset.sectionId === activeId);
+      });
+
 
       const n = filtered.length;
       els.count.textContent = q ? `${n} matching rule(s)` : `${n} total rule(s)`;
