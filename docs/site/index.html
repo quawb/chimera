@@ -1450,19 +1450,6 @@ function renderTraitDescriptions() {
       els.warbandTraitSelect.addEventListener("change", () => {
   warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
   renderTraitDescriptions();
-
-      // Compact mode toggle (persisted)
-      loadCompactPref();
-      applyCompactMode(uiPrefs.compact);
-
-      if (els.compactToggle) {
-        els.compactToggle.checked = uiPrefs.compact;
-        els.compactToggle.addEventListener("change", () => {
-          applyCompactMode(els.compactToggle.checked);
-        });
-      }
-
-
         
   renderWarband();
 });
@@ -1494,7 +1481,17 @@ function renderTraitDescriptions() {
           warband.name = els.warbandName.value;
         });
       }
+      
+      // Compact mode toggle (persisted)
+      loadCompactPref();
+      applyCompactMode(uiPrefs.compact);
 
+      if (els.compactToggle) {
+        els.compactToggle.checked = uiPrefs.compact;
+        els.compactToggle.addEventListener("change", () => {
+          applyCompactMode(els.compactToggle.checked);
+        });
+      }
 
       renderWarband();
     } catch (err) {
