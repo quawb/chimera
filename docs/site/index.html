@@ -363,6 +363,48 @@
   return box;
 }
 
+function makeSelectedAccessoriesSummary(m) {
+  const box = document.createElement("div");
+  box.style.marginTop = "10px";
+  box.style.padding = "10px 12px";
+  box.style.border = "1px solid #eee";
+  box.style.borderRadius = "10px";
+  box.style.background = "#fafafa";
+  box.style.fontSize = "13px";
+
+  const head = document.createElement("div");
+  head.style.fontWeight = "900";
+  head.textContent = "Selected Accessories";
+  box.appendChild(head);
+
+  const chosen = (m.accessoryIdx || [])
+    .map(i => accessories[Number(i)])
+    .filter(Boolean);
+
+  if (!chosen.length) {
+    const none = document.createElement("div");
+    none.style.marginTop = "8px";
+    none.style.color = "#666";
+    none.textContent = "—";
+    box.appendChild(none);
+    return box;
+  }
+
+  chosen.forEach(a => {
+    const row = document.createElement("div");
+    row.style.marginTop = "8px";
+    row.style.whiteSpace = "pre-wrap";
+
+    const name = a.name ?? "(Unnamed)";
+    const pts = toIntOrNull(a.points) ?? 0;
+    const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
+
+    row.textContent = `${name} (${pts} pts)` + (eff ? ` — ${eff}` : "");
+    box.appendChild(row);
+  });
+
+  return box;
+}
 
 
   // Data tables (loaded from JSON)
@@ -574,6 +616,34 @@ function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
     els.ioMsg.textContent = "";
   }
 
+function makeStatsHeadline(m) {
+  const line = document.createElement("div");
+  line.style.marginTop = "10px";
+  line.style.padding = "8px 10px";
+  line.style.border = "1px solid #eee";
+  line.style.borderRadius = "10px";
+  line.style.background = "#fff";
+  line.style.fontSize = "13px";
+  line.style.fontWeight = "700";
+  line.style.color = "#333";
+
+  const ac = armorClass(m);
+  const saveT = savingThrowTarget(m);
+  const wounds = woundsTotal(m);
+
+  const accCap = equipmentCapacity(m);
+  const accUsed = (m.accessoryIdx || []).length;
+
+  const pmCap = psychicMutationCapacity(m);
+  const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
+
+  line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${wounds} • Acc ${accUsed}/${accCap} • Psi/Mut ${pmUsed}/${pmCap}`;
+  return line;
+}
+
+  
+  
+
   function renderWarband() {
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
     els.warbandGrid.innerHTML = "";
@@ -698,12 +768,14 @@ card.appendChild(header);
       statsBlock.appendChild(tierSelect("Willpower", "will"));
       card.appendChild(statsBlock);
 
-      // Derived stats panel
-      const derived = document.createElement("div");
-      derived.style.marginTop = "10px";
-      derived.style.padding = "10px";
-      derived.style.border = "1px solid #eee";
-      derived.style.borderRadius = "10px";
+      // Headline stats row (always visible)
+      card.appendChild(makeStatsHeadline(m));
+
+      // Derived stats (collapsible)
+      const statsSection = makeCollapsible("Stats (AC / Save / Wounds)", false);
+      const derived = statsSection.body;
+
+      derived.style.padding = "10px 12px";
       derived.style.background = "#fafafa";
 
       const statLine = (label, value) => {
@@ -711,25 +783,29 @@ card.appendChild(header);
         row.style.display = "flex";
         row.style.justifyContent = "space-between";
         row.style.gap = "12px";
-        row.style.marginTop = "4px";
-        row.innerHTML = `<span style="color:#444;">${escapeHtml(label)}</span><span style="font-weight:700;">${escapeHtml(value)}</span>`;
+        row.style.marginTop = "6px";
+        row.innerHTML = `<span style="color:#444;">${escapeHtml(label)}</span><span style="font-weight:800;">${escapeHtml(value)}</span>`;
         return row;
       };
 
       derived.appendChild(statLine("Armor Class (AC)", String(armorClass(m))));
       derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
       derived.appendChild(statLine("Wounds", String(woundsTotal(m))));
-      derived.appendChild(statLine("Equipment Capacity", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
-      derived.appendChild(statLine("Psychic/Mutation Capacity", String(psychicMutationCapacity(m))));
-      derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
-      
+
+      derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
+      derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m)}`));
+
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
       derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
       derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
       derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
 
+      derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
+      derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
+      derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
 
-      card.appendChild(derived);
+      card.appendChild(statsSection.wrap);
+
 
       // Primary weapon select
       const weaponRow = document.createElement("div");
@@ -924,7 +1000,9 @@ card.appendChild(header);
 
       accWrap.appendChild(list);
       card.appendChild(accSection.wrap);
-      card.appendChild(accSummaryBox);
+      card.appendChild(makeSelectedAccessoriesSummary(m));
+
+ 
 
 
 
