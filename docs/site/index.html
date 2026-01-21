@@ -304,6 +304,66 @@
     return box;
   }
 
+  function makeSelectedWeaponsSummary(m) {
+  const box = document.createElement("div");
+  box.style.marginTop = "10px";
+  box.style.padding = "10px 12px";
+  box.style.border = "1px solid #eee";
+  box.style.borderRadius = "10px";
+  box.style.background = "#fafafa";
+  box.style.fontSize = "13px";
+
+  const head = document.createElement("div");
+  head.style.fontWeight = "900";
+  head.textContent = "Selected Weapons";
+  box.appendChild(head);
+
+  function weaponLine(label, w) {
+    const row = document.createElement("div");
+    row.style.marginTop = "8px";
+    row.style.whiteSpace = "pre-wrap";
+
+    if (!w) {
+      row.textContent = `${label}: —`;
+      row.style.color = "#666";
+      return row;
+    }
+
+    const name = w.name ?? "(Unnamed)";
+    const pts = toIntOrNull(w.points) ?? 0;
+
+    const actions = (w.max_actions !== undefined && String(w.max_actions).trim() !== "") ? `A:${w.max_actions}` : "";
+    const dmg = (w.damage !== undefined && String(w.damage).trim() !== "") ? `D:${w.damage}` : "";
+    const ap = (w.ap !== undefined && String(w.ap).trim() !== "") ? `AP:${w.ap}` : "";
+
+    const statBits = [actions, dmg, ap].filter(Boolean).join(" · ");
+    const eff = getTextField(w, ["effect_text", "effect", "rule_text"]);
+
+    row.textContent =
+      `${label}: ${name} (${pts} pts)` +
+      (statBits ? ` — ${statBits}` : "") +
+      (eff ? ` — ${eff}` : "");
+
+    return row;
+  }
+
+  const ranged = (m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)]);
+  const sidearm =
+    ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER && m.sidearmIdx !== "")
+      ? weapons[Number(m.sidearmIdx)]
+      : null;
+  const melee = (m.meleeIdx === "" ? null : meleeWeapons[Number(m.meleeIdx)]);
+
+  box.appendChild(weaponLine("Ranged", ranged));
+  if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
+    box.appendChild(weaponLine("Sidearm", sidearm));
+  }
+  box.appendChild(weaponLine("Melee", melee));
+
+  return box;
+}
+
+
 
   // Data tables (loaded from JSON)
   let weapons = [];
@@ -696,14 +756,7 @@ card.appendChild(header);
       weaponRow.appendChild(sel);
       card.appendChild(weaponRow);
 
-            // Ranged weapon details (under the dropdown)
-      const selectedRanged = (m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)]);
-      card.appendChild(makeDetailsBox("Ranged Weapon Details", selectedRanged, [
-        { label: "Max Actions", value: "max_actions" },
-        { label: "Damage", value: "damage" },
-        { label: "AP", value: "ap" },
-        { label: "Points", value: "points" },
-      ]));
+
 
 
       // Secondary sidearm select (Shoot >= 3)
@@ -739,13 +792,6 @@ card.appendChild(header);
         sidearmRow.appendChild(sideSel);
         card.appendChild(sidearmRow);
 
-        const selectedSidearm = (m.sidearmIdx === "" ? null : weapons[Number(m.sidearmIdx)]);
-        card.appendChild(makeDetailsBox("Sidearm Details", selectedSidearm, [
-          { label: "Max Actions", value: "max_actions" },
-          { label: "Damage", value: "damage" },
-          { label: "AP", value: "ap" },
-          { label: "Points", value: "points" },
-        ]));
 
       }
 
@@ -773,14 +819,7 @@ card.appendChild(header);
 
       meleeSection.appendChild(meleeSel);
       card.appendChild(meleeSection);
-
-            const selectedMelee = (m.meleeIdx === "" ? null : meleeWeapons[Number(m.meleeIdx)]);
-      card.appendChild(makeDetailsBox("Melee Weapon Details", selectedMelee, [
-        { label: "Max Actions", value: "max_actions" },
-        { label: "Damage", value: "damage" },   // shown only if fight.json has it
-        { label: "AP", value: "ap" },           // shown only if fight.json has it
-        { label: "Points", value: "points" },
-      ]));
+      card.appendChild(makeSelectedWeaponsSummary(m));
 
 
       const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
