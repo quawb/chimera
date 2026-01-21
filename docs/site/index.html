@@ -246,6 +246,8 @@ body.compact #warbandGrid > div > div {
     errorText: document.getElementById("errorText"),
   };
 
+  
+
   function toIntOrNull(v) {
     if (v === null || v === undefined) return null;
     const s = String(v).trim();
@@ -253,6 +255,27 @@ body.compact #warbandGrid > div > div {
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
+
+  // UI preferences
+const uiPrefs = {
+  compact: false
+};
+
+function applyCompactMode(on) {
+  uiPrefs.compact = !!on;
+  document.body.classList.toggle("compact", uiPrefs.compact);
+  try {
+    localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0");
+  } catch {}
+}
+
+function loadCompactPref() {
+  try {
+    const v = localStorage.getItem("chimera_compact");
+    if (v === "1") uiPrefs.compact = true;
+  } catch {}
+}
+
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -522,24 +545,6 @@ function makeSelectedAccessoriesSummary(m) {
 
   
 
-  const uiPrefs = {
-  compact: false
-};
-
-
-  
-  function applyCompactMode(on) {
-  uiPrefs.compact = !!on;
-  document.body.classList.toggle("compact", uiPrefs.compact);
-  try { localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0"); } catch {}
-}
-
-function loadCompactPref() {
-  try {
-    const v = localStorage.getItem("chimera_compact");
-    if (v === "1") uiPrefs.compact = true;
-  } catch {}
-}
 
 
 
