@@ -179,7 +179,6 @@
 
     warbandName: document.getElementById("warbandName"),
 
-    
     pointCap: document.getElementById("pointCap"),
     warbandGrid: document.getElementById("warbandGrid"),
     warbandTotal: document.getElementById("warbandTotal"),
@@ -378,6 +377,10 @@
     ]
   };
 
+    // Remember which collapsibles are open per member index
+    const openPanelsByMember = new Map(); 
+    // shape: memberIndex -> { accessories: true/false, psi: true/false }
+
   function memberWeaponPoints(m) {
     let sum = 0;
 
@@ -450,53 +453,59 @@ function leaderTraitPoints() { return 0; }
 
   
 
-    function makeCollapsible(titleText, initiallyOpen = false) {
-    const wrap = document.createElement("div");
-    wrap.style.marginTop = "12px";
-    wrap.style.border = "1px solid #eee";
-    wrap.style.borderRadius = "10px";
-    wrap.style.overflow = "hidden";
+function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
+  const wrap = document.createElement("div");
+  wrap.style.marginTop = "12px";
+  wrap.style.border = "1px solid #eee";
+  wrap.style.borderRadius = "10px";
+  wrap.style.overflow = "hidden";
 
-    const header = document.createElement("button");
-    header.type = "button";
-    header.style.width = "100%";
-    header.style.textAlign = "left";
-    header.style.padding = "10px 12px";
-    header.style.border = "0";
-    header.style.background = "#f7f7f7";
-    header.style.cursor = "pointer";
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.alignItems = "center";
-    header.style.gap = "10px";
-    header.style.fontWeight = "800";
+  const header = document.createElement("button");
+  header.type = "button";
+  header.style.width = "100%";
+  header.style.textAlign = "left";
+  header.style.padding = "10px 12px";
+  header.style.border = "0";
+  header.style.background = "#f7f7f7";
+  header.style.cursor = "pointer";
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+  header.style.gap = "10px";
+  header.style.fontWeight = "800";
 
-    const title = document.createElement("span");
-    title.textContent = titleText;
+  const title = document.createElement("span");
+  title.textContent = titleText;
 
-    const chevron = document.createElement("span");
-    chevron.textContent = initiallyOpen ? "▾" : "▸";
-    chevron.style.opacity = "0.8";
+  const chevron = document.createElement("span");
+  chevron.textContent = initiallyOpen ? "▾" : "▸";
+  chevron.style.opacity = "0.8";
 
-    header.appendChild(title);
-    header.appendChild(chevron);
+  header.appendChild(title);
+  header.appendChild(chevron);
 
-    const body = document.createElement("div");
-    body.style.padding = "10px 12px";
-    body.style.display = initiallyOpen ? "block" : "none";
-    body.style.background = "#fff";
+  const body = document.createElement("div");
+  body.style.padding = "10px 12px";
+  body.style.display = initiallyOpen ? "block" : "none";
+  body.style.background = "#fff";
 
-    header.addEventListener("click", () => {
-      const open = body.style.display !== "none";
-      body.style.display = open ? "none" : "block";
-      chevron.textContent = open ? "▸" : "▾";
-    });
-
-    wrap.appendChild(header);
-    wrap.appendChild(body);
-
-    return { wrap, body };
+  function setOpen(open) {
+    body.style.display = open ? "block" : "none";
+    chevron.textContent = open ? "▾" : "▸";
+    if (typeof onToggle === "function") onToggle(open);
   }
+
+  header.addEventListener("click", () => {
+    const open = body.style.display === "none";
+    setOpen(open);
+  });
+
+  wrap.appendChild(header);
+  wrap.appendChild(body);
+
+  return { wrap, body, setOpen };
+}
+
 
   
   function setIoVisible(vis, title) {
@@ -774,9 +783,18 @@ card.appendChild(header);
       ]));
 
 
+      const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+
+
+      
       // Accessories
-      const accSection = makeCollapsible("Accessories", false);
-      const accWrap = accSection.body;
+  const accSection = makeCollapsible("Accessories", openState.accessories, (isOpen) => {
+  const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+  s.accessories = isOpen;
+  openPanelsByMember.set(memberIndex, s);
+  });
+  const accWrap = accSection.body;
+
 
 
       const accCap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
@@ -872,8 +890,14 @@ card.appendChild(header);
 
 
       // Psychic Powers + Mutations
-      const psiSection = makeCollapsible("Psychic Powers + Mutations", false);
-      const psiWrap = psiSection.body;
+      
+  const psiSection = makeCollapsible("Psychic Powers + Mutations", openState.psi, (isOpen) => {
+  const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+  s.psi = isOpen;
+  openPanelsByMember.set(memberIndex, s);
+  });
+  const psiWrap = psiSection.body;
+
 
 
       const pmCap = psychicMutationCapacity(m);
