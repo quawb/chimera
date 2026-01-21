@@ -903,7 +903,7 @@ s.innerHTML = tiers.map(t => {
 
       
       // Accessories
-  const accSection = makeCollapsible("Accessories", openState.accessories, (isOpen) => {
+const accSection = makeCollapsible("Edit Accessories", openState.accessories, (isOpen) => {
   const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
   s.accessories = isOpen;
   openPanelsByMember.set(memberIndex, s);
@@ -1008,7 +1008,7 @@ s.innerHTML = tiers.map(t => {
 
       // Psychic Powers + Mutations
       
-  const psiSection = makeCollapsible("Psychic Powers + Mutations", openState.psi, (isOpen) => {
+const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (isOpen) => {
   const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
   s.psi = isOpen;
   openPanelsByMember.set(memberIndex, s);
