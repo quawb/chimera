@@ -637,7 +637,7 @@ function makeStatsHeadline(m) {
   const pmCap = psychicMutationCapacity(m);
   const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
 
-  line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${wounds};
+  line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${wounds}`;
   return line;
 }
 
