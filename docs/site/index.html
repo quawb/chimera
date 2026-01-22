@@ -9,6 +9,28 @@
   <a href="./rules.html">Rules</a>
 </div>
 
+<div class="card" style="margin-top:12px;">
+  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <div style="font-weight:900;">Dice</div>
+
+    <button id="rollD20Btn" type="button"
+      style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+      Roll d20
+    </button>
+
+    <div style="display:flex; gap:8px; align-items:baseline;">
+      <div style="color:#666;">Result</div>
+      <div id="d20Result" style="font-size:22px; font-weight:900;">—</div>
+    </div>
+
+    <button id="clearRollsBtn" type="button"
+      style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+      Clear
+    </button>
+  </div>
+
+  <div id="d20History" style="margin-top:10px; color:#444; font-size:14px;"></div>
+</div>
 
 
   <style>
@@ -221,6 +243,12 @@ body.compact #warbandGrid > div > div {
 <script>
   const els = {
 
+    rollD20Btn: document.getElementById("rollD20Btn"),
+    clearRollsBtn: document.getElementById("clearRollsBtn"),
+    d20Result: document.getElementById("d20Result"),
+    d20History: document.getElementById("d20History"),
+
+
     compactToggle: document.getElementById("compactToggle"),
 
     warbandName: document.getElementById("warbandName"),
@@ -251,7 +279,24 @@ body.compact #warbandGrid > div > div {
     errorText: document.getElementById("errorText"),
   };
 
-  
+  const diceState = {
+  history: [] // newest first
+};
+
+function rollDie(sides) {
+  return Math.floor(Math.random() * sides) + 1;
+}
+
+function renderDice() {
+  if (els.d20History) {
+    if (!diceState.history.length) {
+      els.d20History.textContent = "History: —";
+    } else {
+      els.d20History.textContent = "History: " + diceState.history.join(", ");
+    }
+  }
+}
+
 
   function toIntOrNull(v) {
     if (v === null || v === undefined) return null;
@@ -1497,6 +1542,26 @@ function renderTraitDescriptions() {
           applyCompactMode(els.compactToggle.checked);
         });
       }
+      // Dice tray
+      if (els.rollD20Btn && els.d20Result) {
+        els.rollD20Btn.addEventListener("click", () => {
+          const r = rollDie(20);
+          els.d20Result.textContent = String(r);
+          diceState.history.unshift(r);
+          diceState.history = diceState.history.slice(0, 10); // keep last 10
+          renderDice();
+        });
+      }
+
+      if (els.clearRollsBtn && els.d20Result) {
+        els.clearRollsBtn.addEventListener("click", () => {
+          diceState.history = [];
+          els.d20Result.textContent = "—";
+          renderDice();
+        });
+      }
+
+      renderDice();
 
       renderWarband();
     } catch (err) {
