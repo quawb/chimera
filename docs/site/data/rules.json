@@ -51,8 +51,8 @@
   },
   {
     "name": "Actions",
-    "step": "Recover Horror",
-    "effect_text": "Remove 1 Horror token, once per activation"
+    "step": "Recover",
+    "effect_text": "Remove 1 Horror token or 1 Suppressed effect, once per activation"
   },
   {
     "name": "To-Hit Modifiers",
@@ -76,13 +76,18 @@
   },
   {
     "name": "To-Hit Modifiers",
-    "step": "Charge",
-    "effect_text": "Add +1 Fight and +1 AP on first attack after Charging"
-  },
-  {
-    "name": "To-Hit Modifiers",
     "step": "Reroll",
     "effect_text": "A reroll ability can be used to reoll 1 failed roll, unless trait allows more."
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "Charge",
+    "effect_text": "When Charged, defending model make a Horror test. On a failure, gain +1 Horror and suffer –1 Action next activation (min 1)."
+  },
+  {
+    "name": "Firing & Combat",
+    "step": "Suppressed",
+    "effect_text": "A model becomes Suppressed when it is Targeted by a Shoot action (hit or miss). A Suppressed mondel Cannot Aim. To move the model must pass a Horror test or gain Horror (max 1 per round). Suppressed can be removed by taking a recover action."
   },
   {
     "name": "Firing & Combat",
