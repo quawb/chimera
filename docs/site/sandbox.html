@@ -4,31 +4,62 @@
   <meta charset="utf-8" />
   <title>Micro Skirmish Playtester</title>
   <style>
-    body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+    body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
     #ui { padding: 12px; border-right: 1px solid #ddd; overflow: auto; }
-    #log { font-size: 12px; white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; padding: 8px; height: 240px; overflow: auto; }
+    #log { font-size: 12px; white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; padding: 8px; height: 260px; overflow: auto; }
     button { width: 100%; margin: 6px 0; padding: 10px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    canvas { display: block; width: 100%; height: 100%; }
     .small { font-size: 12px; color: #555; }
+    textarea { width: 100%; height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    canvas { display: block; width: 100%; height: 100%; }
+    hr { border: none; border-top: 1px solid #eee; margin: 12px 0; }
   </style>
 </head>
 <body>
   <div id="ui">
     <h3>Micro Skirmish</h3>
     <div class="small">
-      Click a unit, then click a tile to move. Use buttons for actions.
+      Click a unit to select. Click a tile to act (Move/Charge). For Shoot/Fight, click an enemy tile.
     </div>
+
     <div class="row">
       <button id="btnMove">Move</button>
-      <button id="btnShoot">Shoot</button>
+      <button id="btnCharge">Charge</button>
     </div>
     <div class="row">
-      <button id="btnEndAct">End Activation</button>
-      <button id="btnNext">Next Turn</button>
+      <button id="btnShoot">Shoot</button>
+      <button id="btnFight">Fight</button>
     </div>
+    <div class="row">
+      <button id="btnAim">Aim</button>
+      <button id="btnRecover">Recover</button>
+    </div>
+
+    <div class="row">
+      <button id="btnEndAct">End Activation</button>
+      <button id="btnNextRound">Next Round (force)</button>
+    </div>
+
+    <hr />
+
+    <button id="btnNewMap">New Random Map</button>
+
+    <hr />
+
+    <h4>Warband Import (optional)</h4>
+    <div class="small">Paste JSON array of models (see example in code), then load.</div>
+    <textarea id="wbJson" placeholder='[{"name":"A1","team":"Blue","tx":2,"ty":3,"tiers":{"def":2,"wp":2,"shoot":2,"fight":2}}]'></textarea>
+    <div class="row">
+      <button id="btnLoadBlue">Load Blue</button>
+      <button id="btnLoadRed">Load Red</button>
+    </div>
+    <button id="btnRandomWarbands">Random Warbands</button>
+
+    <hr />
+
     <h4>Selected</h4>
     <div id="sel"></div>
+
     <h4>Log</h4>
     <div id="log"></div>
   </div>
