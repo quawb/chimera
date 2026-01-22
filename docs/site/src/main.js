@@ -3,6 +3,7 @@ import { Game } from "./sim.js";
 const canvas = document.getElementById("c");
 const uiSel = document.getElementById("sel");
 const uiLog = document.getElementById("log");
+const wbJson = document.getElementById("wbJson");
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
@@ -13,25 +14,38 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const game = new Game({
-  cols: 20,
-  rows: 14,
-  seed: 12345,
-});
+const game = new Game({ cols: 20, rows: 14, seed: 12345, obstacleDensity: 0.12 });
 
 function log(msg) {
   uiLog.textContent += msg + "\n";
   uiLog.scrollTop = uiLog.scrollHeight;
 }
-
 game.onLog = log;
 
-let mode = "move"; // "move" | "shoot"
+let mode = "move"; // move | shoot | charge | fight
 
 document.getElementById("btnMove").onclick = () => mode = "move";
 document.getElementById("btnShoot").onclick = () => mode = "shoot";
+document.getElementById("btnCharge").onclick = () => mode = "charge";
+document.getElementById("btnFight").onclick = () => mode = "fight";
+
+document.getElementById("btnAim").onclick = () => game.tryAimSelected();
+document.getElementById("btnRecover").onclick = () => game.tryRecoverSelected();
+
 document.getElementById("btnEndAct").onclick = () => game.endActivation();
-document.getElementById("btnNext").onclick = () => game.nextTurn();
+document.getElementById("btnNextRound").onclick = () => game.forceNextRound();
+
+document.getElementById("btnNewMap").onclick = () => game.newRandomMap();
+
+document.getElementById("btnLoadBlue").onclick = () => {
+  try { game.loadWarbandFromJson(wbJson.value, "Blue"); }
+  catch (e) { log("Load Blue error: " + e.message); }
+};
+document.getElementById("btnLoadRed").onclick = () => {
+  try { game.loadWarbandFromJson(wbJson.value, "Red"); }
+  catch (e) { log("Load Red error: " + e.message); }
+};
+document.getElementById("btnRandomWarbands").onclick = () => game.randomWarbands();
 
 canvas.addEventListener("click", (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -49,7 +63,9 @@ canvas.addEventListener("click", (e) => {
   if (tx < 0 || ty < 0) return;
 
   if (mode === "move") game.tryMoveSelected(tx, ty);
+  if (mode === "charge") game.tryChargeSelected(tx, ty);
   if (mode === "shoot") game.tryShootAtTile(tx, ty);
+  if (mode === "fight") game.tryFightAtTile(tx, ty);
 });
 
 function render() {
@@ -60,11 +76,12 @@ function render() {
   if (!s) uiSel.textContent = "(none)";
   else {
     uiSel.textContent =
-      `${s.name} (${s.team})\n` +
-      `HP: ${s.hp}\n` +
+      `${s.name} (${s.team}) ${s.id === game.activeUnitId ? " [ACTIVE]" : ""}\n` +
+      `HP: ${s.hp} | AC: ${s.ac}\n` +
       `Actions left: ${s.actionsLeft}\n` +
-      `Horror: ${s.horror}\n` +
+      `Horror: ${s.horror} (–${s.horror} to rolls)\n` +
       `Suppressed: ${s.suppressed ? "Yes" : "No"}\n` +
+      `Aim streak: ${s.aimStreak}\n` +
       `Exhausted: ${s.exhausted ? "Yes" : "No"}\n`;
   }
 
