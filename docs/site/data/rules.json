@@ -82,7 +82,12 @@
   {
     "name": "Firing & Combat",
     "step": "Charge",
-    "effect_text": "When Charged, defending model make a Horror test. On a failure, gain +1 Horror and suffer –1 Action next activation (min 1)."
+    "effect_text": "When Charged, defending model make a Horror test. On a failure, gain +1 Horror and suffer –1 Action next activation (min 1). They are now in engagement range."
+  },
+    {
+    "name": "Firing & Combat",
+    "step": "Engagement",
+    "effect_text": "A model within engagement range of an enemy model cannot use ranged weapons. The model must disenage to perform Shoot actions. A model must Charge into base to base contact to force the enemy into engagement range. Melee weapons can only be used in engagement range."
   },
   {
     "name": "Firing & Combat",
