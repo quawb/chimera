@@ -20,7 +20,7 @@
 
     <div style="display:flex; gap:8px; align-items:baseline;">
       <div style="color:#666;">Result</div>
-      <div id="d20Result" style="font-size:22px; font-weight:900;">—</div>
+      <div id="d20Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
     </div>
 
     <button id="clearRollsBtn" type="button"
@@ -34,6 +34,26 @@
 
 
   <style>
+
+    /* Dice animation */
+.dice-result {
+  display: inline-block;
+  min-width: 2ch;
+}
+
+.dice-rolling {
+  animation: diceSpin 0.45s ease-in-out;
+}
+
+@keyframes diceSpin {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  25%  { transform: translateY(-4px) rotate(6deg) scale(1.08); opacity: 0.9; }
+  50%  { transform: translateY(2px) rotate(-6deg) scale(0.98); opacity: 0.9; }
+  75%  { transform: translateY(-2px) rotate(3deg) scale(1.04); opacity: 1; }
+  100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+}
+
+    
   body {
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     margin: 24px;
@@ -1542,24 +1562,40 @@ function renderTraitDescriptions() {
           applyCompactMode(els.compactToggle.checked);
         });
       }
-      // Dice tray
-      if (els.rollD20Btn && els.d20Result) {
+
+      // Dice Tray
+            if (els.rollD20Btn && els.d20Result) {
         els.rollD20Btn.addEventListener("click", () => {
-          const r = rollDie(20);
-          els.d20Result.textContent = String(r);
-          diceState.history.unshift(r);
-          diceState.history = diceState.history.slice(0, 10); // keep last 10
-          renderDice();
+          // prevent spamming while rolling
+          els.rollD20Btn.disabled = true;
+
+          // restart animation
+          els.d20Result.classList.remove("dice-rolling");
+          // force reflow so the animation restarts reliably
+          void els.d20Result.offsetWidth;
+          els.d20Result.classList.add("dice-rolling");
+
+          // "rolling" flicker for ~350ms
+          const start = Date.now();
+          const flicker = setInterval(() => {
+            els.d20Result.textContent = String(rollDie(20));
+            if (Date.now() - start > 350) clearInterval(flicker);
+          }, 45);
+
+          // final result at ~380ms
+          setTimeout(() => {
+            const r = rollDie(20);
+            els.d20Result.textContent = String(r);
+
+            diceState.history.unshift(r);
+            diceState.history = diceState.history.slice(0, 10);
+            renderDice();
+
+            els.rollD20Btn.disabled = false;
+          }, 380);
         });
       }
 
-      if (els.clearRollsBtn && els.d20Result) {
-        els.clearRollsBtn.addEventListener("click", () => {
-          diceState.history = [];
-          els.d20Result.textContent = "—";
-          renderDice();
-        });
-      }
 
       renderDice();
 
