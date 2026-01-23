@@ -1,5 +1,7 @@
-// Micro Skirmish: rules harness + canvas rendering
-// Adds: random obstacles, alternating activations, suppression + horror, charge shock, aim/recover, simple LOS & cover
+// Micro Skirmish Playtester (grid prototype)
+// Features: random obstacles, LOS/cover, alternating activations,
+// Engagement (no shoot/aim while engaged), Charge (click enemy),
+// Disengage (opportunity attack), Suppression + Horror mechanics.
 
 function mulberry32(seed) {
   return function () {
@@ -10,30 +12,77 @@ function mulberry32(seed) {
   };
 }
 
-function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+function clamp(n, a, b) {
+  return Math.max(a, Math.min(b, n));
+}
 
 function manhattan(ax, ay, bx, by) {
   return Math.abs(ax - bx) + Math.abs(ay - by);
 }
 
-function d20(rng) { return 1 + Math.floor(rng() * 20); }
+function d20(rng) {
+  return 1 + Math.floor(rng() * 20);
+}
 
 // Bresenham line
 function lineTiles(x0, y0, x1, y1) {
   const tiles = [];
-  let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-  let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let dx = Math.abs(x1 - x0),
+    sx = x0 < x1 ? 1 : -1;
+  let dy = -Math.abs(y1 - y0),
+    sy = y0 < y1 ? 1 : -1;
   let err = dx + dy;
 
-  let x = x0, y = y0;
+  let x = x0,
+    y = y0;
   while (true) {
     tiles.push({ x, y });
     if (x === x1 && y === y1) break;
     const e2 = 2 * err;
-    if (e2 >= dy) { err += dy; x += sx; }
-    if (e2 <= dx) { err += dx; y += sy; }
+    if (e2 >= dy) {
+      err += dy;
+      x += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y += sy;
+    }
   }
   return tiles;
+}
+
+// === Builder-aligned stat tables ===
+const DEF_WILL_TABLE = {
+  0: { mod: -2, cost: 0 },
+  1: { mod: 0, cost: 2 },
+  2: { mod: 2, cost: 4 },
+  3: { mod: 4, cost: 8 },
+};
+
+const SHOOT_FIGHT_TABLE = {
+  0: { mod: -2, cost: 0 },
+  1: { mod: -2, cost: 0 },
+  2: { mod: 2, cost: 3 },
+  3: { mod: 4, cost: 6 },
+};
+
+const SAVE_TARGET_BY_WILL = { 0: 14, 1: 14, 2: 13, 3: 11 };
+
+function defenseMod(t) {
+  return (DEF_WILL_TABLE[t] ?? DEF_WILL_TABLE[1]).mod;
+}
+function willMod(t) {
+  return (DEF_WILL_TABLE[t] ?? DEF_WILL_TABLE[1]).mod;
+}
+function shootMod(t) {
+  return (SHOOT_FIGHT_TABLE[t] ?? SHOOT_FIGHT_TABLE[1]).mod;
+}
+function fightMod(t) {
+  return (SHOOT_FIGHT_TABLE[t] ?? SHOOT_FIGHT_TABLE[1]).mod;
+}
+function savingThrowTargetTier(willTier) {
+  const base = SAVE_TARGET_BY_WILL[willTier] ?? SAVE_TARGET_BY_WILL[1];
+  return Math.max(10, base);
 }
 
 export class Game {
@@ -48,13 +97,10 @@ export class Game {
 
     this.round = 1;
 
-    // Alternating activation state
-    this.teamOrder = ["Blue", "Red"]; // winner can choose later; keeping fixed for now
+    // Alternating activation state (winner chooses later; fixed for prototype)
+    this.teamOrder = ["Blue", "Red"];
     this.activationTeamIndex = 0;
 
-    // round-limited horror gain
-    // rule: 1 horror token per model per round (global cap)
-    // we enforce this for charge shock + suppressed-move. (Auto-hit horror not implemented yet.)
     this.units = [];
     this.activeUnitId = null;
     this.selectedId = null;
@@ -64,14 +110,17 @@ export class Game {
     this.startRound();
   }
 
-  log(msg) { this.onLog(msg); }
+  log(msg) {
+    this.onLog(msg);
+  }
 
   // --- Map / Obstacles ---
   newRandomMap() {
-    // 0 = empty, 1 = obstacle
-    this.grid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => 0));
+    this.grid = Array.from({ length: this.rows }, () =>
+      Array.from({ length: this.cols }, () => 0)
+    );
 
-    // keep spawn lanes relatively open (left 3 cols, right 3 cols)
+    // Keep spawn lanes open (left 3 cols, right 3 cols)
     for (let y = 0; y < this.rows; y++) {
       for (let x = 3; x < this.cols - 3; x++) {
         if (this.rng() < this.obstacleDensity) this.grid[y][x] = 1;
@@ -85,9 +134,17 @@ export class Game {
     return this.grid[ty][tx] === 1;
   }
 
+  hasLOS(attacker, target) {
+    const tiles = lineTiles(attacker.tx, attacker.ty, target.tx, target.ty);
+    for (let i = 1; i < tiles.length - 1; i++) {
+      if (this.isObstacle(tiles[i].x, tiles[i].y)) return false;
+    }
+    return true;
+  }
+
   // cover heuristic
   getCover(attacker, target) {
-    // Heavy cover if there is an obstacle directly on LOS between them (excluding endpoints)
+    // Heavy cover if obstacle on LOS between them (excluding endpoints)
     const tiles = lineTiles(attacker.tx, attacker.ty, target.tx, target.ty);
     for (let i = 1; i < tiles.length - 1; i++) {
       if (this.isObstacle(tiles[i].x, tiles[i].y)) return "heavy";
@@ -100,82 +157,146 @@ export class Game {
       { x: target.tx, y: target.ty + 1 },
       { x: target.tx, y: target.ty - 1 },
     ];
-    if (adj.some(p => this.isObstacle(p.x, p.y))) return "light";
+    if (adj.some((p) => this.isObstacle(p.x, p.y))) return "light";
     return "none";
   }
 
-  hasLOS(attacker, target) {
-    const tiles = lineTiles(attacker.tx, attacker.ty, target.tx, target.ty);
-    for (let i = 1; i < tiles.length - 1; i++) {
-      if (this.isObstacle(tiles[i].x, tiles[i].y)) return false;
-    }
-    return true;
+  // --- Engagement ---
+  isEngaged(u) {
+    return this.units.some(
+      (v) =>
+        v.hp > 0 &&
+        v.team !== u.team &&
+        manhattan(u.tx, u.ty, v.tx, v.ty) === 1
+    );
+  }
+
+  getAdjacentEnemies(u) {
+    return this.units.filter(
+      (v) =>
+        v.hp > 0 &&
+        v.team !== u.team &&
+        manhattan(u.tx, u.ty, v.tx, v.ty) === 1
+    );
   }
 
   // --- Units / Warbands ---
-  makeUnitFromTiers({ name, team, tx, ty, tiers }) {
-    // tiers are 1-3
-    const defTier = clamp(tiers.def ?? 2, 1, 3);
-    const wpTier = clamp(tiers.wp ?? 2, 1, 3);
-    const shootTier = clamp(tiers.shoot ?? 2, 1, 3);
-    const fightTier = clamp(tiers.fight ?? 2, 1, 3);
+  makeUnitFromTiers({ name, team, tx, ty, tiers = {}, extra = {} }) {
+    // accept either {defense,will,shoot,fight} or older {def,wp,shoot,fight}
+    const defTier = clamp(tiers.defense ?? tiers.def ?? 1, 0, 3);
+    const willTier = clamp(tiers.will ?? tiers.wp ?? 1, 0, 3);
+    const shootTier = clamp(tiers.shoot ?? 1, 0, 3);
+    const fightTier = clamp(tiers.fight ?? 1, 0, 3);
 
-    const defMod = defTier === 1 ? 0 : defTier === 2 ? 2 : 4;
-    const wpMod = wpTier === 1 ? 0 : wpTier === 2 ? 2 : 4;
-    const shootMod = shootTier === 1 ? -2 : shootTier === 2 ? 2 : 4;
-    const fightMod = fightTier === 1 ? -2 : fightTier === 2 ? 2 : 4;
+    const mods = {
+      def: defenseMod(defTier),
+      wp: willMod(willTier),
+      shoot: shootMod(shootTier),
+      fight: fightMod(fightTier),
+    };
 
-    const ac = 10 + defMod;
-    const hp = defTier + wpTier + shootTier + fightTier; // sum of tiers
-    const range = 7; // prototype default
+    // AC = 10 + Defense Mod + accessory/mutation bonus (not yet computed here)
+    const acBonus = Number(extra.acBonus ?? 0);
+    const ac = 10 + mods.def + acBonus;
+
+    // Wounds = sum of tiers
+    const hp = defTier + willTier + shootTier + fightTier;
 
     return {
       id: crypto.randomUUID(),
       name,
       team,
-      tx, ty,
-      tiers: { def: defTier, wp: wpTier, shoot: shootTier, fight: fightTier },
-      mods: { def: defMod, wp: wpMod, shoot: shootMod, fight: fightMod },
+      tx,
+      ty,
+
+      tiers: { defense: defTier, will: willTier, shoot: shootTier, fight: fightTier },
+      mods,
       ac,
+      acBonus,
+
       hp,
-      range,
+      range: Number(extra.range ?? 7),
 
       suppressed: false,
       exhausted: false,
 
       horror: 0, // max 5
-      gainedHorrorThisRound: false, // global 1 token per round cap
-      gainedHorrorFromSuppressionThisRound: false, // also capped
+      gainedHorrorThisRound: false, // 1 token per model per round cap
+      gainedHorrorFromSuppressionThisRound: false,
 
       actionsLeft: 3,
-      actionPenaltyNextActivation: 0,
+      actionPenaltyNextActivation: 0, // from Charge Shock
 
       recoveredThisActivation: false,
-      aimStreak: 0, // counts consecutive Aim actions this activation (0/1/2)
-      aimBonus: 0,  // computed from aimStreak for next Shoot
+      aimStreak: 0,
+      aimBonus: 0,
     };
   }
 
   clearTeam(team) {
-    this.units = this.units.filter(u => u.team !== team);
+    this.units = this.units.filter((u) => u.team !== team);
   }
 
   loadWarbandFromJson(jsonText, team) {
-    let arr;
-    try { arr = JSON.parse(jsonText); }
-    catch { throw new Error("Invalid JSON."); }
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      throw new Error("Invalid JSON.");
+    }
 
-    if (!Array.isArray(arr)) throw new Error("Expected a JSON array of models.");
+    // If builder export object: { members: [...] }
+    if (parsed && typeof parsed === "object" && Array.isArray(parsed.members)) {
+      this.loadWarbandFromBuilderExport(parsed, team);
+      return;
+    }
 
+    if (!Array.isArray(parsed)) {
+      throw new Error("Expected a JSON array OR a builder export object with members[].");
+    }
+
+    this.loadWarbandFromModelArray(parsed, team);
+  }
+
+  loadWarbandFromBuilderExport(warbandObj, team) {
     this.clearTeam(team);
 
-    // spawn zone: left for Blue, right for Red
+    const spawnX = team === "Blue" ? 1 : this.cols - 2;
+    const members = warbandObj.members.slice(0, 5);
+
+    let i = 0;
+    for (const m of members) {
+      const nm = String(m.name ?? "").trim();
+      const name = nm || `${team[0]}${i + 1}`;
+      const tx = spawnX;
+      const ty = clamp(2 + i * 2, 0, this.rows - 1);
+
+      const unit = this.makeUnitFromTiers({
+        name,
+        team,
+        tx,
+        ty,
+        tiers: { defense: m.defense, will: m.will, shoot: m.shoot, fight: m.fight },
+        extra: { acBonus: 0 }, // future: derive from accessories/mutations
+      });
+
+      if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
+      this.units.push(unit);
+      i++;
+    }
+
+    this.log(`Loaded ${team} warband from builder export (${members.length} models).`);
+    this.startRound();
+  }
+
+  loadWarbandFromModelArray(arr, team) {
+    this.clearTeam(team);
     const spawnX = team === "Blue" ? 1 : this.cols - 2;
 
     let i = 0;
     for (const m of arr) {
       const name = String(m.name ?? `${team[0]}${i + 1}`);
-      const ty = clamp(Number(m.ty ?? (2 + i * 2)), 0, this.rows - 1);
+      const ty = clamp(Number(m.ty ?? 2 + i * 2), 0, this.rows - 1);
       const tx = clamp(Number(m.tx ?? spawnX), 0, this.cols - 1);
 
       const unit = this.makeUnitFromTiers({
@@ -183,7 +304,8 @@ export class Game {
         team,
         tx,
         ty,
-        tiers: m.tiers ?? { def: 2, wp: 2, shoot: 2, fight: 2 },
+        tiers: m.tiers ?? m,
+        extra: { acBonus: Number(m.acBonus ?? 0), range: Number(m.range ?? 7) },
       });
 
       if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
@@ -197,6 +319,7 @@ export class Game {
 
   randomWarbands() {
     this.units = [];
+
     const makeSide = (team) => {
       const spawnX = team === "Blue" ? 1 : this.cols - 2;
       const names = team === "Blue" ? ["A1", "A2", "A3"] : ["B1", "B2", "B3"];
@@ -208,12 +331,13 @@ export class Game {
           tx: spawnX,
           ty: 2 + i * 3,
           tiers: {
-            def: 1 + Math.floor(this.rng() * 3),
-            wp: 1 + Math.floor(this.rng() * 3),
+            defense: 1 + Math.floor(this.rng() * 3),
+            will: 1 + Math.floor(this.rng() * 3),
             shoot: 1 + Math.floor(this.rng() * 3),
             fight: 1 + Math.floor(this.rng() * 3),
-          }
+          },
         });
+
         if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
         this.units.push(unit);
       }
@@ -228,7 +352,6 @@ export class Game {
 
   // --- Round / Alternating Activation ---
   startRound() {
-    this.round = this.round ?? 1;
     for (const u of this.units) {
       u.exhausted = false;
       u.actionsLeft = 3;
@@ -237,8 +360,8 @@ export class Game {
       u.aimBonus = 0;
       u.gainedHorrorThisRound = false;
       u.gainedHorrorFromSuppressionThisRound = false;
-      // action penalty applies when model becomes active
     }
+
     this.activationTeamIndex = 0;
     this.pickNextActiveUnit(true);
     this.log(`=== Round ${this.round} begins ===`);
@@ -249,28 +372,20 @@ export class Game {
     this.startRound();
   }
 
-  teamHasReady(team) {
-    return this.units.some(u => u.team === team && !u.exhausted && u.hp > 0);
-  }
-
-  allExhaustedOrDead() {
-    return this.units.every(u => u.hp <= 0 || u.exhausted);
-  }
-
   pickNextActiveUnit(isStart = false) {
-    // Alternating: try current team; if none, try other; if none, maintenance/next round
     const tA = this.teamOrder[this.activationTeamIndex];
     const tB = this.teamOrder[(this.activationTeamIndex + 1) % this.teamOrder.length];
 
-    let next = this.units.find(u => u.team === tA && !u.exhausted && u.hp > 0) ?? null;
+    let next =
+      this.units.find((u) => u.team === tA && !u.exhausted && u.hp > 0) ?? null;
 
     if (!next) {
-      next = this.units.find(u => u.team === tB && !u.exhausted && u.hp > 0) ?? null;
+      next =
+        this.units.find((u) => u.team === tB && !u.exhausted && u.hp > 0) ?? null;
       if (next) this.activationTeamIndex = (this.activationTeamIndex + 1) % this.teamOrder.length;
     }
 
     if (!next) {
-      // no one ready -> next round
       if (!isStart) this.log("All models Exhausted (or down). Maintenance -> next round.");
       this.round += 1;
       this.startRound();
@@ -280,7 +395,6 @@ export class Game {
     this.activeUnitId = next.id;
     this.selectedId = next.id;
 
-    // apply action penalty next activation (from Charge Shock)
     const penalty = next.actionPenaltyNextActivation || 0;
     next.actionsLeft = clamp(3 - penalty, 1, 3);
     next.actionPenaltyNextActivation = 0;
@@ -303,14 +417,17 @@ export class Game {
 
     this.log(`${u.name} becomes Exhausted.`);
 
-    // Alternate to the other team for the next activation (if possible)
     this.activationTeamIndex = (this.activationTeamIndex + 1) % this.teamOrder.length;
     this.pickNextActiveUnit();
   }
 
   // --- Helpers ---
-  getUnit(id) { return this.units.find(u => u.id === id) ?? null; }
-  getSelected() { return this.getUnit(this.selectedId); }
+  getUnit(id) {
+    return this.units.find((u) => u.id === id) ?? null;
+  }
+  getSelected() {
+    return this.getUnit(this.selectedId);
+  }
 
   select(id) {
     const u = this.getUnit(id);
@@ -322,31 +439,42 @@ export class Game {
   canActSelected() {
     const u = this.getSelected();
     if (!u) return false;
-    if (u.id !== this.activeUnitId) { this.log("Not the active model."); return false; }
-    if (u.actionsLeft <= 0) { this.log("No actions left."); return false; }
-    if (u.exhausted) { this.log("Model is Exhausted."); return false; }
-    if (u.hp <= 0) { this.log("Model is down."); return false; }
+    if (u.id !== this.activeUnitId) {
+      this.log("Not the active model.");
+      return false;
+    }
+    if (u.actionsLeft <= 0) {
+      this.log("No actions left.");
+      return false;
+    }
+    if (u.exhausted) {
+      this.log("Model is Exhausted.");
+      return false;
+    }
+    if (u.hp <= 0) {
+      this.log("Model is down.");
+      return false;
+    }
     return true;
   }
 
-  // Saving Throw Threshold based on WP tier: 14 / 13 / 11, min 10
   getSaveThreshold(u) {
-    const t = u.tiers.wp;
-    const base = (t === 1) ? 14 : (t === 2) ? 13 : 11;
-    return Math.max(10, base);
+    return savingThrowTargetTier(u.tiers.will);
   }
 
-  // Horror test: d20 + WPmod - horrorTokens vs threshold
   horrorTest(u, reason) {
     const roll = d20(this.rng);
     const total = roll + u.mods.wp - u.horror;
     const thr = this.getSaveThreshold(u);
     const pass = total >= thr;
-    this.log(`${u.name} Horror test (${reason}): d20(${roll})+WP(${u.mods.wp})-H(${u.horror})=${total} vs ${thr} => ${pass ? "PASS" : "FAIL"}`);
+    this.log(
+      `${u.name} Horror test (${reason}): d20(${roll})+WP(${u.mods.wp})-H(${u.horror})=${total} vs ${thr} => ${
+        pass ? "PASS" : "FAIL"
+      }`
+    );
     return { roll, total, thr, pass };
   }
 
-  // 1 horror per model per round cap
   tryGainHorror(u, source) {
     if (u.gainedHorrorThisRound) {
       this.log(`${u.name} would gain Horror (${source}) but is already at 1 Horror this round.`);
@@ -363,11 +491,13 @@ export class Game {
     if (!this.canActSelected()) return;
     const u = this.getSelected();
 
-    // cannot Aim if Suppressed unless Heavy Cover
+    if (this.isEngaged(u)) {
+      this.log(`${u.name} is Engaged and cannot Aim.`);
+      return;
+    }
+
+    // cannot Aim if Suppressed unless Heavy Cover (approx)
     if (u.suppressed) {
-      // treat "in heavy cover" as adjacent to obstacle AND also LOS block would be heavy in getCover
-      // simple: adjacent to obstacle counts as cover; only allow if at least light? user rule says heavy cover, so require "heavy"
-      // We approximate: adjacent obstacle = heavy for aiming permission if at least 2 adjacent obstacles
       const adjObs = [
         this.isObstacle(u.tx + 1, u.ty),
         this.isObstacle(u.tx - 1, u.ty),
@@ -381,11 +511,9 @@ export class Game {
       }
     }
 
-    if (u.actionsLeft <= 0) return;
-
     u.actionsLeft -= 1;
     u.aimStreak = clamp(u.aimStreak + 1, 0, 2);
-    u.aimBonus = (u.aimStreak === 1) ? 1 : (u.aimStreak === 2) ? 3 : 0;
+    u.aimBonus = u.aimStreak === 1 ? 1 : u.aimStreak === 2 ? 3 : 0;
 
     this.log(`${u.name} Aims (streak ${u.aimStreak}) => next Shoot bonus +${u.aimBonus}. Actions left: ${u.actionsLeft}`);
   }
@@ -397,6 +525,7 @@ export class Game {
       this.log("Recover is once per activation.");
       return;
     }
+
     u.actionsLeft -= 1;
     u.recoveredThisActivation = true;
 
@@ -405,7 +534,6 @@ export class Game {
       this.log(`${u.name} Recovers: removes Suppressed.`);
       return;
     }
-
     if (u.horror > 0) {
       u.horror -= 1;
       this.log(`${u.name} Recovers: removes 1 Horror. Horror=${u.horror}`);
@@ -418,19 +546,23 @@ export class Game {
   tryMoveSelected(tx, ty) {
     if (!this.canActSelected()) return;
     const u = this.getSelected();
-    if (this.isObstacle(tx, ty)) { this.log("Blocked by obstacle."); return; }
 
-    // 4-dir move 1 tile (prototype)
+    if (this.isObstacle(tx, ty)) {
+      this.log("Blocked by obstacle.");
+      return;
+    }
+
     const d = manhattan(u.tx, u.ty, tx, ty);
-    if (d !== 1) { this.log("Move 1 tile only (prototype)."); return; }
+    if (d !== 1) {
+      this.log("Move 1 tile only (prototype).");
+      return;
+    }
 
     // Suppressed movement horror test
     if (u.suppressed) {
       const t = this.horrorTest(u, "Suppressed Move");
       if (!t.pass) {
         u.actionsLeft -= 1;
-        // fail adds 1 horror max per round (also global cap)
-        // additionally, cap suppression-sourced horror once/round is naturally covered by global cap; we keep a separate flag anyway
         if (!u.gainedHorrorFromSuppressionThisRound) {
           u.gainedHorrorFromSuppressionThisRound = true;
           this.tryGainHorror(u, "Suppression");
@@ -438,28 +570,59 @@ export class Game {
           this.log(`${u.name} already gained Horror from Suppression this round.`);
         }
         this.log(`${u.name} fails to move (Suppressed). Actions left: ${u.actionsLeft}`);
-        u.aimStreak = 0; u.aimBonus = 0;
+        u.aimStreak = 0;
+        u.aimBonus = 0;
         return;
       }
     }
 
-    u.tx = tx; u.ty = ty;
+    // cannot move onto another unit
+    const occupied = this.units.some((w) => w.hp > 0 && w.tx === tx && w.ty === ty);
+    if (occupied) {
+      this.log("Tile occupied.");
+      return;
+    }
+
+    u.tx = tx;
+    u.ty = ty;
     u.actionsLeft -= 1;
-    u.aimStreak = 0; u.aimBonus = 0;
+    u.aimStreak = 0;
+    u.aimBonus = 0;
     this.log(`${u.name} moves to (${tx},${ty}). Actions left: ${u.actionsLeft}`);
   }
 
-  tryChargeSelected(tx, ty) {
+  // Charge: click enemy tile, move into adjacency if possible, then defender makes Charge Shock test
+  tryChargeAtTile(tx, ty) {
     if (!this.canActSelected()) return;
     const attacker = this.getSelected();
 
-    if (this.isObstacle(tx, ty)) { this.log("Blocked by obstacle."); return; }
+    const target = this.units.find(
+      (u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0
+    );
+    if (!target) {
+      this.log("Charge requires clicking an enemy.");
+      return;
+    }
 
-    // Charge is a move into adjacency with an enemy (prototype: must end adjacent)
-    const d = manhattan(attacker.tx, attacker.ty, tx, ty);
-    if (d !== 1) { this.log("Charge: move 1 tile (prototype)."); return; }
+    const distNow = manhattan(attacker.tx, attacker.ty, target.tx, target.ty);
 
-    // If suppressed, Charge also requires the suppressed move test (per your rule)
+    // already adjacent: still counts as charge for Shock
+    if (distNow === 1) {
+      attacker.actionsLeft -= 1;
+      attacker.aimStreak = 0;
+      attacker.aimBonus = 0;
+      this.log(`${attacker.name} Charges ${target.name} (already in contact).`);
+      this.resolveChargeShock(target);
+      return;
+    }
+
+    // prototype: allow only distance 2 -> one step into adjacency
+    if (distNow !== 2) {
+      this.log("Charge (prototype): target must be distance 1–2.");
+      return;
+    }
+
+    // Suppressed charge horror test
     if (attacker.suppressed) {
       const t = this.horrorTest(attacker, "Suppressed Charge");
       if (!t.pass) {
@@ -467,89 +630,157 @@ export class Game {
         if (!attacker.gainedHorrorFromSuppressionThisRound) {
           attacker.gainedHorrorFromSuppressionThisRound = true;
           this.tryGainHorror(attacker, "Suppression");
-        } else {
-          this.log(`${attacker.name} already gained Horror from Suppression this round.`);
         }
         this.log(`${attacker.name} fails to Charge (Suppressed). Actions left: ${attacker.actionsLeft}`);
-        attacker.aimStreak = 0; attacker.aimBonus = 0;
+        attacker.aimStreak = 0;
+        attacker.aimBonus = 0;
         return;
       }
     }
 
-    // move attacker
-    attacker.tx = tx; attacker.ty = ty;
+    const candidates = [
+      { x: target.tx + 1, y: target.ty },
+      { x: target.tx - 1, y: target.ty },
+      { x: target.tx, y: target.ty + 1 },
+      { x: target.tx, y: target.ty - 1 },
+    ].filter((p) => {
+      if (this.isObstacle(p.x, p.y)) return false;
+      if (this.units.some((u) => u.hp > 0 && u.tx === p.x && u.ty === p.y)) return false;
+      return manhattan(attacker.tx, attacker.ty, p.x, p.y) === 1;
+    });
+
+    if (!candidates.length) {
+      this.log("No open tile to Charge into (blocked).");
+      return;
+    }
+
+    const dest = candidates[0];
+    attacker.tx = dest.x;
+    attacker.ty = dest.y;
     attacker.actionsLeft -= 1;
-    attacker.aimStreak = 0; attacker.aimBonus = 0;
+    attacker.aimStreak = 0;
+    attacker.aimBonus = 0;
 
-    // Find a defender adjacent after charge (prototype: any enemy adjacent)
-    const defender = this.units.find(u =>
-      u.team !== attacker.team &&
-      u.hp > 0 &&
-      manhattan(u.tx, u.ty, attacker.tx, attacker.ty) === 1
-    );
+    this.log(`${attacker.name} Charges into contact with ${target.name}.`);
+    this.resolveChargeShock(target);
+  }
 
-    this.log(`${attacker.name} Charges to (${tx},${ty}).`);
-
-    if (!defender) return;
-
-    // Charge Shock: defender Horror test; on fail +1 Horror and -1 action next activation (min 1)
+  resolveChargeShock(defender) {
     const t = this.horrorTest(defender, "Charge Shock");
     if (!t.pass) {
       this.tryGainHorror(defender, "Charge Shock");
-      defender.actionPenaltyNextActivation = clamp((defender.actionPenaltyNextActivation || 0) + 1, 0, 2);
+      defender.actionPenaltyNextActivation = Math.min(
+        2,
+        (defender.actionPenaltyNextActivation || 0) + 1
+      );
       this.log(`${defender.name} will have –1 Action next activation (min 1).`);
     }
+  }
+
+  tryDisengageSelected() {
+    if (!this.canActSelected()) return;
+    const u = this.getSelected();
+
+    if (!this.isEngaged(u)) {
+      this.log("Not Engaged; Disengage not needed.");
+      return;
+    }
+
+    // Opportunity attack: first adjacent enemy gets a free Fight
+    const enemies = this.getAdjacentEnemies(u);
+    const opp = enemies[0];
+    if (opp) {
+      this.log(`${opp.name} makes an opportunity attack on ${u.name}.`);
+      this.resolveFight(opp, u, { isOpportunity: true });
+      if (u.hp <= 0) return;
+    }
+
+    const options = [
+      { x: u.tx + 1, y: u.ty },
+      { x: u.tx - 1, y: u.ty },
+      { x: u.tx, y: u.ty + 1 },
+      { x: u.tx, y: u.ty - 1 },
+    ].filter((p) => {
+      if (this.isObstacle(p.x, p.y)) return false;
+      if (this.units.some((w) => w.hp > 0 && w.tx === p.x && w.ty === p.y)) return false;
+      return true;
+    });
+
+    if (!options.length) {
+      this.log("No space to Disengage into.");
+      return;
+    }
+
+    const dest = options[0];
+    u.tx = dest.x;
+    u.ty = dest.y;
+    u.actionsLeft -= 1;
+    u.aimStreak = 0;
+    u.aimBonus = 0;
+
+    this.log(`${u.name} Disengages to (${dest.x},${dest.y}). Actions left: ${u.actionsLeft}`);
   }
 
   tryShootAtTile(tx, ty) {
     if (!this.canActSelected()) return;
     const attacker = this.getSelected();
 
-    const target = this.units.find(u => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
-    if (!target) { this.log("No enemy on that tile."); return; }
+    if (this.isEngaged(attacker)) {
+      this.log(`${attacker.name} is Engaged and cannot Shoot. Disengage first.`);
+      return;
+    }
+
+    const target = this.units.find((u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
+    if (!target) {
+      this.log("No enemy on that tile.");
+      return;
+    }
 
     const r = manhattan(attacker.tx, attacker.ty, target.tx, target.ty);
-    if (r > attacker.range) { this.log("Out of range."); return; }
+    if (r > attacker.range) {
+      this.log("Out of range.");
+      return;
+    }
 
-    if (!this.hasLOS(attacker, target)) { this.log("No line of sight (blocked by obstacle)."); return; }
+    if (!this.hasLOS(attacker, target)) {
+      this.log("No line of sight (blocked by obstacle).");
+      return;
+    }
 
     attacker.actionsLeft -= 1;
 
-    // Apply Suppressed when targeted by Shoot (hit or miss)
+    // Suppressed on being targeted (hit or miss)
     if (!target.suppressed) {
       target.suppressed = true;
       this.log(`${target.name} becomes Suppressed (targeted by fire).`);
     }
 
-    // Determine cover penalty
     const cover = this.getCover(attacker, target);
-    const coverPenalty = (cover === "light") ? -1 : (cover === "heavy") ? -3 : 0;
+    const coverPenalty = cover === "light" ? -1 : cover === "heavy" ? -3 : 0;
 
-    // Aim bonus is consumed on shoot
     const aimBonus = attacker.aimBonus || 0;
     attacker.aimStreak = 0;
     attacker.aimBonus = 0;
 
-    // suppressed penalty (to shoot)
     const suppressedPenalty = attacker.suppressed ? -2 : 0;
 
-    // horror penalty already subtracted as -horror
     const roll = d20(this.rng);
+    const total = roll + attacker.mods.shoot + aimBonus + suppressedPenalty + coverPenalty - attacker.horror;
 
-    // Natural 20/1 handling (minimal)
-    const baseTotal = roll + attacker.mods.shoot + aimBonus + suppressedPenalty + coverPenalty - attacker.horror;
-
+    // nat20: auto-hit +1 dmg, save only if heavy cover
     if (roll === 20) {
-      // auto hit, +1 dmg; target may save only if Heavy Cover
       let dmg = 2;
       this.log(`${attacker.name} SHOOT nat20 => auto-hit (+1 dmg).`);
+
       if (cover === "heavy") {
-        const save = d20(this.rng) + target.mods.wp - target.horror;
+        const saveRoll = d20(this.rng);
+        const saveTotal = saveRoll + target.mods.wp - target.horror;
         const thr = this.getSaveThreshold(target);
-        const pass = save >= thr;
-        this.log(`${target.name} Saving Throw (Heavy Cover): d20+WP-H = ${save} vs ${thr} => ${pass ? "PASS" : "FAIL"}`);
-        if (pass) dmg = 1; // reduce by 1 (simple)
+        const pass = saveTotal >= thr;
+        this.log(`${target.name} Saving Throw (Heavy Cover): d20(${saveRoll})+WP(${target.mods.wp})-H(${target.horror})=${saveTotal} vs ${thr} => ${pass ? "PASS" : "FAIL"}`);
+        if (pass) dmg = 1; // simple reduction
       }
+
       target.hp -= dmg;
       this.log(`${target.name} takes ${dmg} damage. HP=${target.hp}`);
       if (target.hp <= 0) this.log(`${target.name} is taken out.`);
@@ -561,8 +792,12 @@ export class Game {
       return;
     }
 
-    const hit = baseTotal >= target.ac;
-    this.log(`${attacker.name} shoots ${target.name}: d20(${roll}) +Shoot(${attacker.mods.shoot}) +Aim(${aimBonus}) +Supp(${suppressedPenalty}) +Cover(${coverPenalty}) -H(${attacker.horror}) = ${baseTotal} vs AC ${target.ac} => ${hit ? "HIT" : "MISS"}`);
+    const hit = total >= target.ac;
+    this.log(
+      `${attacker.name} shoots ${target.name}: d20(${roll}) +Shoot(${attacker.mods.shoot}) +Aim(${aimBonus}) +Supp(${suppressedPenalty}) +Cover(${coverPenalty}) -H(${attacker.horror}) = ${total} vs AC ${target.ac} => ${
+        hit ? "HIT" : "MISS"
+      }`
+    );
 
     if (hit) {
       target.hp -= 1;
@@ -571,41 +806,47 @@ export class Game {
     }
   }
 
+  resolveFight(attacker, target, { isOpportunity = false } = {}) {
+    const roll = d20(this.rng);
+    const total = roll + attacker.mods.fight - attacker.horror;
+
+    if (roll === 20) {
+      target.hp -= 2;
+      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "FIGHT"} nat20 => ${target.name} takes 2. HP=${target.hp}`);
+    } else if (roll === 1) {
+      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "FIGHT"} nat1 => miss.`);
+    } else {
+      const hit = total >= target.ac;
+      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "fights"} ${target.name}: d20(${roll})+Fight(${attacker.mods.fight})-H(${attacker.horror})=${total} vs AC ${target.ac} => ${hit ? "HIT" : "MISS"}`);
+      if (hit) {
+        target.hp -= 1;
+        this.log(`${target.name} takes 1 damage. HP=${target.hp}`);
+      }
+    }
+
+    if (target.hp <= 0) this.log(`${target.name} is taken out.`);
+  }
+
   tryFightAtTile(tx, ty) {
     if (!this.canActSelected()) return;
     const attacker = this.getSelected();
 
-    const target = this.units.find(u => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
-    if (!target) { this.log("No enemy on that tile."); return; }
+    const target = this.units.find((u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
+    if (!target) {
+      this.log("No enemy on that tile.");
+      return;
+    }
 
-    // Must be adjacent
-    const d = manhattan(attacker.tx, attacker.ty, target.tx, target.ty);
-    if (d !== 1) { this.log("Fight requires adjacency."); return; }
+    if (manhattan(attacker.tx, attacker.ty, target.tx, target.ty) !== 1) {
+      this.log("Fight requires engagement range (adjacent).");
+      return;
+    }
 
     attacker.actionsLeft -= 1;
-    attacker.aimStreak = 0; attacker.aimBonus = 0;
+    attacker.aimStreak = 0;
+    attacker.aimBonus = 0;
 
-    const roll = d20(this.rng);
-    const total = roll + attacker.mods.fight - attacker.horror; // horror affects all rolls
-
-    if (roll === 20) {
-      target.hp -= 2;
-      this.log(`${attacker.name} FIGHT nat20 => auto-hit (+1 dmg). ${target.name} HP=${target.hp}`);
-      if (target.hp <= 0) this.log(`${target.name} is taken out.`);
-      return;
-    }
-    if (roll === 1) {
-      this.log(`${attacker.name} FIGHT nat1 => miss.`);
-      return;
-    }
-
-    const hit = total >= target.ac;
-    this.log(`${attacker.name} fights ${target.name}: d20(${roll})+Fight(${attacker.mods.fight})-H(${attacker.horror})=${total} vs AC ${target.ac} => ${hit ? "HIT" : "MISS"}`);
-    if (hit) {
-      target.hp -= 1;
-      this.log(`${target.name} takes 1 damage. HP=${target.hp}`);
-      if (target.hp <= 0) this.log(`${target.name} is taken out.`);
-    }
+    this.resolveFight(attacker, target);
   }
 
   // --- UI picking / coords ---
@@ -653,7 +894,6 @@ export class Game {
     const size = this.getTilePx(canvas);
     const pad = this._pad;
 
-    // background
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -698,8 +938,8 @@ export class Game {
       ctx.fill();
 
       // outline: selected + active
-      ctx.lineWidth = (u.id === this.selectedId) ? 4 : 2;
-      ctx.strokeStyle = (u.id === this.activeUnitId) ? "#111" : "#777";
+      ctx.lineWidth = u.id === this.selectedId ? 4 : 2;
+      ctx.strokeStyle = u.id === this.activeUnitId ? "#111" : "#777";
       ctx.stroke();
 
       // suppressed ring
@@ -711,21 +951,26 @@ export class Game {
         ctx.stroke();
       }
 
+      // engaged indicator (small dot)
+      const engaged = this.isEngaged(u);
+      if (engaged) {
+        ctx.beginPath();
+        ctx.arc(cx + r - 4, cy - r + 4, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#111";
+        ctx.fill();
+      }
+
       // label
       ctx.fillStyle = "#111";
       ctx.font = `${Math.floor(size * 0.28)}px system-ui`;
       ctx.textAlign = "center";
-      ctx.fillText(u.name, cx, cy + r + Math.floor(size * 0.30));
+      ctx.fillText(u.name, cx, cy + r + Math.floor(size * 0.3));
 
-      // tiny HUD: actions
+      // tiny HUD
       ctx.font = `${Math.floor(size * 0.22)}px system-ui`;
       ctx.fillText(`A:${u.actionsLeft} H:${u.horror}`, cx, cy - r - 4);
     }
 
     ctx.restore();
-
-    // status footer
-    ctx.fillStyle = "#111";
-    ctx.font = `${Math.floor(14 * (window.devicePixelRatio || 1))}px system-ui`;
   }
 }
