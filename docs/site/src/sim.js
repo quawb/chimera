@@ -1,976 +1,1580 @@
-// Micro Skirmish Playtester (grid prototype)
-// Features: random obstacles, LOS/cover, alternating activations,
-// Engagement (no shoot/aim while engaged), Charge (click enemy),
-// Disengage (opportunity attack), Suppression + Horror mechanics.
+// src/sim.js
+// Chimera / Micro Skirmish sandbox simulation core
+// Assumptions are minimized; rules implemented per your latest spec.
 
-function mulberry32(seed) {
-  return function () {
-    let t = (seed += 0x6D2B79F5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export const GRID_W = 22;
+export const GRID_H = 14;
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
+export const TEAM_BLUE = "Blue";
+export const TEAM_RED = "Red";
 
-function manhattan(ax, ay, bx, by) {
-  return Math.abs(ax - bx) + Math.abs(ay - by);
-}
+export const TILE_EMPTY = 0;
+export const TILE_HEAVY = 1;   // light gray: can shoot through, applies heavy cover penalty to-hit
+export const TILE_BLOCK = 2;   // dark gray: blocks LoS entirely
 
-function d20(rng) {
-  return 1 + Math.floor(rng() * 20);
-}
+export const ACTIONS_PER_ACTIVATION = 3;
+export const MOVE_PER_ACTION = 2; // grid spaces per action (Move or Charge)
 
-// Bresenham line
-function lineTiles(x0, y0, x1, y1) {
-  const tiles = [];
-  let dx = Math.abs(x1 - x0),
-    sx = x0 < x1 ? 1 : -1;
-  let dy = -Math.abs(y1 - y0),
-    sy = y0 < y1 ? 1 : -1;
-  let err = dx + dy;
+export const MAX_HORROR = 5;
 
-  let x = x0,
-    y = y0;
-  while (true) {
-    tiles.push({ x, y });
-    if (x === x1 && y === y1) break;
-    const e2 = 2 * err;
-    if (e2 >= dy) {
-      err += dy;
-      x += sx;
-    }
-    if (e2 <= dx) {
-      err += dx;
-      y += sy;
-    }
-  }
-  return tiles;
-}
-
-// === Builder-aligned stat tables ===
-const DEF_WILL_TABLE = {
+export const DEF_WILL_TABLE = {
   0: { mod: -2, cost: 0 },
-  1: { mod: 0, cost: 2 },
-  2: { mod: 2, cost: 4 },
-  3: { mod: 4, cost: 8 },
+  1: { mod: 0,  cost: 2 },
+  2: { mod: 2,  cost: 4 },
+  3: { mod: 4,  cost: 8 },
 };
 
-const SHOOT_FIGHT_TABLE = {
+export const SHOOT_FIGHT_TABLE = {
   0: { mod: -2, cost: 0 },
   1: { mod: -2, cost: 0 },
-  2: { mod: 2, cost: 3 },
-  3: { mod: 4, cost: 6 },
+  2: { mod: 2,  cost: 3 },
+  3: { mod: 4,  cost: 6 },
 };
 
-const SAVE_TARGET_BY_WILL = { 0: 14, 1: 14, 2: 13, 3: 11 };
+export const SAVE_TARGET_BY_WILL = { 0: 14, 1: 14, 2: 13, 3: 11 };
 
-function defenseMod(t) {
-  return (DEF_WILL_TABLE[t] ?? DEF_WILL_TABLE[1]).mod;
+export function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+export function randint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+export function rollDie(sides) { return randint(1, sides); }
+export function rollD20() { return rollDie(20); }
+
+export function defenseMod(tier) { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
+export function willMod(tier)    { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
+export function shootMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
+export function fightMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
+
+export function statPointsCost(m) {
+  const d = (DEF_WILL_TABLE[m.defense] ?? DEF_WILL_TABLE[1]).cost;
+  const w = (DEF_WILL_TABLE[m.will] ?? DEF_WILL_TABLE[1]).cost;
+  const s = (SHOOT_FIGHT_TABLE[m.shoot] ?? SHOOT_FIGHT_TABLE[1]).cost;
+  const f = (SHOOT_FIGHT_TABLE[m.fight] ?? SHOOT_FIGHT_TABLE[1]).cost;
+  return d + w + s + f;
 }
-function willMod(t) {
-  return (DEF_WILL_TABLE[t] ?? DEF_WILL_TABLE[1]).mod;
+
+export function woundsTotal(m) {
+  // base wounds = sum of tiers
+  let w = (m.defense ?? 0) + (m.shoot ?? 0) + (m.fight ?? 0) + (m.will ?? 0);
+
+  // mutation: Monstrous (+1 Wound)
+  if (m.mutations?.some(x => (x?.name ?? "").toLowerCase() === "monstrous")) w += 1;
+
+  return w;
 }
-function shootMod(t) {
-  return (SHOOT_FIGHT_TABLE[t] ?? SHOOT_FIGHT_TABLE[1]).mod;
-}
-function fightMod(t) {
-  return (SHOOT_FIGHT_TABLE[t] ?? SHOOT_FIGHT_TABLE[1]).mod;
-}
-function savingThrowTargetTier(willTier) {
-  const base = SAVE_TARGET_BY_WILL[willTier] ?? SAVE_TARGET_BY_WILL[1];
+
+export function equipmentCapacity(m) { return m.defense ?? 0; }
+export function psychicMutationCapacity(m) { return m.will ?? 0; }
+
+export function savingThrowTarget(m) {
+  const base = SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1];
   return Math.max(10, base);
 }
 
-export class Game {
-  constructor({ cols, rows, seed, obstacleDensity = 0.12 }) {
-    this.cols = cols;
-    this.rows = rows;
-    this.seed = seed ?? 1;
-    this.rng = mulberry32(this.seed);
-    this.obstacleDensity = obstacleDensity;
+export function armorClass(m) {
+  let ac = 10 + defenseMod(m.defense ?? 1);
 
-    this.onLog = (msg) => console.log(msg);
+  // accessories / mutations that add AC
+  if (m.accessories?.some(a => (a?.name ?? "").toLowerCase() === "heavy armor")) ac += 1;
+  if (m.mutations?.some(mu => (mu?.name ?? "").toLowerCase() === "chitin armor")) ac += 1;
 
-    this.round = 1;
+  return ac;
+}
 
-    // Alternating activation state (winner chooses later; fixed for prototype)
-    this.teamOrder = ["Blue", "Red"];
-    this.activationTeamIndex = 0;
+export function modelHas(m, nameLower) {
+  const n = nameLower.toLowerCase();
+  const hasAcc = (m.accessories ?? []).some(a => (a?.name ?? "").toLowerCase() === n);
+  const hasMut = (m.mutations ?? []).some(a => (a?.name ?? "").toLowerCase() === n);
+  const hasPsi = (m.psychic ?? []).some(a => (a?.name ?? "").toLowerCase() === n);
+  return hasAcc || hasMut || hasPsi;
+}
 
-    this.units = [];
-    this.activeUnitId = null;
-    this.selectedId = null;
+export function distGrid(a, b) {
+  const dx = (a.tx - b.tx);
+  const dy = (a.ty - b.ty);
+  return Math.sqrt(dx*dx + dy*dy);
+}
 
-    this.newRandomMap();
-    this.randomWarbands();
-    this.startRound();
-  }
+export function distM(a, b) {
+  // 1 M = 2 grid spaces
+  return distGrid(a, b) / 2;
+}
 
-  log(msg) {
-    this.onLog(msg);
-  }
+export function isAdjacent(a, b) {
+  const dx = Math.abs(a.tx - b.tx);
+  const dy = Math.abs(a.ty - b.ty);
+  return (dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0));
+}
 
-  // --- Map / Obstacles ---
-  newRandomMap() {
-    this.grid = Array.from({ length: this.rows }, () =>
-      Array.from({ length: this.cols }, () => 0)
-    );
+export function inBounds(x, y) {
+  return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
+}
 
-    // Keep spawn lanes open (left 3 cols, right 3 cols)
-    for (let y = 0; y < this.rows; y++) {
-      for (let x = 3; x < this.cols - 3; x++) {
-        if (this.rng() < this.obstacleDensity) this.grid[y][x] = 1;
-      }
+export function key(x, y) { return `${x},${y}`; }
+
+export function neighbors8(x, y) {
+  const out = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      if (inBounds(nx, ny)) out.push({ x: nx, y: ny });
     }
-    this.log("Generated random obstacles.");
   }
+  return out;
+}
 
-  isObstacle(tx, ty) {
-    if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return true;
-    return this.grid[ty][tx] === 1;
+// Bresenham line between cell centers.
+// Returns cells visited INCLUDING endpoints.
+export function bresenhamCells(x0, y0, x1, y1) {
+  const cells = [];
+  let dx = Math.abs(x1 - x0);
+  let dy = Math.abs(y1 - y0);
+  let sx = (x0 < x1) ? 1 : -1;
+  let sy = (y0 < y1) ? 1 : -1;
+  let err = dx - dy;
+
+  let x = x0, y = y0;
+  while (true) {
+    cells.push({ x, y });
+    if (x === x1 && y === y1) break;
+    const e2 = 2 * err;
+    if (e2 > -dy) { err -= dy; x += sx; }
+    if (e2 < dx)  { err += dx; y += sy; }
   }
+  return cells;
+}
 
-  hasLOS(attacker, target) {
-    const tiles = lineTiles(attacker.tx, attacker.ty, target.tx, target.ty);
-    for (let i = 1; i < tiles.length - 1; i++) {
-      if (this.isObstacle(tiles[i].x, tiles[i].y)) return false;
+// LoS: center-to-center. Block tiles block completely.
+// Heavy tiles do not block but impose heavy cover penalty.
+// If a diagonal step "clips a corner", count as light cover.
+export function lineOfSight(grid, from, to) {
+  const cells = bresenhamCells(from.tx, from.ty, to.tx, to.ty);
+
+  let blocked = false;
+  let heavyThrough = false;
+  let cornerClipLight = false;
+
+  for (let i = 1; i < cells.length - 1; i++) {
+    const c = cells[i];
+    const t = grid[c.y][c.x];
+    if (t === TILE_BLOCK) { blocked = true; break; }
+    if (t === TILE_HEAVY) heavyThrough = true;
+
+    // corner clip heuristic: if the line makes a diagonal step, and either
+    // of the orthogonally-adjacent cells at that corner is blocking,
+    // treat as "light cover"
+    const prev = cells[i - 1];
+    const next = cells[i + 1];
+    const d1x = c.x - prev.x, d1y = c.y - prev.y;
+    const d2x = next.x - c.x, d2y = next.y - c.y;
+
+    const diagonalStep = (Math.abs(d1x) === 1 && Math.abs(d1y) === 1) || (Math.abs(d2x) === 1 && Math.abs(d2y) === 1);
+    if (diagonalStep) {
+      // check orthogonal corner neighbors around c relative to prev
+      const ox1 = prev.x, oy1 = c.y;
+      const ox2 = c.x, oy2 = prev.y;
+      if (inBounds(ox1, oy1) && grid[oy1][ox1] === TILE_BLOCK) cornerClipLight = true;
+      if (inBounds(ox2, oy2) && grid[oy2][ox2] === TILE_BLOCK) cornerClipLight = true;
     }
-    return true;
   }
 
-  // cover heuristic
-  getCover(attacker, target) {
-    // Heavy cover if obstacle on LOS between them (excluding endpoints)
-    const tiles = lineTiles(attacker.tx, attacker.ty, target.tx, target.ty);
-    for (let i = 1; i < tiles.length - 1; i++) {
-      if (this.isObstacle(tiles[i].x, tiles[i].y)) return "heavy";
-    }
+  return { blocked, heavyThrough, cornerClipLight, cells };
+}
 
-    // Light cover if target adjacent to any obstacle
-    const adj = [
-      { x: target.tx + 1, y: target.ty },
-      { x: target.tx - 1, y: target.ty },
-      { x: target.tx, y: target.ty + 1 },
-      { x: target.tx, y: target.ty - 1 },
-    ];
-    if (adj.some((p) => this.isObstacle(p.x, p.y))) return "light";
-    return "none";
+export function touchingObstacle(grid, m) {
+  // touching = any adjacent (8) tile is an obstacle (heavy or block)
+  const ns = neighbors8(m.tx, m.ty);
+  for (const n of ns) {
+    const t = grid[n.y][n.x];
+    if (t === TILE_BLOCK || t === TILE_HEAVY) return true;
   }
+  return false;
+}
 
-  // --- Engagement ---
-  isEngaged(u) {
-    return this.units.some(
-      (v) =>
-        v.hp > 0 &&
-        v.team !== u.team &&
-        manhattan(u.tx, u.ty, v.tx, v.ty) === 1
-    );
-  }
+export function rollWithMods(ctx, label, baseRollFn, mods, logFn) {
+  const raw = baseRollFn();
+  const totalMods = mods.reduce((a, b) => a + b, 0);
+  const total = raw + totalMods;
+  logFn(`${label}: d20=${raw} ${totalMods ? (totalMods >= 0 ? `+${totalMods}` : `${totalMods}`) : ""} → ${total}`);
+  return { raw, total, totalMods };
+}
 
-  getAdjacentEnemies(u) {
-    return this.units.filter(
-      (v) =>
-        v.hp > 0 &&
-        v.team !== u.team &&
-        manhattan(u.tx, u.ty, v.tx, v.ty) === 1
-    );
-  }
+// Basic name generator (simple but flavorful)
+const NAME_A = ["Ash", "Mire", "Quawb", "Vanta", "Sable", "Hex", "Null", "Gore", "Weld", "Kelo", "Rift", "Pale"];
+const NAME_B = ["Warden", "Mason", "Ghoul", "Clade", "Vox", "Rider", "Splice", "Husk", "Mirror", "Knife", "Oracle", "Drifter"];
+const WB_A = ["The", "House", "Order", "Cult", "Choir", "Syndicate", "Gang", "Circle", "Legion", "Coven", "Assembly"];
+const WB_B = ["of Rust", "of Glass", "of Teeth", "of Echoes", "of Bone", "of Static", "of Ash", "of Ink", "of Rot", "of Cables", "of Night"];
 
-  // --- Units / Warbands ---
-  makeUnitFromTiers({ name, team, tx, ty, tiers = {}, extra = {} }) {
-    // accept either {defense,will,shoot,fight} or older {def,wp,shoot,fight}
-    const defTier = clamp(tiers.defense ?? tiers.def ?? 1, 0, 3);
-    const willTier = clamp(tiers.will ?? tiers.wp ?? 1, 0, 3);
-    const shootTier = clamp(tiers.shoot ?? 1, 0, 3);
-    const fightTier = clamp(tiers.fight ?? 1, 0, 3);
+export function genName() {
+  return `${NAME_A[randint(0, NAME_A.length - 1)]} ${NAME_B[randint(0, NAME_B.length - 1)]}`;
+}
+export function genWarbandName() {
+  return `${WB_A[randint(0, WB_A.length - 1)]} ${WB_B[randint(0, WB_B.length - 1)]}`;
+}
 
-    const mods = {
-      def: defenseMod(defTier),
-      wp: willMod(willTier),
-      shoot: shootMod(shootTier),
-      fight: fightMod(fightTier),
-    };
+// ---------- Data Loading ----------
+export async function loadTables(basePath = "./data") {
+  const get = async (p) => {
+    const res = await fetch(`${basePath}/${p}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch ${p}: HTTP ${res.status}`);
+    const json = await res.json();
+    if (!Array.isArray(json)) throw new Error(`${p} must be an array`);
+    return json;
+  };
 
-    // AC = 10 + Defense Mod + accessory/mutation bonus (not yet computed here)
-    const acBonus = Number(extra.acBonus ?? 0);
-    const ac = 10 + mods.def + acBonus;
+  const tables = {
+    shoot: await get("shoot.json"),
+    fight: await get("fight.json"),
+    accessories: await get("accessories.json"),
+    psychic: await get("psychic_powers.json"),
+    mutations: await get("mutations.json"),
+    warbandTraits: await get("warband_traits.json"),
+    leaderTraits: await get("leader_traits.json"),
+    rules: await get("rules.json").catch(() => []),
+  };
 
-    // Wounds = sum of tiers
-    const hp = defTier + willTier + shootTier + fightTier;
+  return tables;
+}
 
-    return {
-      id: crypto.randomUUID(),
-      name,
-      team,
-      tx,
-      ty,
+// ---------- Random warband generation ----------
+function pickRandom(arr, pred = null) {
+  const list = pred ? arr.filter(pred) : arr.slice();
+  if (!list.length) return null;
+  return list[randint(0, list.length - 1)];
+}
 
-      tiers: { defense: defTier, will: willTier, shoot: shootTier, fight: fightTier },
-      mods,
-      ac,
-      acBonus,
+function sumPoints(arr) {
+  return (arr ?? []).reduce((a, x) => a + (Number(x?.points) || 0), 0);
+}
 
-      hp,
-      range: Number(extra.range ?? 7),
+function weaponPoints(w) {
+  return (Number(w?.points) || 0);
+}
 
-      suppressed: false,
+function tryBuildModel(tables, role, pointCap) {
+  // Randomly allocate tiers first (1–3), then fill gear until cap; reroll invalid loadouts.
+  // Respect capacity: accessories <= defense tier, psi+mut <= will tier.
+  const maxAttempts = 400;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const m = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2),
+      role,
+      name: genName(),
+
+      team: null, // assigned later
+      tx: -1, ty: -1,
+      deployed: false,
+
+      defense: randint(1, 3),
+      shoot: randint(1, 3),
+      fight: randint(1, 3),
+      will: randint(1, 3),
+
+      // loadout objects
+      ranged: null,
+      sidearm: null,
+      melee: null,
+      accessories: [],
+      psychic: [],
+      mutations: [],
+
+      // runtime state
+      woundsMax: 0,
+      wounds: 0,
       exhausted: false,
-
-      horror: 0, // max 5
-      gainedHorrorThisRound: false, // 1 token per model per round cap
-      gainedHorrorFromSuppressionThisRound: false,
-
-      actionsLeft: 3,
-      actionPenaltyNextActivation: 0, // from Charge Shock
-
+      actionsRemaining: ACTIONS_PER_ACTIVATION,
+      actionPenaltyNext: 0, // lose 1 action next activation
+      suppressed: false,
+      horror: 0,
+      horrorGainedThisRound: false,
+      aimConsecutive: 0, // consecutive aim actions this activation
+      aimBonus: 0,       // applied to next ranged attack only
       recoveredThisActivation: false,
-      aimStreak: 0,
-      aimBonus: 0,
-    };
-  }
 
-  clearTeam(team) {
-    this.units = this.units.filter((u) => u.team !== team);
-  }
-
-  loadWarbandFromJson(jsonText, team) {
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonText);
-    } catch {
-      throw new Error("Invalid JSON.");
-    }
-
-    // If builder export object: { members: [...] }
-    if (parsed && typeof parsed === "object" && Array.isArray(parsed.members)) {
-      this.loadWarbandFromBuilderExport(parsed, team);
-      return;
-    }
-
-    if (!Array.isArray(parsed)) {
-      throw new Error("Expected a JSON array OR a builder export object with members[].");
-    }
-
-    this.loadWarbandFromModelArray(parsed, team);
-  }
-
-  loadWarbandFromBuilderExport(warbandObj, team) {
-    this.clearTeam(team);
-
-    const spawnX = team === "Blue" ? 1 : this.cols - 2;
-    const members = warbandObj.members.slice(0, 5);
-
-    let i = 0;
-    for (const m of members) {
-      const nm = String(m.name ?? "").trim();
-      const name = nm || `${team[0]}${i + 1}`;
-      const tx = spawnX;
-      const ty = clamp(2 + i * 2, 0, this.rows - 1);
-
-      const unit = this.makeUnitFromTiers({
-        name,
-        team,
-        tx,
-        ty,
-        tiers: { defense: m.defense, will: m.will, shoot: m.shoot, fight: m.fight },
-        extra: { acBonus: 0 }, // future: derive from accessories/mutations
-      });
-
-      if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
-      this.units.push(unit);
-      i++;
-    }
-
-    this.log(`Loaded ${team} warband from builder export (${members.length} models).`);
-    this.startRound();
-  }
-
-  loadWarbandFromModelArray(arr, team) {
-    this.clearTeam(team);
-    const spawnX = team === "Blue" ? 1 : this.cols - 2;
-
-    let i = 0;
-    for (const m of arr) {
-      const name = String(m.name ?? `${team[0]}${i + 1}`);
-      const ty = clamp(Number(m.ty ?? 2 + i * 2), 0, this.rows - 1);
-      const tx = clamp(Number(m.tx ?? spawnX), 0, this.cols - 1);
-
-      const unit = this.makeUnitFromTiers({
-        name,
-        team,
-        tx,
-        ty,
-        tiers: m.tiers ?? m,
-        extra: { acBonus: Number(m.acBonus ?? 0), range: Number(m.range ?? 7) },
-      });
-
-      if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
-      this.units.push(unit);
-      i++;
-    }
-
-    this.log(`Loaded ${team} warband (${arr.length} models).`);
-    this.startRound();
-  }
-
-  randomWarbands() {
-    this.units = [];
-
-    const makeSide = (team) => {
-      const spawnX = team === "Blue" ? 1 : this.cols - 2;
-      const names = team === "Blue" ? ["A1", "A2", "A3"] : ["B1", "B2", "B3"];
-
-      for (let i = 0; i < names.length; i++) {
-        const unit = this.makeUnitFromTiers({
-          name: names[i],
-          team,
-          tx: spawnX,
-          ty: 2 + i * 3,
-          tiers: {
-            defense: 1 + Math.floor(this.rng() * 3),
-            will: 1 + Math.floor(this.rng() * 3),
-            shoot: 1 + Math.floor(this.rng() * 3),
-            fight: 1 + Math.floor(this.rng() * 3),
-          },
-        });
-
-        if (this.isObstacle(unit.tx, unit.ty)) unit.ty = 1 + (i % (this.rows - 2));
-        this.units.push(unit);
-      }
+      // reroll trackers
+      rerollShootUsed: false,
+      rerollFightUsed: false,
     };
 
-    makeSide("Blue");
-    makeSide("Red");
+    // apply Psychic Scars at creation (start with 1 horror, +1 will mod)
+    // We apply +1 will mod later during rolling, but represent it as a flag:
+    m.hasPsychicScars = false;
 
-    this.log("Generated random warbands.");
-    this.startRound();
-  }
+    // 1) pick ranged weapon (can be "No Ranged Weapon" or anything)
+    // avoid rocket/sniper requiring Aim 2/1 for simplicity? We'll allow them but enforce in logic.
+    m.ranged = pickRandom(tables.shoot);
 
-  // --- Round / Alternating Activation ---
-  startRound() {
-    for (const u of this.units) {
-      u.exhausted = false;
-      u.actionsLeft = 3;
-      u.recoveredThisActivation = false;
-      u.aimStreak = 0;
-      u.aimBonus = 0;
-      u.gainedHorrorThisRound = false;
-      u.gainedHorrorFromSuppressionThisRound = false;
+    // 2) pick melee weapon
+    m.melee = pickRandom(tables.fight);
+
+    // 3) fill accessories up to capacity and cap points
+    const accCap = equipmentCapacity(m);
+    const pmCap = psychicMutationCapacity(m);
+
+    // Determine "core" points (tiers + weapons)
+    const basePts = statPointsCost(m) + weaponPoints(m.ranged) + weaponPoints(m.melee);
+    if (basePts > pointCap) continue;
+
+    // Helper: add random gear while under cap
+    const accPool = tables.accessories.filter(a => (Number(a?.points) || 0) > 0);
+    const psiPool = tables.psychic.filter(p => (Number(p?.points) || 0) > 0);
+    const mutPool = tables.mutations.filter(mu => (Number(mu?.points) || 0) > 0);
+
+    // Choose some psi/mut up to pmCap
+    const pmChoices = [];
+    const totalPmSlots = pmCap;
+    for (let i = 0; i < totalPmSlots; i++) {
+      // 60/40 psi vs mut
+      const choosePsi = Math.random() < 0.6;
+      const pick = choosePsi ? pickRandom(psiPool) : pickRandom(mutPool);
+      if (!pick) continue;
+      pmChoices.push(pick);
     }
 
-    this.activationTeamIndex = 0;
-    this.pickNextActiveUnit(true);
-    this.log(`=== Round ${this.round} begins ===`);
-  }
+    // random subset (sometimes fewer)
+    const pmFinal = pmChoices.filter(() => Math.random() < 0.7);
+    // split into psi/mut, but enforce total slots
+    m.psychic = pmFinal.filter(x => x.power_type || x.range || x.horror_generated !== undefined).slice(0, totalPmSlots);
+    m.mutations = pmFinal.filter(x => x.type !== undefined && x.power_type === undefined).slice(0, Math.max(0, totalPmSlots - m.psychic.length));
 
-  forceNextRound() {
-    this.round += 1;
-    this.startRound();
-  }
-
-  pickNextActiveUnit(isStart = false) {
-    const tA = this.teamOrder[this.activationTeamIndex];
-    const tB = this.teamOrder[(this.activationTeamIndex + 1) % this.teamOrder.length];
-
-    let next =
-      this.units.find((u) => u.team === tA && !u.exhausted && u.hp > 0) ?? null;
-
-    if (!next) {
-      next =
-        this.units.find((u) => u.team === tB && !u.exhausted && u.hp > 0) ?? null;
-      if (next) this.activationTeamIndex = (this.activationTeamIndex + 1) % this.teamOrder.length;
+    // Add Psychic Scars sometimes
+    if (m.mutations.some(mu => (mu?.name ?? "").toLowerCase() === "psychic scars")) {
+      m.hasPsychicScars = true;
+      m.horror = 1;
     }
 
-    if (!next) {
-      if (!isStart) this.log("All models Exhausted (or down). Maintenance -> next round.");
-      this.round += 1;
-      this.startRound();
-      return;
-    }
-
-    this.activeUnitId = next.id;
-    this.selectedId = next.id;
-
-    const penalty = next.actionPenaltyNextActivation || 0;
-    next.actionsLeft = clamp(3 - penalty, 1, 3);
-    next.actionPenaltyNextActivation = 0;
-
-    next.recoveredThisActivation = false;
-    next.aimStreak = 0;
-    next.aimBonus = 0;
-
-    this.log(`Active: ${next.name} (${next.team}) [Actions: ${next.actionsLeft}]`);
-  }
-
-  endActivation() {
-    const u = this.getUnit(this.activeUnitId);
-    if (!u) return;
-
-    u.exhausted = true;
-    u.actionsLeft = 0;
-    u.aimStreak = 0;
-    u.aimBonus = 0;
-
-    this.log(`${u.name} becomes Exhausted.`);
-
-    this.activationTeamIndex = (this.activationTeamIndex + 1) % this.teamOrder.length;
-    this.pickNextActiveUnit();
-  }
-
-  // --- Helpers ---
-  getUnit(id) {
-    return this.units.find((u) => u.id === id) ?? null;
-  }
-  getSelected() {
-    return this.getUnit(this.selectedId);
-  }
-
-  select(id) {
-    const u = this.getUnit(id);
-    if (!u) return;
-    this.selectedId = id;
-    this.log(`Selected ${u.name} (${u.team})`);
-  }
-
-  canActSelected() {
-    const u = this.getSelected();
-    if (!u) return false;
-    if (u.id !== this.activeUnitId) {
-      this.log("Not the active model.");
-      return false;
-    }
-    if (u.actionsLeft <= 0) {
-      this.log("No actions left.");
-      return false;
-    }
-    if (u.exhausted) {
-      this.log("Model is Exhausted.");
-      return false;
-    }
-    if (u.hp <= 0) {
-      this.log("Model is down.");
-      return false;
-    }
-    return true;
-  }
-
-  getSaveThreshold(u) {
-    return savingThrowTargetTier(u.tiers.will);
-  }
-
-  horrorTest(u, reason) {
-    const roll = d20(this.rng);
-    const total = roll + u.mods.wp - u.horror;
-    const thr = this.getSaveThreshold(u);
-    const pass = total >= thr;
-    this.log(
-      `${u.name} Horror test (${reason}): d20(${roll})+WP(${u.mods.wp})-H(${u.horror})=${total} vs ${thr} => ${
-        pass ? "PASS" : "FAIL"
-      }`
-    );
-    return { roll, total, thr, pass };
-  }
-
-  tryGainHorror(u, source) {
-    if (u.gainedHorrorThisRound) {
-      this.log(`${u.name} would gain Horror (${source}) but is already at 1 Horror this round.`);
-      return false;
-    }
-    u.horror = clamp(u.horror + 1, 0, 5);
-    u.gainedHorrorThisRound = true;
-    this.log(`${u.name} gains +1 Horror (${source}). Horror=${u.horror}`);
-    return true;
-  }
-
-  // --- Actions ---
-  tryAimSelected() {
-    if (!this.canActSelected()) return;
-    const u = this.getSelected();
-
-    if (this.isEngaged(u)) {
-      this.log(`${u.name} is Engaged and cannot Aim.`);
-      return;
-    }
-
-    // cannot Aim if Suppressed unless Heavy Cover (approx)
-    if (u.suppressed) {
-      const adjObs = [
-        this.isObstacle(u.tx + 1, u.ty),
-        this.isObstacle(u.tx - 1, u.ty),
-        this.isObstacle(u.tx, u.ty + 1),
-        this.isObstacle(u.tx, u.ty - 1),
-      ].filter(Boolean).length;
-
-      if (adjObs < 2) {
-        this.log(`${u.name} is Suppressed and cannot Aim unless in Heavy Cover (approx).`);
-        return;
+    // Choose accessories up to cap
+    const accFinal = [];
+    for (let i = 0; i < accCap; i++) {
+      if (Math.random() < 0.6) {
+        const a = pickRandom(accPool);
+        if (a) accFinal.push(a);
       }
     }
+    m.accessories = accFinal.slice(0, accCap);
 
-    u.actionsLeft -= 1;
-    u.aimStreak = clamp(u.aimStreak + 1, 0, 2);
-    u.aimBonus = u.aimStreak === 1 ? 1 : u.aimStreak === 2 ? 3 : 0;
+    // Now check points cap and reroll if over
+    const totalPts = basePts + sumPoints(m.accessories) + sumPoints(m.psychic) + sumPoints(m.mutations);
+    if (totalPts > pointCap) continue;
 
-    this.log(`${u.name} Aims (streak ${u.aimStreak}) => next Shoot bonus +${u.aimBonus}. Actions left: ${u.actionsLeft}`);
+    // finalize wounds
+    m.woundsMax = woundsTotal(m);
+    m.wounds = m.woundsMax;
+
+    return { model: m, points: totalPts };
   }
 
-  tryRecoverSelected() {
-    if (!this.canActSelected()) return;
-    const u = this.getSelected();
-    if (u.recoveredThisActivation) {
-      this.log("Recover is once per activation.");
-      return;
-    }
+  return null;
+}
 
-    u.actionsLeft -= 1;
-    u.recoveredThisActivation = true;
+export function randomWarband(tables, team) {
+  const warband = {
+    name: genWarbandName(),
+    team,
+    warbandTrait: pickRandom(tables.warbandTraits),
+    leaderTrait: pickRandom(tables.leaderTraits),
+    models: [],
+  };
 
-    if (u.suppressed) {
-      u.suppressed = false;
-      this.log(`${u.name} Recovers: removes Suppressed.`);
-      return;
-    }
-    if (u.horror > 0) {
-      u.horror -= 1;
-      this.log(`${u.name} Recovers: removes 1 Horror. Horror=${u.horror}`);
-      return;
-    }
+  // Leader ≤ 20
+  let leaderBuilt = tryBuildModel(tables, "Leader", 20);
+  if (!leaderBuilt) leaderBuilt = tryBuildModel(tables, "Leader", 20); // one more try
+  if (!leaderBuilt) throw new Error("Could not build a leader within 20 points after many attempts.");
 
-    this.log(`${u.name} Recovers: nothing to remove.`);
+  const leader = leaderBuilt.model;
+  leader.team = team;
+  leader.isLeader = true;
+
+  // Followers ≤ 75 each
+  const followers = [];
+  for (let i = 0; i < 4; i++) {
+    const built = tryBuildModel(tables, `Follower ${i+1}`, 75);
+    if (!built) throw new Error("Could not build follower within 75 points.");
+    built.model.team = team;
+    built.model.isLeader = false;
+    followers.push(built.model);
   }
 
-  tryMoveSelected(tx, ty) {
-    if (!this.canActSelected()) return;
-    const u = this.getSelected();
+  warband.models = [leader, ...followers];
+  return warband;
+}
 
-    if (this.isObstacle(tx, ty)) {
-      this.log("Blocked by obstacle.");
-      return;
-    }
+// ---------- Import / Export ----------
+export function exportWarbandForSandbox(wb) {
+  // keep a stable export structure the sandbox can re-import
+  return {
+    name: wb.name,
+    team: wb.team,
+    warbandTrait: wb.warbandTrait,
+    leaderTrait: wb.leaderTrait,
+    models: wb.models.map(m => ({
+      id: m.id,
+      role: m.role,
+      name: m.name,
+      team: m.team,
+      defense: m.defense,
+      shoot: m.shoot,
+      fight: m.fight,
+      will: m.will,
+      ranged: m.ranged,
+      melee: m.melee,
+      accessories: m.accessories,
+      psychic: m.psychic,
+      mutations: m.mutations,
+    })),
+  };
+}
 
-    const d = manhattan(u.tx, u.ty, tx, ty);
-    if (d !== 1) {
-      this.log("Move 1 tile only (prototype).");
-      return;
-    }
+export function importWarbandFromAnyJSON(tables, json, teamOverride = null) {
+  // Supports:
+  // (A) builder warband format: { members:[{ defense/shoot/fight/will, weaponIdx, meleeIdx, accessoryIdx, psychicIdx, mutationIdx, name }], ... }
+  // (B) sandbox format: { models:[...], name, team... }
+  // (C) legacy: array of models [{name, team, tx, ty, tiers:{def,wp,shoot,fight}}]
 
-    // Suppressed movement horror test
-    if (u.suppressed) {
-      const t = this.horrorTest(u, "Suppressed Move");
-      if (!t.pass) {
-        u.actionsLeft -= 1;
-        if (!u.gainedHorrorFromSuppressionThisRound) {
-          u.gainedHorrorFromSuppressionThisRound = true;
-          this.tryGainHorror(u, "Suppression");
-        } else {
-          this.log(`${u.name} already gained Horror from Suppression this round.`);
-        }
-        this.log(`${u.name} fails to move (Suppressed). Actions left: ${u.actionsLeft}`);
-        u.aimStreak = 0;
-        u.aimBonus = 0;
-        return;
-      }
-    }
+  const team = teamOverride || (json?.team) || TEAM_BLUE;
 
-    // cannot move onto another unit
-    const occupied = this.units.some((w) => w.hp > 0 && w.tx === tx && w.ty === ty);
-    if (occupied) {
-      this.log("Tile occupied.");
-      return;
-    }
+  // (C) legacy
+  if (Array.isArray(json)) {
+    const models = json.map((r, i) => {
+      const tiers = r.tiers || {};
+      const m = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2),
+        role: i === 0 ? "Leader" : `Follower ${i}`,
+        name: String(r.name ?? genName()),
+        team: String(r.team ?? team),
+        tx: Number.isFinite(r.tx) ? r.tx : -1,
+        ty: Number.isFinite(r.ty) ? r.ty : -1,
+        deployed: Number.isFinite(r.tx) && Number.isFinite(r.ty),
 
-    u.tx = tx;
-    u.ty = ty;
-    u.actionsLeft -= 1;
-    u.aimStreak = 0;
-    u.aimBonus = 0;
-    this.log(`${u.name} moves to (${tx},${ty}). Actions left: ${u.actionsLeft}`);
-  }
+        defense: Number(tiers.def ?? 1),
+        will: Number(tiers.wp ?? 1),
+        shoot: Number(tiers.shoot ?? 1),
+        fight: Number(tiers.fight ?? 1),
 
-  // Charge: click enemy tile, move into adjacency if possible, then defender makes Charge Shock test
-  tryChargeAtTile(tx, ty) {
-    if (!this.canActSelected()) return;
-    const attacker = this.getSelected();
+        ranged: pickRandom(tables.shoot),
+        melee: pickRandom(tables.fight),
+        accessories: [],
+        psychic: [],
+        mutations: [],
 
-    const target = this.units.find(
-      (u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0
-    );
-    if (!target) {
-      this.log("Charge requires clicking an enemy.");
-      return;
-    }
-
-    const distNow = manhattan(attacker.tx, attacker.ty, target.tx, target.ty);
-
-    // already adjacent: still counts as charge for Shock
-    if (distNow === 1) {
-      attacker.actionsLeft -= 1;
-      attacker.aimStreak = 0;
-      attacker.aimBonus = 0;
-      this.log(`${attacker.name} Charges ${target.name} (already in contact).`);
-      this.resolveChargeShock(target);
-      return;
-    }
-
-    // prototype: allow only distance 2 -> one step into adjacency
-    if (distNow !== 2) {
-      this.log("Charge (prototype): target must be distance 1–2.");
-      return;
-    }
-
-    // Suppressed charge horror test
-    if (attacker.suppressed) {
-      const t = this.horrorTest(attacker, "Suppressed Charge");
-      if (!t.pass) {
-        attacker.actionsLeft -= 1;
-        if (!attacker.gainedHorrorFromSuppressionThisRound) {
-          attacker.gainedHorrorFromSuppressionThisRound = true;
-          this.tryGainHorror(attacker, "Suppression");
-        }
-        this.log(`${attacker.name} fails to Charge (Suppressed). Actions left: ${attacker.actionsLeft}`);
-        attacker.aimStreak = 0;
-        attacker.aimBonus = 0;
-        return;
-      }
-    }
-
-    const candidates = [
-      { x: target.tx + 1, y: target.ty },
-      { x: target.tx - 1, y: target.ty },
-      { x: target.tx, y: target.ty + 1 },
-      { x: target.tx, y: target.ty - 1 },
-    ].filter((p) => {
-      if (this.isObstacle(p.x, p.y)) return false;
-      if (this.units.some((u) => u.hp > 0 && u.tx === p.x && u.ty === p.y)) return false;
-      return manhattan(attacker.tx, attacker.ty, p.x, p.y) === 1;
+        woundsMax: 0,
+        wounds: 0,
+        exhausted: false,
+        actionsRemaining: ACTIONS_PER_ACTIVATION,
+        actionPenaltyNext: 0,
+        suppressed: false,
+        horror: 0,
+        horrorGainedThisRound: false,
+        aimConsecutive: 0,
+        aimBonus: 0,
+        recoveredThisActivation: false,
+        rerollShootUsed: false,
+        rerollFightUsed: false,
+        isLeader: (i === 0),
+        hasPsychicScars: false,
+      };
+      m.woundsMax = woundsTotal(m);
+      m.wounds = m.woundsMax;
+      return m;
     });
 
-    if (!candidates.length) {
-      this.log("No open tile to Charge into (blocked).");
-      return;
-    }
-
-    const dest = candidates[0];
-    attacker.tx = dest.x;
-    attacker.ty = dest.y;
-    attacker.actionsLeft -= 1;
-    attacker.aimStreak = 0;
-    attacker.aimBonus = 0;
-
-    this.log(`${attacker.name} Charges into contact with ${target.name}.`);
-    this.resolveChargeShock(target);
-  }
-
-  resolveChargeShock(defender) {
-    const t = this.horrorTest(defender, "Charge Shock");
-    if (!t.pass) {
-      this.tryGainHorror(defender, "Charge Shock");
-      defender.actionPenaltyNextActivation = Math.min(
-        2,
-        (defender.actionPenaltyNextActivation || 0) + 1
-      );
-      this.log(`${defender.name} will have –1 Action next activation (min 1).`);
-    }
-  }
-
-  tryDisengageSelected() {
-    if (!this.canActSelected()) return;
-    const u = this.getSelected();
-
-    if (!this.isEngaged(u)) {
-      this.log("Not Engaged; Disengage not needed.");
-      return;
-    }
-
-    // Opportunity attack: first adjacent enemy gets a free Fight
-    const enemies = this.getAdjacentEnemies(u);
-    const opp = enemies[0];
-    if (opp) {
-      this.log(`${opp.name} makes an opportunity attack on ${u.name}.`);
-      this.resolveFight(opp, u, { isOpportunity: true });
-      if (u.hp <= 0) return;
-    }
-
-    const options = [
-      { x: u.tx + 1, y: u.ty },
-      { x: u.tx - 1, y: u.ty },
-      { x: u.tx, y: u.ty + 1 },
-      { x: u.tx, y: u.ty - 1 },
-    ].filter((p) => {
-      if (this.isObstacle(p.x, p.y)) return false;
-      if (this.units.some((w) => w.hp > 0 && w.tx === p.x && w.ty === p.y)) return false;
-      return true;
-    });
-
-    if (!options.length) {
-      this.log("No space to Disengage into.");
-      return;
-    }
-
-    const dest = options[0];
-    u.tx = dest.x;
-    u.ty = dest.y;
-    u.actionsLeft -= 1;
-    u.aimStreak = 0;
-    u.aimBonus = 0;
-
-    this.log(`${u.name} Disengages to (${dest.x},${dest.y}). Actions left: ${u.actionsLeft}`);
-  }
-
-  tryShootAtTile(tx, ty) {
-    if (!this.canActSelected()) return;
-    const attacker = this.getSelected();
-
-    if (this.isEngaged(attacker)) {
-      this.log(`${attacker.name} is Engaged and cannot Shoot. Disengage first.`);
-      return;
-    }
-
-    const target = this.units.find((u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
-    if (!target) {
-      this.log("No enemy on that tile.");
-      return;
-    }
-
-    const r = manhattan(attacker.tx, attacker.ty, target.tx, target.ty);
-    if (r > attacker.range) {
-      this.log("Out of range.");
-      return;
-    }
-
-    if (!this.hasLOS(attacker, target)) {
-      this.log("No line of sight (blocked by obstacle).");
-      return;
-    }
-
-    attacker.actionsLeft -= 1;
-
-    // Suppressed on being targeted (hit or miss)
-    if (!target.suppressed) {
-      target.suppressed = true;
-      this.log(`${target.name} becomes Suppressed (targeted by fire).`);
-    }
-
-    const cover = this.getCover(attacker, target);
-    const coverPenalty = cover === "light" ? -1 : cover === "heavy" ? -3 : 0;
-
-    const aimBonus = attacker.aimBonus || 0;
-    attacker.aimStreak = 0;
-    attacker.aimBonus = 0;
-
-    const suppressedPenalty = attacker.suppressed ? -2 : 0;
-
-    const roll = d20(this.rng);
-    const total = roll + attacker.mods.shoot + aimBonus + suppressedPenalty + coverPenalty - attacker.horror;
-
-    // nat20: auto-hit +1 dmg, save only if heavy cover
-    if (roll === 20) {
-      let dmg = 2;
-      this.log(`${attacker.name} SHOOT nat20 => auto-hit (+1 dmg).`);
-
-      if (cover === "heavy") {
-        const saveRoll = d20(this.rng);
-        const saveTotal = saveRoll + target.mods.wp - target.horror;
-        const thr = this.getSaveThreshold(target);
-        const pass = saveTotal >= thr;
-        this.log(`${target.name} Saving Throw (Heavy Cover): d20(${saveRoll})+WP(${target.mods.wp})-H(${target.horror})=${saveTotal} vs ${thr} => ${pass ? "PASS" : "FAIL"}`);
-        if (pass) dmg = 1; // simple reduction
-      }
-
-      target.hp -= dmg;
-      this.log(`${target.name} takes ${dmg} damage. HP=${target.hp}`);
-      if (target.hp <= 0) this.log(`${target.name} is taken out.`);
-      return;
-    }
-
-    if (roll === 1) {
-      this.log(`${attacker.name} SHOOT nat1 => critical miss.`);
-      return;
-    }
-
-    const hit = total >= target.ac;
-    this.log(
-      `${attacker.name} shoots ${target.name}: d20(${roll}) +Shoot(${attacker.mods.shoot}) +Aim(${aimBonus}) +Supp(${suppressedPenalty}) +Cover(${coverPenalty}) -H(${attacker.horror}) = ${total} vs AC ${target.ac} => ${
-        hit ? "HIT" : "MISS"
-      }`
-    );
-
-    if (hit) {
-      target.hp -= 1;
-      this.log(`${target.name} takes 1 damage. HP=${target.hp}`);
-      if (target.hp <= 0) this.log(`${target.name} is taken out.`);
-    }
-  }
-
-  resolveFight(attacker, target, { isOpportunity = false } = {}) {
-    const roll = d20(this.rng);
-    const total = roll + attacker.mods.fight - attacker.horror;
-
-    if (roll === 20) {
-      target.hp -= 2;
-      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "FIGHT"} nat20 => ${target.name} takes 2. HP=${target.hp}`);
-    } else if (roll === 1) {
-      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "FIGHT"} nat1 => miss.`);
-    } else {
-      const hit = total >= target.ac;
-      this.log(`${attacker.name} ${isOpportunity ? "OPP" : "fights"} ${target.name}: d20(${roll})+Fight(${attacker.mods.fight})-H(${attacker.horror})=${total} vs AC ${target.ac} => ${hit ? "HIT" : "MISS"}`);
-      if (hit) {
-        target.hp -= 1;
-        this.log(`${target.name} takes 1 damage. HP=${target.hp}`);
-      }
-    }
-
-    if (target.hp <= 0) this.log(`${target.name} is taken out.`);
-  }
-
-  tryFightAtTile(tx, ty) {
-    if (!this.canActSelected()) return;
-    const attacker = this.getSelected();
-
-    const target = this.units.find((u) => u.tx === tx && u.ty === ty && u.team !== attacker.team && u.hp > 0);
-    if (!target) {
-      this.log("No enemy on that tile.");
-      return;
-    }
-
-    if (manhattan(attacker.tx, attacker.ty, target.tx, target.ty) !== 1) {
-      this.log("Fight requires engagement range (adjacent).");
-      return;
-    }
-
-    attacker.actionsLeft -= 1;
-    attacker.aimStreak = 0;
-    attacker.aimBonus = 0;
-
-    this.resolveFight(attacker, target);
-  }
-
-  // --- UI picking / coords ---
-  screenToTile(x, y, canvas) {
-    const size = this.getTilePx(canvas);
-    const tx = Math.floor((x - this._pad) / size);
-    const ty = Math.floor((y - this._pad) / size);
-    if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) return { tx: -1, ty: -1 };
-    return { tx, ty };
-  }
-
-  tileToScreenCenter(tx, ty, canvas) {
-    const size = this.getTilePx(canvas);
     return {
-      x: this._pad + tx * size + size / 2,
-      y: this._pad + ty * size + size / 2,
+      name: `Imported ${team}`,
+      team,
+      warbandTrait: pickRandom(tables.warbandTraits),
+      leaderTrait: pickRandom(tables.leaderTraits),
+      models,
     };
   }
 
-  getTilePx(canvas) {
-    const dpr = window.devicePixelRatio || 1;
-    const pad = 12 * dpr;
-    const usableW = canvas.width - pad * 2;
-    const usableH = canvas.height - pad * 2;
-    const size = Math.floor(Math.min(usableW / this.cols, usableH / this.rows));
-    this._pad = pad;
-    this._size = size;
-    return size;
+  // (B) sandbox
+  if (json && typeof json === "object" && Array.isArray(json.models)) {
+    const wb = {
+      name: String(json.name ?? `Imported ${team}`),
+      team,
+      warbandTrait: json.warbandTrait ?? pickRandom(tables.warbandTraits),
+      leaderTrait: json.leaderTrait ?? pickRandom(tables.leaderTraits),
+      models: [],
+    };
+
+    wb.models = json.models.map((r, i) => {
+      const m = {
+        id: r.id || (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)),
+        role: String(r.role ?? (i === 0 ? "Leader" : `Follower ${i}`)),
+        name: String(r.name ?? genName()),
+        team: teamOverride || String(r.team ?? team),
+        tx: -1, ty: -1,
+        deployed: false,
+
+        defense: Number(r.defense ?? 1),
+        shoot: Number(r.shoot ?? 1),
+        fight: Number(r.fight ?? 1),
+        will: Number(r.will ?? 1),
+
+        ranged: r.ranged ?? pickRandom(tables.shoot),
+        melee: r.melee ?? pickRandom(tables.fight),
+        accessories: Array.isArray(r.accessories) ? r.accessories : [],
+        psychic: Array.isArray(r.psychic) ? r.psychic : [],
+        mutations: Array.isArray(r.mutations) ? r.mutations : [],
+
+        woundsMax: 0,
+        wounds: 0,
+        exhausted: false,
+        actionsRemaining: ACTIONS_PER_ACTIVATION,
+        actionPenaltyNext: 0,
+        suppressed: false,
+        horror: 0,
+        horrorGainedThisRound: false,
+        aimConsecutive: 0,
+        aimBonus: 0,
+        recoveredThisActivation: false,
+        rerollShootUsed: false,
+        rerollFightUsed: false,
+        isLeader: (i === 0),
+        hasPsychicScars: false,
+      };
+
+      if (m.mutations?.some(mu => (mu?.name ?? "").toLowerCase() === "psychic scars")) {
+        m.hasPsychicScars = true;
+        m.horror = 1;
+      }
+
+      m.woundsMax = woundsTotal(m);
+      m.wounds = m.woundsMax;
+      return m;
+    });
+
+    return wb;
   }
 
-  pickUnit(x, y, canvas) {
-    const size = this.getTilePx(canvas);
-    for (const u of this.units) {
-      if (u.hp <= 0) continue;
-      const c = this.tileToScreenCenter(u.tx, u.ty, canvas);
-      const r = Math.max(10, size * 0.28);
-      if (Math.hypot(x - c.x, y - c.y) <= r) return u.id;
+  // (A) builder warband
+  if (json && typeof json === "object" && Array.isArray(json.members)) {
+    const wb = {
+      name: String(json.name ?? `Imported ${team}`),
+      team,
+      warbandTrait: tables.warbandTraits[Number(json.warbandTraitIdx)] ?? pickRandom(tables.warbandTraits),
+      leaderTrait: tables.leaderTraits[Number(json.leaderTraitIdx)] ?? pickRandom(tables.leaderTraits),
+      models: [],
+    };
+
+    wb.models = json.members.map((mem, i) => {
+      const ranged = (mem.weaponIdx === "" || mem.weaponIdx == null) ? null : tables.shoot[Number(mem.weaponIdx)];
+      const melee = (mem.meleeIdx === "" || mem.meleeIdx == null) ? null : tables.fight[Number(mem.meleeIdx)];
+
+      const accessories = Array.isArray(mem.accessoryIdx)
+        ? mem.accessoryIdx.map(n => tables.accessories[Number(n)]).filter(Boolean)
+        : [];
+
+      const psychic = Array.isArray(mem.psychicIdx)
+        ? mem.psychicIdx.map(n => tables.psychic[Number(n)]).filter(Boolean)
+        : [];
+
+      const mutations = Array.isArray(mem.mutationIdx)
+        ? mem.mutationIdx.map(n => tables.mutations[Number(n)]).filter(Boolean)
+        : [];
+
+      const m = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2),
+        role: String(mem.role ?? (i === 0 ? "Leader" : `Follower ${i}`)),
+        name: String(mem.name ?? genName()),
+        team: teamOverride || team,
+
+        tx: -1, ty: -1,
+        deployed: false,
+
+        defense: Number(mem.defense ?? 1),
+        shoot: Number(mem.shoot ?? 1),
+        fight: Number(mem.fight ?? 1),
+        will: Number(mem.will ?? 1),
+
+        ranged: ranged ?? null,
+        melee: melee ?? null,
+        accessories,
+        psychic,
+        mutations,
+
+        woundsMax: 0,
+        wounds: 0,
+        exhausted: false,
+        actionsRemaining: ACTIONS_PER_ACTIVATION,
+        actionPenaltyNext: 0,
+        suppressed: false,
+        horror: 0,
+        horrorGainedThisRound: false,
+        aimConsecutive: 0,
+        aimBonus: 0,
+        recoveredThisActivation: false,
+        rerollShootUsed: false,
+        rerollFightUsed: false,
+        isLeader: (i === 0),
+        hasPsychicScars: false,
+      };
+
+      if (m.mutations?.some(mu => (mu?.name ?? "").toLowerCase() === "psychic scars")) {
+        m.hasPsychicScars = true;
+        m.horror = 1;
+      }
+
+      m.woundsMax = woundsTotal(m);
+      m.wounds = m.woundsMax;
+
+      return m;
+    });
+
+    // ensure ranged/melee exist
+    for (const m of wb.models) {
+      if (!m.ranged) m.ranged = pickRandom(tables.shoot);
+      if (!m.melee) m.melee = pickRandom(tables.fight);
     }
-    return null;
+
+    return wb;
   }
 
-  // --- Draw ---
-  draw(ctx, canvas) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const size = this.getTilePx(canvas);
-    const pad = this._pad;
+  throw new Error("Unrecognized import JSON format.");
+}
 
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// ---------- Map generation ----------
+export function makeEmptyGrid() {
+  const g = [];
+  for (let y = 0; y < GRID_H; y++) {
+    const row = new Array(GRID_W).fill(TILE_EMPTY);
+    g.push(row);
+  }
+  return g;
+}
 
-    ctx.save();
-    ctx.translate(pad, pad);
+export function randomMap() {
+  const g = makeEmptyGrid();
 
-    // grid
-    ctx.strokeStyle = "#eee";
-    for (let x = 0; x <= this.cols; x++) {
-      ctx.beginPath();
-      ctx.moveTo(x * size, 0);
-      ctx.lineTo(x * size, this.rows * size);
-      ctx.stroke();
+  // sprinkle obstacles with some clustering
+  const heavyCount = Math.floor(GRID_W * GRID_H * 0.08);
+  const blockCount = Math.floor(GRID_W * GRID_H * 0.06);
+
+  // keep edges mostly clear for deployment
+  const edgeClear = (x, y) => (x <= 1 || x >= GRID_W - 2);
+
+  const place = (type, count) => {
+    let placed = 0;
+    let tries = 0;
+    while (placed < count && tries < count * 40) {
+      tries++;
+      const x = randint(0, GRID_W - 1);
+      const y = randint(0, GRID_H - 1);
+      if (edgeClear(x, y)) continue;
+      if (g[y][x] !== TILE_EMPTY) continue;
+
+      g[y][x] = type;
+      placed++;
+
+      // small cluster chance
+      if (Math.random() < 0.35) {
+        for (const n of neighbors8(x, y)) {
+          if (placed >= count) break;
+          if (edgeClear(n.x, n.y)) continue;
+          if (g[n.y][n.x] === TILE_EMPTY && Math.random() < 0.35) {
+            g[n.y][n.x] = type;
+            placed++;
+          }
+        }
+      }
     }
-    for (let y = 0; y <= this.rows; y++) {
-      ctx.beginPath();
-      ctx.moveTo(0, y * size);
-      ctx.lineTo(this.cols * size, y * size);
-      ctx.stroke();
+  };
+
+  place(TILE_HEAVY, heavyCount);
+  place(TILE_BLOCK, blockCount);
+
+  return g;
+}
+
+// ---------- Game State ----------
+export function makeGame(tables) {
+  const grid = randomMap();
+
+  const blue = randomWarband(tables, TEAM_BLUE);
+  const red = randomWarband(tables, TEAM_RED);
+
+  const game = {
+    tables,
+    grid,
+    warbands: { [TEAM_BLUE]: blue, [TEAM_RED]: red },
+    models: [...blue.models, ...red.models],
+
+    round: 1,
+    activeTeam: null,
+    waitingFor: "init", // init | pickModel | deploy | action | target
+    activeModelId: null,
+
+    selectedModelId: null,
+    selectedAction: null, // Move|Charge|Shoot|Fight|Disengage|Recover|Aim|Psychic|End
+
+    // per-round trackers
+    log: [],
+  };
+
+  return game;
+}
+
+export function getModel(game, id) {
+  return game.models.find(m => m.id === id) || null;
+}
+
+export function livingModels(game, team = null) {
+  return game.models.filter(m => m.wounds > 0 && (!team || m.team === team));
+}
+
+export function unexhaustedModels(game, team) {
+  return livingModels(game, team).filter(m => !m.exhausted);
+}
+
+export function maxWillModInTeam(game, team) {
+  const ms = livingModels(game, team);
+  if (!ms.length) return 0;
+  let best = -999;
+  for (const m of ms) {
+    let mod = willMod(m.will);
+    if (m.hasPsychicScars) mod += 1;
+    best = Math.max(best, mod);
+  }
+  return best;
+}
+
+export function log(game, s) {
+  game.log.push(s);
+  if (game.log.length > 500) game.log.shift();
+}
+
+// ---------- Turn / round flow ----------
+export function startRound(game) {
+  // reset per-round caps
+  for (const m of livingModels(game)) {
+    m.horrorGainedThisRound = false;
+    m.rerollShootUsed = false;
+    m.rerollFightUsed = false;
+  }
+
+  // if everyone exhausted, clear exhausted
+  const allLiving = livingModels(game);
+  const allExhausted = allLiving.length > 0 && allLiving.every(m => m.exhausted);
+  if (allExhausted) {
+    for (const m of allLiving) m.exhausted = false;
+  }
+
+  const blueMod = maxWillModInTeam(game, TEAM_BLUE);
+  const redMod = maxWillModInTeam(game, TEAM_RED);
+
+  const b = rollDie(20);
+  const r = rollDie(20);
+  const bt = b + blueMod;
+  const rt = r + redMod;
+
+  log(game, `=== Round ${game.round} Initiative ===`);
+  log(game, `Blue rolls d20(${b}) + WPmod(${blueMod}) = ${bt}`);
+  log(game, `Red  rolls d20(${r}) + WPmod(${redMod}) = ${rt}`);
+
+  if (bt > rt) {
+    game.activeTeam = TEAM_BLUE;
+    log(game, `Blue wins initiative and activates first.`);
+  } else if (rt > bt) {
+    game.activeTeam = TEAM_RED;
+    log(game, `Red wins initiative and activates first.`);
+  } else {
+    // tie: re-roll (simple)
+    game.activeTeam = (Math.random() < 0.5) ? TEAM_BLUE : TEAM_RED;
+    log(game, `Tie! Random pick → ${game.activeTeam} activates first.`);
+  }
+
+  game.activeModelId = null;
+  game.waitingFor = "pickModel";
+  game.selectedAction = null;
+}
+
+export function beginActivation(game, model) {
+  game.activeModelId = model.id;
+  model.exhausted = false; // should already be, but safe
+  model.recoveredThisActivation = false;
+  model.aimConsecutive = 0;
+  model.aimBonus = 0;
+
+  const penalty = clamp(model.actionPenaltyNext, 0, 2);
+  model.actionPenaltyNext = 0;
+
+  model.actionsRemaining = clamp(ACTIONS_PER_ACTIVATION - penalty, 1, ACTIONS_PER_ACTIVATION);
+
+  log(game, `--- ${model.team} activates ${model.name} (${model.role}) [${model.actionsRemaining} actions] ---`);
+
+  if (!model.deployed) {
+    log(game, `Deploy: click a tile on your board edge (deployment counts as 1 Move action).`);
+    game.waitingFor = "deploy";
+    return;
+  }
+
+  game.waitingFor = "action";
+}
+
+export function endActivation(game) {
+  const m = getModel(game, game.activeModelId);
+  if (!m) return;
+
+  m.exhausted = true;
+  game.activeModelId = null;
+  game.selectedAction = null;
+
+  // check victory
+  const blueAlive = livingModels(game, TEAM_BLUE).length;
+  const redAlive = livingModels(game, TEAM_RED).length;
+  if (blueAlive === 0 || redAlive === 0) {
+    log(game, `=== GAME OVER: ${blueAlive === 0 ? "Red" : "Blue"} wins! ===`);
+    game.waitingFor = "init";
+    return;
+  }
+
+  // alternate team; if next team has no unexhausted, keep current until both done
+  const nextTeam = (game.activeTeam === TEAM_BLUE) ? TEAM_RED : TEAM_BLUE;
+  const nextHas = unexhaustedModels(game, nextTeam).length > 0;
+  const curHas = unexhaustedModels(game, game.activeTeam).length > 0;
+
+  if (nextHas) {
+    game.activeTeam = nextTeam;
+  } else if (curHas) {
+    // stay
+  } else {
+    // round ends
+    game.round += 1;
+    startRound(game);
+    return;
+  }
+
+  game.waitingFor = "pickModel";
+}
+
+// ---------- Rules helpers ----------
+export function canShoot(game, attacker) {
+  // cannot shoot if engaged
+  for (const e of livingModels(game)) {
+    if (e.team !== attacker.team && e.deployed && isAdjacent(attacker, e)) return false;
+  }
+  return true;
+}
+
+export function engagedEnemies(game, m) {
+  return livingModels(game).filter(e => e.team !== m.team && e.deployed && isAdjacent(m, e));
+}
+
+export function effectiveWillMod(m) {
+  let mod = willMod(m.will);
+  if (m.hasPsychicScars) mod += 1;
+  if (modelHas(m, "psychic focus")) mod += 1;
+  return mod;
+}
+
+export function effectiveShootMod(m) {
+  let mod = shootMod(m.shoot);
+  if (modelHas(m, "targeting reticule")) mod += 1;
+  // horror penalty applied elsewhere
+  return mod;
+}
+
+export function effectiveFightMod(m) {
+  let mod = fightMod(m.fight);
+  if (modelHas(m, "cybernetics")) mod += 1;
+  return mod;
+}
+
+export function horrorPenalty(m) {
+  return -clamp(m.horror ?? 0, 0, MAX_HORROR);
+}
+
+// terrain cover penalties:
+export function terrainCoverPenalty(game, attacker, defender) {
+  // touching obstacle grants light cover (unless defender cannot benefit from cover)
+  if (modelHas(defender, "monstrous")) return 0;
+
+  const touches = touchingObstacle(game.grid, defender);
+  if (!touches) return 0;
+  return -1; // light cover only
+}
+
+export function losAndCover(game, attacker, defender) {
+  const los = lineOfSight(game.grid, attacker, defender);
+  if (los.blocked) return { ok: false, los, coverPenalty: 0 };
+
+  let coverPenalty = 0;
+
+  // heavy cover tiles along the LoS path impose -3
+  if (los.heavyThrough) coverPenalty += -3;
+
+  // corner clip counts as light cover (-1)
+  if (los.cornerClipLight) coverPenalty += -1;
+
+  // touching obstacle but clear LoS = light cover
+  coverPenalty += terrainCoverPenalty(game, attacker, defender);
+
+  return { ok: true, los, coverPenalty };
+}
+
+export function rangePenalty(attacker, defender) {
+  const dM = distM(attacker, defender);
+  if (dM > 3) return -3;
+  if (dM > 2) return -1;
+  return 0;
+}
+
+export function applyDamage(game, target, dmg) {
+  target.wounds = Math.max(0, target.wounds - dmg);
+  log(game, `${target.name} takes ${dmg} damage → ${target.wounds}/${target.woundsMax} wounds`);
+  if (target.wounds <= 0) {
+    log(game, `${target.name} is taken Out of Action!`);
+    // remove from board (keep in list but "dead")
+    target.deployed = false;
+    target.tx = -1; target.ty = -1;
+  }
+}
+
+export function gainHorror(game, m, amount = 1, reason = "") {
+  if (amount <= 0) return;
+
+  // max 1 gained per model per round
+  if (m.horrorGainedThisRound) {
+    log(game, `${m.name} would gain Horror but already gained one this round.`);
+    return;
+  }
+  const before = m.horror;
+  m.horror = clamp(m.horror + amount, 0, MAX_HORROR);
+  m.horrorGainedThisRound = true;
+  log(game, `${m.name} gains ${m.horror - before} Horror${reason ? ` (${reason})` : ""} → ${m.horror}/${MAX_HORROR}`);
+}
+
+export function horrorTest(game, m, label = "Horror test") {
+  const mods = [
+    effectiveWillMod(m),
+    horrorPenalty(m),
+  ];
+  const { raw, total } = rollWithMods(game, `${label} for ${m.name}`, () => rollDie(20), mods, (s) => log(game, s));
+  const target = savingThrowTarget(m);
+  const pass = total >= target;
+  log(game, `${m.name} vs Save ${target} → ${pass ? "PASS" : "FAIL"}`);
+  return { raw, total, pass, target };
+}
+
+// ---------- Action resolution ----------
+export function spendAction(game, m, reason) {
+  m.actionsRemaining = Math.max(0, m.actionsRemaining - 1);
+  m.aimConsecutive = (reason === "Aim") ? (m.aimConsecutive + 1) : 0;
+  if (reason !== "Aim") m.aimBonus = 0; // aim bonus persists only until next ranged attack, but non-aim should break "consecutive aim" anyway.
+}
+
+export function moveModel(game, m, toX, toY) {
+  m.tx = toX; m.ty = toY;
+}
+
+export function isTileOccupied(game, x, y) {
+  return livingModels(game).some(m => m.deployed && m.tx === x && m.ty === y);
+}
+
+export function canStepOn(game, x, y) {
+  if (!inBounds(x, y)) return false;
+  const t = game.grid[y][x];
+  if (t === TILE_BLOCK) return false;
+  // heavy cover is terrain you can stand on (fine)
+  if (isTileOccupied(game, x, y)) return false;
+  return true;
+}
+
+export function tilesWithinChebyshev(fromX, fromY, maxSteps) {
+  const out = [];
+  for (let y = fromY - maxSteps; y <= fromY + maxSteps; y++) {
+    for (let x = fromX - maxSteps; x <= fromX + maxSteps; x++) {
+      if (!inBounds(x, y)) continue;
+      const dx = Math.abs(x - fromX);
+      const dy = Math.abs(y - fromY);
+      const cheb = Math.max(dx, dy);
+      if (cheb <= maxSteps) out.push({ x, y });
+    }
+  }
+  return out;
+}
+
+export function resolveMove(game, m, toX, toY) {
+  if (!m.deployed) return { ok: false, reason: "Not deployed" };
+  if (m.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+
+  // suppressed: must pass horror test to move, else movement fails (action still spent)
+  if (m.suppressed) {
+    const ht = horrorTest(game, m, "Suppressed Move test");
+    if (!ht.pass) {
+      gainHorror(game, m, 1, "Suppressed Move failed");
+      spendAction(game, m, "Move");
+      log(game, `${m.name} fails to move due to suppression.`);
+      return { ok: false, reason: "Suppressed and failed horror test" };
+    }
+  }
+
+  const options = tilesWithinChebyshev(m.tx, m.ty, MOVE_PER_ACTION);
+  const legal = options.some(p => p.x === toX && p.y === toY);
+  if (!legal) return { ok: false, reason: "Out of range" };
+  if (!canStepOn(game, toX, toY)) return { ok: false, reason: "Blocked or occupied" };
+
+  moveModel(game, m, toX, toY);
+  spendAction(game, m, "Move");
+  log(game, `${m.name} moves to (${toX},${toY}). [${m.actionsRemaining} actions left]`);
+  return { ok: true };
+}
+
+export function resolveCharge(game, m, target) {
+  if (!m.deployed) return { ok: false, reason: "Not deployed" };
+  if (m.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (!target || target.team === m.team || target.wounds <= 0 || !target.deployed) return { ok: false, reason: "Invalid target" };
+
+  // charge is a move (2 grid spaces) that must end adjacent (including diagonals)
+  const options = tilesWithinChebyshev(m.tx, m.ty, MOVE_PER_ACTION);
+  // valid end positions: empty tile within range that is adjacent to target
+  const ends = options.filter(p => !isTileOccupied(game, p.x, p.y) && canStepOn(game, p.x, p.y) && isAdjacent({ tx: p.x, ty: p.y }, target));
+  if (!ends.length) return { ok: false, reason: "No reachable engagement position" };
+
+  // choose the end closest to target (simple)
+  ends.sort((a, b) => (Math.abs(a.x - target.tx) + Math.abs(a.y - target.ty)) - (Math.abs(b.x - target.tx) + Math.abs(b.y - target.ty)));
+  const end = ends[0];
+
+  moveModel(game, m, end.x, end.y);
+  spendAction(game, m, "Charge");
+  log(game, `${m.name} charges into engagement with ${target.name} at (${end.x},${end.y}).`);
+
+  // target takes horror test; on fail gains horror + loses 1 action next activation (min 1)
+  const ht = horrorTest(game, target, `Charge Horror test (defender)`);
+  if (!ht.pass) {
+    gainHorror(game, target, 1, "Charged");
+    target.actionPenaltyNext = clamp((target.actionPenaltyNext || 0) + 1, 0, 2);
+    log(game, `${target.name} will lose 1 action next activation (min 1).`);
+  }
+
+  return { ok: true };
+}
+
+export function resolveAim(game, m) {
+  if (m.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (m.suppressed) {
+    log(game, `${m.name} cannot Aim while Suppressed.`);
+    return { ok: false, reason: "Suppressed" };
+  }
+
+  // 1 action => +1
+  // 2 consecutive aim actions => +3
+  spendAction(game, m, "Aim");
+  if (m.aimConsecutive >= 2) {
+    m.aimBonus = 3;
+    log(game, `${m.name} aims (2nd consecutive) → +3 to next Shoot.`);
+  } else {
+    m.aimBonus = 1;
+    log(game, `${m.name} aims → +1 to next Shoot.`);
+  }
+  log(game, `${m.name} [${m.actionsRemaining} actions left]`);
+  return { ok: true };
+}
+
+export function resolveRecover(game, m) {
+  if (m.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (m.recoveredThisActivation) {
+    log(game, `${m.name} already used Recover this activation.`);
+    return { ok: false, reason: "Already recovered" };
+  }
+
+  spendAction(game, m, "Recover");
+  m.recoveredThisActivation = true;
+
+  if (m.horror > 0) {
+    m.horror = Math.max(0, m.horror - 1);
+    log(game, `${m.name} recovers: removes 1 Horror → ${m.horror}/${MAX_HORROR}.`);
+    return { ok: true };
+  }
+  if (m.suppressed) {
+    m.suppressed = false;
+    log(game, `${m.name} recovers: removes Suppressed.`);
+    return { ok: true };
+  }
+
+  log(game, `${m.name} recovers but had nothing to remove.`);
+  return { ok: true };
+}
+
+export function resolveDisengage(game, m, toX, toY) {
+  if (m.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+
+  const enemiesAdj = engagedEnemies(game, m);
+  if (!enemiesAdj.length) {
+    log(game, `${m.name} is not engaged; Disengage does nothing.`);
+    return { ok: false, reason: "Not engaged" };
+  }
+
+  // move within 2, but must end NOT adjacent to any enemy
+  const options = tilesWithinChebyshev(m.tx, m.ty, MOVE_PER_ACTION);
+  const legal = options.some(p => p.x === toX && p.y === toY);
+  if (!legal) return { ok: false, reason: "Out of range" };
+  if (!canStepOn(game, toX, toY)) return { ok: false, reason: "Blocked or occupied" };
+
+  // must end not adjacent to any enemy
+  const endPos = { tx: toX, ty: toY };
+  const adjacentEnemyAfter = livingModels(game).some(e => e.team !== m.team && e.deployed && isAdjacent(endPos, e));
+  if (adjacentEnemyAfter) return { ok: false, reason: "Must end not engaged" };
+
+  // opportunity attack: first adjacent enemy gets a free fight
+  const attacker = enemiesAdj[0];
+  log(game, `${m.name} disengages → ${attacker.name} makes an opportunity attack!`);
+
+  // move happens after the op attack (typical)
+  // resolve a fight attack
+  resolveFightAttack(game, attacker, m, { free: true, label: "Opportunity Attack" });
+
+  // now move
+  moveModel(game, m, toX, toY);
+  spendAction(game, m, "Disengage");
+  log(game, `${m.name} disengages to (${toX},${toY}). [${m.actionsRemaining} actions left]`);
+  return { ok: true };
+}
+
+function weaponReqAim(w) {
+  const nm = String(w?.name ?? "").toLowerCase();
+  if (nm.includes("rocket launcher")) return 2;
+  if (nm.includes("sniper rifle")) return 1;
+  return 0;
+}
+
+function weaponToHitBonusAndPenaltyFromText(attacker, defender, weapon) {
+  // Implement a few weapon-specific modifiers explicitly.
+  // You said weapon-specific modifiers always apply regardless of terrain.
+  let mod = 0;
+  const nm = String(weapon?.name ?? "").toLowerCase();
+  const dM = distM(attacker, defender);
+
+  if (nm.includes("sidearm")) {
+    if (dM > 1) mod += -2;
+  } else if (nm.includes("energy pistol")) {
+    if (dM > 1) mod += -2;
+  } else if (nm.includes("shotgun")) {
+    if (dM > 1) {
+      // "-2 to hit x distance away" : interpret as -2 * ceil(M away beyond 1)
+      const distSteps = Math.ceil(dM);
+      mod += -2 * distSteps;
+    }
+  } else if (nm.includes("sniper rifle")) {
+    // ignores range-based to-hit penalties: we'll remove rangePenalty later by skipping it in caller
+  }
+
+  return mod;
+}
+
+function weaponApDamage(attacker, defender, weapon) {
+  // Handle AP="*" weapons via effect_text and range.
+  let ap = Number(weapon?.ap);
+  let dmg = Number(weapon?.damage) || 0;
+  const nm = String(weapon?.name ?? "").toLowerCase();
+  const dM = distM(attacker, defender);
+
+  if (String(weapon?.ap ?? "") === "*") ap = 0;
+
+  if (nm.includes("energy pistol")) {
+    // Range < 1 = -1 AP (i.e., AP becomes 1 at close range)
+    if (dM < 1) ap = 1;
+  } else if (nm.includes("shotgun")) {
+    // Range < 1 = -1 AP +1 Damage
+    if (dM < 1) { ap = 1; dmg += 1; }
+  }
+
+  return { ap: ap || 0, dmg };
+}
+
+export function resolveShoot(game, attacker, defender) {
+  if (attacker.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (!defender || defender.team === attacker.team || defender.wounds <= 0 || !defender.deployed) return { ok: false, reason: "Invalid target" };
+  if (!canShoot(game, attacker)) {
+    log(game, `${attacker.name} is engaged and cannot Shoot (must Disengage first).`);
+    return { ok: false, reason: "Engaged" };
+  }
+
+  const losInfo = losAndCover(game, attacker, defender);
+  if (!losInfo.ok) {
+    log(game, `${attacker.name} has no Line of Sight to ${defender.name}.`);
+    return { ok: false, reason: "No LoS" };
+  }
+
+  // suppression happens when targeted (hit or miss)
+  defender.suppressed = true;
+  log(game, `${defender.name} becomes Suppressed (targeted by Shoot).`);
+
+  const weapon = attacker.ranged;
+  const reqAim = weaponReqAim(weapon);
+  if (reqAim > 0 && attacker.aimConsecutive < reqAim) {
+    log(game, `${weapon?.name ?? "Weapon"} requires Aim ${reqAim} before firing.`);
+    return { ok: false, reason: "Needs Aim" };
+  }
+
+  const targetAC = armorClass(defender);
+
+  const isSniper = String(weapon?.name ?? "").toLowerCase().includes("sniper rifle");
+  const rangeMod = isSniper ? 0 : rangePenalty(attacker, defender);
+
+  const coverMod = losInfo.coverPenalty;
+
+  const weaponMod = weaponToHitBonusAndPenaltyFromText(attacker, defender, weapon);
+
+  const mods = [
+    effectiveShootMod(attacker),
+    attacker.aimBonus || 0,
+    weaponMod,
+    rangeMod,
+    coverMod,
+    horrorPenalty(attacker),
+  ];
+
+  const { raw, total } = rollWithMods(game, `Shoot to-hit (${attacker.name} → ${defender.name})`, () => rollDie(20), mods, (s) => log(game, s));
+
+  // aim is consumed on shoot attempt
+  attacker.aimBonus = 0;
+  attacker.aimConsecutive = 0;
+
+  spendAction(game, attacker, "Shoot");
+
+  // natural 20: automatic hit, +1 damage, save only if heavy cover
+  const nat20 = (raw === 20);
+  const nat1 = (raw === 1);
+
+  if (nat1) {
+    log(game, `Natural 1 → automatic miss.`);
+    log(game, `${attacker.name} [${attacker.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  let hit = nat20 || (total >= targetAC);
+  log(game, `vs AC ${targetAC} → ${hit ? "HIT" : "MISS"}`);
+
+  if (!hit) {
+    // reroll logic (Extra Eyes: reroll failed Shoot once per round)
+    if (!attacker.rerollShootUsed && modelHas(attacker, "extra eyes")) {
+      attacker.rerollShootUsed = true;
+      log(game, `${attacker.name} uses Extra Eyes to reroll a failed Shoot roll.`);
+      // re-run once with same mods but new d20
+      const rr = rollWithMods(game, `Reroll Shoot to-hit`, () => rollDie(20), mods, (s) => log(game, s));
+      const rrNat20 = (rr.raw === 20);
+      const rrNat1 = (rr.raw === 1);
+      if (rrNat1) {
+        log(game, `Reroll Natural 1 → miss.`);
+        log(game, `${attacker.name} [${attacker.actionsRemaining} actions left]`);
+        return { ok: true };
+      }
+      hit = rrNat20 || (rr.total >= targetAC);
+      log(game, `Reroll vs AC ${targetAC} → ${hit ? "HIT" : "MISS"}`);
+      if (!hit) {
+        log(game, `${attacker.name} [${attacker.actionsRemaining} actions left]`);
+        return { ok: true };
+      }
+      // if rrNat20 apply nat20 behavior
+      if (rrNat20) {
+        return resolveHitDamageAndSave(game, attacker, defender, weapon, { nat20: true, losInfo });
+      }
     }
 
-    // obstacles
-    ctx.fillStyle = "#999";
-    for (let y = 0; y < this.rows; y++) {
-      for (let x = 0; x < this.cols; x++) {
-        if (this.grid[y][x] === 1) {
-          ctx.fillRect(x * size + 2, y * size + 2, size - 4, size - 4);
+    log(game, `${attacker.name} [${attacker.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  return resolveHitDamageAndSave(game, attacker, defender, weapon, { nat20, losInfo });
+}
+
+function resolveHitDamageAndSave(game, attacker, defender, weapon, { nat20, losInfo }) {
+  const { ap, dmg } = weaponApDamage(attacker, defender, weapon);
+  const finalDmg = nat20 ? (dmg + 1) : dmg;
+
+  // Save target reduced by AP (min 10)
+  const baseSave = savingThrowTarget(defender);
+  const saveTarget = Math.max(10, baseSave - (ap || 0));
+
+  const heavyCoverPresent = !!losInfo?.los?.heavyThrough;
+  if (nat20 && !heavyCoverPresent) {
+    log(game, `Natural 20: automatic hit (+1 dmg), no Saving Throw (unless Heavy Cover).`);
+    applyDamage(game, defender, finalDmg);
+    return { ok: true };
+  }
+
+  const mods = [
+    effectiveWillMod(defender),
+    horrorPenalty(defender),
+  ];
+  const { total } = rollWithMods(game, `Saving Throw (${defender.name})`, () => rollDie(20), mods, (s) => log(game, s));
+  const pass = total >= saveTarget;
+
+  log(game, `${defender.name} vs Save ${saveTarget} (base ${baseSave} - AP ${ap || 0}) → ${pass ? "SUCCESS" : "FAIL"}`);
+
+  if (!pass) {
+    applyDamage(game, defender, finalDmg);
+  } else {
+    log(game, `${defender.name} takes no damage.`);
+  }
+
+  return { ok: true };
+}
+
+export function resolveFightAttack(game, attacker, defender, { free = false, label = "Fight" } = {}) {
+  if (!free && attacker.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (!defender || defender.team === attacker.team || defender.wounds <= 0 || !defender.deployed) return { ok: false, reason: "Invalid target" };
+  if (!isAdjacent(attacker, defender)) {
+    log(game, `${attacker.name} is not in engagement with ${defender.name}.`);
+    return { ok: false, reason: "Not engaged" };
+  }
+
+  const weapon = attacker.melee;
+  const targetAC = armorClass(defender);
+
+  let mods = [
+    effectiveFightMod(attacker),
+    horrorPenalty(attacker),
+  ];
+
+  // Unarmed penalty: if unarmed, -2 to hit unless Clawed Limbs mutation
+  const isUnarmed = String(weapon?.name ?? "").toLowerCase().includes("unarmed");
+  if (isUnarmed && !modelHas(attacker, "clawed limbs")) mods.push(-2);
+
+  const { raw, total } = rollWithMods(game, `${label} to-hit (${attacker.name} → ${defender.name})`, () => rollDie(20), mods, (s) => log(game, s));
+  if (!free) spendAction(game, attacker, "Fight");
+
+  const nat20 = (raw === 20);
+  const nat1 = (raw === 1);
+
+  if (nat1) {
+    log(game, `Natural 1 → miss.`);
+    return { ok: true };
+  }
+
+  let hit = nat20 || (total >= targetAC);
+  log(game, `vs AC ${targetAC} → ${hit ? "HIT" : "MISS"}`);
+
+  if (!hit) {
+    // Reinforced Weapon: reroll fight hit roll once per round
+    if (!attacker.rerollFightUsed && modelHas(attacker, "reinforced weapon")) {
+      attacker.rerollFightUsed = true;
+      log(game, `${attacker.name} uses Reinforced Weapon to reroll a failed Fight roll.`);
+      const rr = rollWithMods(game, `Reroll Fight to-hit`, () => rollDie(20), mods, (s) => log(game, s));
+      if (rr.raw === 1) {
+        log(game, `Reroll Natural 1 → miss.`);
+        return { ok: true };
+      }
+      const rrNat20 = (rr.raw === 20);
+      hit = rrNat20 || (rr.total >= targetAC);
+      log(game, `Reroll vs AC ${targetAC} → ${hit ? "HIT" : "MISS"}`);
+      if (!hit) return { ok: true };
+      return resolveMeleeDamageAndSave(game, attacker, defender, weapon, { nat20: rrNat20 });
+    }
+
+    return { ok: true };
+  }
+
+  return resolveMeleeDamageAndSave(game, attacker, defender, weapon, { nat20 });
+}
+
+function resolveMeleeDamageAndSave(game, attacker, defender, weapon, { nat20 }) {
+  const baseSave = savingThrowTarget(defender);
+
+  let ap = Number(weapon?.ap) || 0;
+  let dmg = Number(weapon?.damage) || 0;
+
+  // mutation: Monstrous (+1 melee dmg)
+  if (modelHas(attacker, "monstrous")) dmg += 1;
+
+  const finalDmg = nat20 ? (dmg + 1) : dmg;
+  const saveTarget = Math.max(10, baseSave - ap);
+
+  if (nat20) {
+    // Nat 20 rule says "save only if heavy cover" but in melee heavy cover doesn't make sense.
+    // We'll still allow save normally in melee (consistent with your earlier “fight works same”).
+  }
+
+  const mods = [
+    effectiveWillMod(defender),
+    horrorPenalty(defender),
+  ];
+  const { total } = rollWithMods(game, `Saving Throw (${defender.name})`, () => rollDie(20), mods, (s) => log(game, s));
+  const pass = total >= saveTarget;
+  log(game, `${defender.name} vs Save ${saveTarget} (base ${baseSave} - AP ${ap}) → ${pass ? "SUCCESS" : "FAIL"}`);
+
+  if (!pass) applyDamage(game, defender, finalDmg);
+  else log(game, `${defender.name} takes no damage.`);
+
+  return { ok: true };
+}
+
+// Psychic powers
+export function resolvePsychic(game, caster, power, target, targetPos = null) {
+  if (caster.actionsRemaining <= 0) return { ok: false, reason: "No actions" };
+  if (!power) return { ok: false, reason: "No power selected" };
+
+  const pName = String(power.name ?? "Psychic Power");
+
+  // Some powers are effects:
+  const type = String(power.power_type ?? "").toLowerCase();
+
+  // Horrible Scream: pick one grid box; everyone within 2 grid spaces affected; auto-hit; save or gain 1 horror
+  if (pName.toLowerCase() === "horrible scream") {
+    if (!targetPos) return { ok: false, reason: "Needs target position" };
+    spendAction(game, caster, "Psychic");
+    log(game, `${caster.name} uses Horrible Scream at (${targetPos.x},${targetPos.y}) (AoE radius 2 tiles).`);
+
+    const affected = livingModels(game).filter(m => m.deployed && distGrid({ tx: targetPos.x, ty: targetPos.y }, m) <= 2);
+    for (const m of affected) {
+      const mods = [ effectiveWillMod(m), horrorPenalty(m) ];
+      const { total } = rollWithMods(game, `Save vs Horrible Scream (${m.name})`, () => rollDie(20), mods, (s) => log(game, s));
+      const saveT = savingThrowTarget(m);
+      const pass = total >= saveT;
+      log(game, `${m.name} vs Save ${saveT} → ${pass ? "PASS" : "FAIL"}`);
+      if (!pass) gainHorror(game, m, 1, "Horrible Scream");
+    }
+    log(game, `${caster.name} [${caster.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  // Fear (per your correction): auto-hit; defender saves vs their save target; fail => move 1M away (2 tiles)
+  if (pName.toLowerCase() === "fear") {
+    if (!target || target.team === caster.team) return { ok: false, reason: "Invalid target" };
+    // requires LoS? We'll require LoS if deployed
+    const losInfo = losAndCover(game, caster, target);
+    if (!losInfo.ok) {
+      log(game, `${caster.name} has no LoS to ${target.name} for Fear.`);
+      return { ok: false, reason: "No LoS" };
+    }
+
+    spendAction(game, caster, "Psychic");
+    log(game, `${caster.name} uses Fear on ${target.name} (auto-hit).`);
+
+    const mods = [ effectiveWillMod(target), horrorPenalty(target) ];
+    const { total } = rollWithMods(game, `Saving Throw (${target.name})`, () => rollDie(20), mods, (s) => log(game, s));
+    const saveT = savingThrowTarget(target);
+    const pass = total >= saveT;
+    log(game, `${target.name} vs Save ${saveT} → ${pass ? "SUCCESS" : "FAIL"}`);
+
+    if (!pass) {
+      // move 1M away (2 tiles): choose a tile that increases distance from caster
+      const opts = tilesWithinChebyshev(target.tx, target.ty, MOVE_PER_ACTION)
+        .filter(p => canStepOn(game, p.x, p.y));
+      opts.sort((a, b) => distGrid({ tx: b.x, ty: b.y }, caster) - distGrid({ tx: a.x, ty: a.y }, caster));
+      if (opts.length) {
+        const pick = opts[0];
+        moveModel(game, target, pick.x, pick.y);
+        log(game, `${target.name} flees to (${pick.x},${pick.y}).`);
+      }
+      gainHorror(game, target, 1, "Fear");
+    }
+
+    log(game, `${caster.name} [${caster.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  // Heal: wounds only, within 1M and LoS (or self)
+  if (pName.toLowerCase() === "heal") {
+    // allow self if no target
+    const tgt = target || caster;
+    if (tgt !== caster) {
+      const d = distM(caster, tgt);
+      if (d > 1) return { ok: false, reason: "Out of range" };
+      const losInfo = losAndCover(game, caster, tgt);
+      if (!losInfo.ok) return { ok: false, reason: "No LoS" };
+    }
+
+    spendAction(game, caster, "Psychic");
+    const amt = rollDie(4);
+    tgt.wounds = Math.min(tgt.woundsMax, tgt.wounds + amt);
+    log(game, `${caster.name} casts Heal on ${tgt.name}: heals d4=${amt} → ${tgt.wounds}/${tgt.woundsMax}`);
+    log(game, `${caster.name} [${caster.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  // Inspire: target ally in LoS may immediately free Move or Recover
+  if (pName.toLowerCase() === "inspire") {
+    if (!target || target.team !== caster.team) return { ok: false, reason: "Must target ally" };
+    const losInfo = losAndCover(game, caster, target);
+    if (!losInfo.ok) return { ok: false, reason: "No LoS" };
+
+    spendAction(game, caster, "Psychic");
+    log(game, `${caster.name} casts Inspire on ${target.name}: ${target.name} may immediately Move or Recover.`);
+
+    // Sandbox simplification: we grant an immediate free Recover if they have horror/suppressed; else a free Move 2 tiles toward nearest enemy
+    if (target.horror > 0 || target.suppressed) {
+      const beforeH = target.horror;
+      if (target.horror > 0) target.horror = Math.max(0, target.horror - 1);
+      else target.suppressed = false;
+      log(game, `${target.name} uses Inspire to Recover immediately. Horror ${beforeH}→${target.horror}, Suppressed=${target.suppressed ? "Yes" : "No"}`);
+    } else {
+      const enemies = livingModels(game).filter(e => e.team !== target.team && e.deployed);
+      if (enemies.length) {
+        enemies.sort((a, b) => distGrid(target, a) - distGrid(target, b));
+        const nearest = enemies[0];
+        const opts = tilesWithinChebyshev(target.tx, target.ty, MOVE_PER_ACTION).filter(p => canStepOn(game, p.x, p.y));
+        opts.sort((a, b) => distGrid({ tx: a.x, ty: a.y }, nearest) - distGrid({ tx: b.x, ty: b.y }, nearest));
+        if (opts.length) {
+          moveModel(game, target, opts[0].x, opts[0].y);
+          log(game, `${target.name} uses Inspire to Move to (${opts[0].x},${opts[0].y}).`);
         }
       }
     }
 
-    // units
-    for (const u of this.units) {
-      if (u.hp <= 0) continue;
-      const cx = u.tx * size + size / 2;
-      const cy = u.ty * size + size / 2;
-      const r = Math.max(10, size * 0.28);
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = u.team === "Blue" ? "#1f77b4" : "#d62728";
-      ctx.fill();
-
-      // outline: selected + active
-      ctx.lineWidth = u.id === this.selectedId ? 4 : 2;
-      ctx.strokeStyle = u.id === this.activeUnitId ? "#111" : "#777";
-      ctx.stroke();
-
-      // suppressed ring
-      if (u.suppressed) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#000";
-        ctx.stroke();
-      }
-
-      // engaged indicator (small dot)
-      const engaged = this.isEngaged(u);
-      if (engaged) {
-        ctx.beginPath();
-        ctx.arc(cx + r - 4, cy - r + 4, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#111";
-        ctx.fill();
-      }
-
-      // label
-      ctx.fillStyle = "#111";
-      ctx.font = `${Math.floor(size * 0.28)}px system-ui`;
-      ctx.textAlign = "center";
-      ctx.fillText(u.name, cx, cy + r + Math.floor(size * 0.3));
-
-      // tiny HUD
-      ctx.font = `${Math.floor(size * 0.22)}px system-ui`;
-      ctx.fillText(`A:${u.actionsLeft} H:${u.horror}`, cx, cy - r - 4);
-    }
-
-    ctx.restore();
+    log(game, `${caster.name} [${caster.actionsRemaining} actions left]`);
+    return { ok: true };
   }
+
+  // Blink: place the psychic anywhere (cannot ignore engagement; cannot be placed into engagement)
+  if (pName.toLowerCase() === "blink") {
+    if (!targetPos) return { ok: false, reason: "Needs destination tile" };
+    const dest = { tx: targetPos.x, ty: targetPos.y };
+    if (!canStepOn(game, dest.tx, dest.ty)) return { ok: false, reason: "Blocked or occupied" };
+
+    // cannot be placed into engagement: destination must not be adjacent to any enemy
+    const adjacentEnemy = livingModels(game).some(e => e.team !== caster.team && e.deployed && isAdjacent(dest, e));
+    if (adjacentEnemy) return { ok: false, reason: "Blink cannot place into engagement" };
+
+    spendAction(game, caster, "Psychic");
+    moveModel(game, caster, dest.tx, dest.ty);
+    log(game, `${caster.name} blinks to (${dest.tx},${dest.ty}).`);
+    log(game, `${caster.name} [${caster.actionsRemaining} actions left]`);
+    return { ok: true };
+  }
+
+  // Default psychic attack: d20 + WPmod + modifiers vs AC, target saves like normal
+  if (!target || target.team === caster.team) return { ok: false, reason: "Invalid target" };
+  const losInfo = losAndCover(game, caster, target);
+  if (!losInfo.ok) return { ok: false, reason: "No LoS" };
+
+  const targetAC = armorClass(target);
+  const mods = [
+    effectiveWillMod(caster),
+    horrorPenalty(caster),
+  ];
+
+  const { raw, total } = rollWithMods(game, `Psychic to-hit (${caster.name} → ${target.name})`, () => rollDie(20), mods, (s) => log(game, s));
+  spendAction(game, caster, "Psychic");
+
+  if (raw === 1) {
+    log(game, `Natural 1: Psychic backfires on caster (take 1 damage).`);
+    applyDamage(game, caster, 1);
+    return { ok: true };
+  }
+
+  const hit = (raw === 20) || (total >= targetAC);
+  log(game, `vs AC ${targetAC} → ${hit ? "HIT" : "MISS"}`);
+  if (!hit) return { ok: true };
+
+  // For sandbox default: treat as 1 damage, AP 0 unless power says otherwise
+  let ap = 0;
+  let dmg = 1;
+  if (pName.toLowerCase() === "mind stab") {
+    ap = 3; // "Roll with -3 AP" meaning it reduces save by 3
+    dmg = 1;
+  }
+
+  const baseSave = savingThrowTarget(target);
+  const saveTarget = Math.max(10, baseSave - ap);
+
+  const saveMods = [ effectiveWillMod(target), horrorPenalty(target) ];
+  const save = rollWithMods(game, `Saving Throw (${target.name})`, () => rollDie(20), saveMods, (s) => log(game, s));
+  const pass = save.total >= saveTarget;
+  log(game, `${target.name} vs Save ${saveTarget} (base ${baseSave} - AP ${ap}) → ${pass ? "SUCCESS" : "FAIL"}`);
+
+  if (!pass) applyDamage(game, target, dmg);
+  return { ok: true };
 }
