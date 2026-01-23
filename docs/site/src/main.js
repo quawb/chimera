@@ -1402,6 +1402,21 @@ canvas.addEventListener("click", (ev) => {
   // First: see if click selects a model
   const clickedModel = getAllModels().find(m => !m.dead && m.deployed && m.tx === tx && m.ty === ty) || null;
 
+  // ✅ If we're mid-action (Shoot/Fight/Charge) and click an enemy model,
+  // treat it as a target click instead of "selecting" that model.
+  const active = getModel(game.activeId);
+  if (
+    clickedModel &&
+    active &&
+    game.actionSelected &&
+    (game.actionSelected === "Shoot" || game.actionSelected === "Fight" || game.actionSelected === "Charge") &&
+    clickedModel.team !== active.team
+  ) {
+    resolveBoardClick(tx, ty);
+    return;
+  }
+
+  
   // If no active model, selecting a friendly unexhausted model begins activation (only if it's that team's turn)
   if (clickedModel) {
     game.selectedId = clickedModel.id;
