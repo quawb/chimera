@@ -1419,6 +1419,21 @@ canvas.addEventListener("click", (ev) => {
   
   // If no active model, selecting a friendly unexhausted model begins activation (only if it's that team's turn)
   if (clickedModel) {
+
+  // ✅ If an action is selected and you clicked an enemy model,
+  // treat this click as a target click (Shoot/Fight/Charge), not as selection.
+  const act = getModel(game.activeId);
+  if (
+    act &&
+    game.actionSelected &&
+    (game.actionSelected === "Shoot" || game.actionSelected === "Fight" || game.actionSelected === "Charge") &&
+    clickedModel.team !== act.team
+  ) {
+    resolveBoardClick(tx, ty);
+    return;
+  }
+
+    
     game.selectedId = clickedModel.id;
     renderSelected();
 
