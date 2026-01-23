@@ -281,6 +281,10 @@ function modelsByTeam(team) {
 function enemyTeam(team) {
   return team === "Red" ? "Blue" : "Red";
 }
+function firstActivatableModel(team) {
+  return modelsByTeam(team).find(m => !m.dead && !m.exhausted) || null;
+}
+
 
 function isOccupied(tx, ty) {
   for (const m of getAllModels()) {
@@ -637,11 +641,21 @@ const ACTIONS = ["Move", "Charge", "Shoot", "Fight", "Disengage", "Recover", "Ai
 function setAction(action) {
   if (!ACTIONS.includes(action)) return;
 
-  const active = getModel(game.activeId);
+  let active = getModel(game.activeId);
+
+  // ✅ If nothing is active yet, auto-activate the next available model for the active team.
   if (!active) {
-    log("Select a model to activate first.");
-    return;
+    const next = firstActivatableModel(game.activeTeam);
+    if (!next) {
+      log(`No available models for ${game.activeTeam}.`);
+      return;
+    }
+    game.selectedId = next.id;
+    beginActivation(next);
+    active = next;
+    renderSelected();
   }
+
   if (active.team !== game.activeTeam) {
     log(`It's ${game.activeTeam}'s turn.`);
     return;
@@ -670,7 +684,13 @@ function setAction(action) {
   game.actionSelected = action;
   game.needsTargetClick = true;
   updateButtons();
+
+  // Helpful prompt for deployment
+  if (!active.deployed) {
+    log(`Deploy ${active.name}: click a tile in your deployment zone (Blue = left 2 cols, Red = right 2 cols).`);
+  }
 }
+
 
 function spendAction(model, n = 1) {
   model.actionsLeft = Math.max(0, model.actionsLeft - n);
