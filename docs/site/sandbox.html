@@ -1,7 +1,8 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Micro Skirmish Playtester</title>
   <style>
     body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
@@ -15,50 +16,53 @@
     hr { border: none; border-top: 1px solid #eee; margin: 12px 0; }
   </style>
 </head>
+
 <body>
   <div id="ui">
     <h3>Micro Skirmish</h3>
     <div class="small">
-      Click a unit to select. Click a tile to act (Move/Charge). For Shoot/Fight, click an enemy tile.
+      Click a unit to select. Click an action, then click the board to use it.
+      For Shoot/Fight, click an enemy tile.
     </div>
+
+    <div id="status" class="small" style="margin-top:8px;"></div>
 
     <div class="row">
       <button id="btnMove">Move</button>
       <button id="btnCharge">Charge (click enemy)</button>
     </div>
+
     <div class="row">
       <button id="btnShoot">Shoot</button>
       <button id="btnFight">Fight</button>
     </div>
+
     <div class="row">
       <button id="btnDisengage">Disengage</button>
       <button id="btnRecover">Recover</button>
     </div>
+
     <div class="row">
       <button id="btnAim">Aim</button>
       <button id="btnEndAct">End Activation</button>
     </div>
-
 
     <div class="row">
       <button id="btnNextRound">Next Round (force)</button>
       <button id="btnNewMap">New Random Map</button>
     </div>
 
-
-    <hr />
-
-    <button id="btnNewMap">New Random Map</button>
-
     <hr />
 
     <h4>Warband Import (optional)</h4>
     <div class="small">Paste JSON array of models (see example in code), then load.</div>
     <textarea id="wbJson" placeholder='[{"name":"A1","team":"Blue","tx":2,"ty":3,"tiers":{"def":2,"wp":2,"shoot":2,"fight":2}}]'></textarea>
+
     <div class="row">
       <button id="btnLoadBlue">Load Blue</button>
       <button id="btnLoadRed">Load Red</button>
     </div>
+
     <button id="btnRandomWarbands">Random Warbands</button>
 
     <hr />
@@ -71,6 +75,8 @@
   </div>
 
   <canvas id="c"></canvas>
+
+  <!-- IMPORTANT: this must be served over http:// (not file://) if your JS fetches JSON -->
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
