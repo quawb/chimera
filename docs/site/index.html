@@ -119,11 +119,53 @@
 
     /* --- Compact mode --- */
     body.compact { margin: 16px; }
-    body.compact .row { grid-template-columns: 180px 1fr; gap: 10px; margin-bottom: 8px; }
+    body.compact .row { grid-template-columns: 140px 1fr; gap: 10px; margin-bottom: 8px; }
     body.compact select, body.compact input { font-size: 14px; padding: 6px 8px; }
     body.compact #warbandGrid { gap: 10px; }
     body.compact #warbandGrid > div { padding: 10px !important; }
     body.compact #warbandGrid > div > div { margin-top: 8px !important; }
+
+    /* Compact: "read at a glance" per-model summary */
+body.compact .compactHeadline{
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 2 columns on phone */
+  gap: 6px 10px;
+  font-size: 12px;
+  line-height: 1.15;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+body.compact .compactHeadline .kv{
+  min-width: 0;
+}
+
+body.compact .compactHeadline .k{
+  display: block;
+  font-weight: 800;
+  font-size: 11px;
+  color: #444;
+  margin-bottom: 2px;
+}
+
+body.compact .compactHeadline .v{
+  display: block;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* keeps it inside the card */
+}
+
+/* When the value is long (accessories/powers), allow wrapping instead of overflow */
+body.compact .compactHeadline .v.wrap{
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
 
     /* In-play controls */
     .playbar {
@@ -733,25 +775,100 @@
   }
 
   // NEW: headline shows current wounds + horror
-  function makeStatsHeadline(m) {
-    ensurePlayState(m);
+function makeStatsHeadline(m) {
+  ensurePlayState(m);
+
+  const isCompact = document.body.classList.contains("compact");
+
+  // Helpers to safely get names from loaded tables
+  const safeName = (x) => (x && (x.name ?? x.title ?? x.label)) ? String(x.name ?? x.title ?? x.label) : "";
+  const joinNames = (arr, lookup) =>
+    (arr || [])
+      .map((idx) => safeName(lookup[Number(idx)]))
+      .filter(Boolean)
+      .join(", ");
+
+  // Selected weapon(s)
+  let weaponText = "—";
+  if (m.weaponIdx !== "" && m.weaponIdx !== null && m.weaponIdx !== undefined) {
+    weaponText = safeName(weapons[Number(m.weaponIdx)]) || "—";
+  }
+
+  // Sidearm (only when unlocked + selected)
+  let sidearmText = "";
+  const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
+  if (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx !== null && m.sidearmIdx !== undefined) {
+    sidearmText = safeName(weapons[Number(m.sidearmIdx)]) || "";
+  }
+  if (sidearmText) weaponText += ` / ${sidearmText}`;
+
+  // Accessories, powers, mutations
+  const accText = joinNames(m.accessoryIdx, accessories) || "—";
+  const psiText = joinNames(m.psychicIdx, psychicPowers) || "";
+  const mutText = joinNames(m.mutationIdx, mutations) || "";
+  const psiMutText = (psiText && mutText) ? `${psiText}; ${mutText}` : (psiText || mutText || "—");
+
+  // Core stats
+  const ac = armorClass(m);
+  const saveT = savingThrowTarget(m);
+  const maxW = woundsTotal(m);
+
+  // Modifiers (derived from tier tables)
+  const dMod = defenseMod(m.defense ?? 1);
+  const sMod = shootMod(m.shoot ?? 1);
+  const fMod = fightMod(m.fight ?? 1);
+  const wMod = willMod(m.will ?? 1);
+
+  // Non-compact: keep the old single-line behavior (but slightly improved)
+  if (!isCompact) {
     const line = document.createElement("div");
-    line.style.marginTop = "10px";
+    line.style.marginTop = "8px";
     line.style.padding = "8px 10px";
-    line.style.border = "1px solid #eee";
-    line.style.borderRadius = "10px";
     line.style.background = "#fff";
     line.style.fontSize = "13px";
     line.style.fontWeight = "700";
     line.style.color = "#333";
-
-    const ac = armorClass(m);
-    const saveT = savingThrowTarget(m);
-    const maxW = woundsTotal(m);
-
-    line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${m.woundsCurrent}/${maxW} • Horror ${m.horror}/5`;
+    line.textContent =
+      `Weapon: ${weaponText} • Acc: ${accText} • Psi/Mut: ${psiMutText} • ` +
+      `AC ${ac} • Save ${saveT} • Wounds ${m.woundsCurrent}/${maxW} • Horror ${m.horror}/5 • ` +
+      `Mods D${fmtSigned(dMod)} S${fmtSigned(sMod)} F${fmtSigned(fMod)} W${fmtSigned(wMod)}`;
     return line;
   }
+
+  // Compact: 2-column "at a glance" grid
+  const wrap = document.createElement("div");
+  wrap.className = "compactHeadline";
+
+  const addKV = (k, v, wrapValue = false) => {
+    const kv = document.createElement("div");
+    kv.className = "kv";
+    const kk = document.createElement("span");
+    kk.className = "k";
+    kk.textContent = k;
+    const vv = document.createElement("span");
+    vv.className = "v" + (wrapValue ? " wrap" : "");
+    vv.textContent = v;
+    kv.appendChild(kk);
+    kv.appendChild(vv);
+    wrap.appendChild(kv);
+  };
+
+  addKV("Weapon", weaponText, true);
+  addKV("Accessories", accText, true);
+  addKV("Powers / Mut", psiMutText, true);
+
+  addKV("AC / Save", `AC ${ac} • Save ${saveT}`);
+  addKV("Wounds / Horror", `${m.woundsCurrent}/${maxW} • H ${m.horror}/5`);
+  addKV("Mods", `D${fmtSigned(dMod)} S${fmtSigned(sMod)} F${fmtSigned(fMod)} W${fmtSigned(wMod)}`);
+
+  return wrap;
+
+  function fmtSigned(n) {
+    const v = Number(n) || 0;
+    return (v >= 0 ? `+${v}` : `${v}`);
+  }
+}
+
 
   // NEW: show/hide list above grid
   function renderModelVisibilityControls() {
