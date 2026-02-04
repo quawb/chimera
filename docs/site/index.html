@@ -1,4 +1,4 @@
-<!doctype html> 
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,203 +6,209 @@
   <title>Chimera — Warband Builder (Prototype)</title>
 
   <div class="sub">
-  <a href="./rules.html">Rules</a>
-</div>
-
-    <div class="sub">
-  <a href="./sandbox.html">Sandbox</a>
-</div>
-
-<div class="card" style="margin-top:12px;">
-  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-    <div style="font-weight:900;">Dice</div>
-
-    <button id="rollD20Btn" type="button"
-      style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
-      Roll d20
-    </button>
-
-    <div style="display:flex; gap:8px; align-items:baseline;">
-      <div style="color:#666;">Result</div>
-      <div id="d20Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
-    </div>
-
-    <button id="clearRollsBtn" type="button"
-      style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
-      Clear
-    </button>
+    <a href="./rules.html">Rules</a>
   </div>
 
-  <div id="d20History" style="margin-top:10px; color:#444; font-size:14px;"></div>
-</div>
+  <div class="sub">
+    <a href="./sandbox.html">Sandbox</a>
+  </div>
 
+  <div class="card" style="margin-top:12px;">
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div style="font-weight:900;">Dice</div>
+
+      <button id="rollD20Btn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Roll d20
+      </button>
+
+      <div style="display:flex; gap:8px; align-items:baseline;">
+        <div style="color:#666;">Result</div>
+        <div id="d20Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
+      </div>
+
+      <button id="clearRollsBtn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Clear
+      </button>
+    </div>
+
+    <div id="d20History" style="margin-top:10px; color:#444; font-size:14px;"></div>
+  </div>
 
   <style>
-
     /* Dice animation */
-.dice-result {
-  display: inline-block;
-  min-width: 2ch;
-}
+    .dice-result { display: inline-block; min-width: 2ch; }
+    .dice-rolling { animation: diceSpin 0.45s ease-in-out; }
+    @keyframes diceSpin {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      25%  { transform: translateY(-4px) rotate(6deg) scale(1.08); opacity: 0.9; }
+      50%  { transform: translateY(2px) rotate(-6deg) scale(0.98); opacity: 0.9; }
+      75%  { transform: translateY(-2px) rotate(3deg) scale(1.04); opacity: 1; }
+      100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    }
 
-.dice-rolling {
-  animation: diceSpin 0.45s ease-in-out;
-}
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 24px;
+      line-height: 1.35;
+    }
+    h1 { margin: 0 0 8px; }
+    .sub { color: #444; margin: 0 0 24px; }
 
-@keyframes diceSpin {
-  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-  25%  { transform: translateY(-4px) rotate(6deg) scale(1.08); opacity: 0.9; }
-  50%  { transform: translateY(2px) rotate(-6deg) scale(0.98); opacity: 0.9; }
-  75%  { transform: translateY(-2px) rotate(3deg) scale(1.04); opacity: 1; }
-  100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-}
+    .row {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
 
-    
-  body {
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    margin: 24px;
-    line-height: 1.35;
-  }
-  h1 { margin: 0 0 8px; }
-  .sub { color: #444; margin: 0 0 24px; }
+    select, input { font-size: 16px; padding: 8px; }
 
-  .row {
-    display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 16px;
+      max-width: none;
+    }
 
-  select, input { font-size: 16px; padding: 8px; }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      align-items: start;
+      margin-top: 12px;
+    }
 
-  /* IMPORTANT: remove max-width so the page can grow */
-  .card {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 14px;
-    margin-top: 16px;
-    max-width: none;   /* was 820px */
-  }
+    .pill {
+      display: inline-block;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin: 4px 6px 0 0;
+      font-size: 14px;
+    }
+    .warn { color: #8a1f11; font-weight: 600; }
+    .ok { color: #0b5; font-weight: 600; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
 
-  /* If you're still using .grid somewhere, make it responsive too */
-  .grid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    align-items: start;
-    margin-top: 12px;
-  }
+    #warbandGrid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      align-items: start;
+    }
+    #warbandGrid > div { min-width: 0; overflow: hidden; }
+    #warbandGrid input, #warbandGrid select, #warbandGrid button {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    #warbandGrid > div > div:first-child { flex-wrap: wrap; }
 
-  .pill {
-    display: inline-block;
-    border: 1px solid #ddd;
-    border-radius: 999px;
-    padding: 4px 10px;
-    margin: 4px 6px 0 0;
-    font-size: 14px;
-  }
-  .warn { color: #8a1f11; font-weight: 600; }
-  .ok { color: #0b5; font-weight: 600; }
-  code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
-
-  /* Warband grid truly responsive */
-  #warbandGrid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    align-items: start;
-  }
-
-  /* Prevent any card content from overflowing into other columns */
-  #warbandGrid > div {
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  /* Make inputs/selects behave inside narrow cards */
-  #warbandGrid input,
-  #warbandGrid select,
-  #warbandGrid button {
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Make the header area wrap instead of pushing outside the card */
-  #warbandGrid > div > div:first-child {
-    flex-wrap: wrap;
-  }
-
-/* Compact inputs for warband name + point cap */
-#warbandName {
-  max-width: 280px;
-  padding: 6px 8px;
-  font-size: 14px;
-}
-
-#pointCap {
-  max-width: 96px;
-  padding: 6px 8px;
-  font-size: 14px;
-}
+    #warbandName { max-width: 280px; padding: 6px 8px; font-size: 14px; }
+    #pointCap { max-width: 96px; padding: 6px 8px; font-size: 14px; }
 
     /* --- Compact mode --- */
-body.compact {
-  margin: 16px;
-}
+    body.compact { margin: 16px; }
+    body.compact .row { grid-template-columns: 180px 1fr; gap: 10px; margin-bottom: 8px; }
+    body.compact select, body.compact input { font-size: 14px; padding: 6px 8px; }
+    body.compact #warbandGrid { gap: 10px; }
+    body.compact #warbandGrid > div { padding: 10px !important; }
+    body.compact #warbandGrid > div > div { margin-top: 8px !important; }
 
-body.compact .row {
-  grid-template-columns: 180px 1fr;
-  gap: 10px;
-  margin-bottom: 8px;
-}
+    /* In-play controls */
+    .playbar {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .playrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #fff;
+      user-select: none;
+    }
+    .counter button {
+      width: 30px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .counter .val {
+      min-width: 48px;
+      text-align: center;
+      font-weight: 900;
+    }
+    .smallBtn {
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
 
-body.compact select,
-body.compact input {
-  font-size: 14px;
-  padding: 6px 8px;
-}
-
-body.compact #warbandGrid {
-  gap: 10px;
-}
-
-/* Each card in the grid (your cards are divs appended into warbandGrid) */
-body.compact #warbandGrid > div {
-  padding: 10px !important;
-}
-
-/* Tighten spacing inside cards */
-body.compact #warbandGrid > div > div {
-  margin-top: 8px !important;
-}
-
-
-    
-</style>
-
-
+    /* Card visibility toggles */
+    #modelVisibility {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+    #modelVisibility .mvGrid{
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px 12px;
+    }
+    #modelVisibility label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      user-select:none;
+      font-size: 13px;
+      color:#333;
+    }
+  </style>
 </head>
 
 <body>
   <h1>Chimera Builder (Prototype)</h1>
-
 
   <div class="row">
     <label for="pointCap"><strong>Point Cap</strong></label>
     <input id="pointCap" type="number" value="75" min="0" step="1" />
   </div>
 
-<div class="row" style="margin-top:10px;">
-  <label><strong>Display</strong></label>
-  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
-    <input id="compactToggle" type="checkbox" />
-    Compact mode
-  </label>
-</div>
+  <div class="row" style="margin-top:10px;">
+    <label><strong>Display</strong></label>
+    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+      <input id="compactToggle" type="checkbox" />
+      Compact mode
+    </label>
+  </div>
 
-
-    <div class="card">
+  <div class="card">
     <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
       <div>
         <div style="font-size:18px; font-weight:800;">Warband</div>
@@ -214,25 +220,29 @@ body.compact #warbandGrid > div > div {
       </div>
     </div>
 
-<div class="row" style="margin-top:10px;">
-  <label for="warbandName"><strong>Warband Name</strong></label>
-  <input id="warbandName" type="text" placeholder="e.g., The Quawb Cult" style="width:100%;" />
-</div>
+    <div class="row" style="margin-top:10px;">
+      <label for="warbandName"><strong>Warband Name</strong></label>
+      <input id="warbandName" type="text" placeholder="e.g., The Quawb Cult" style="width:100%;" />
+    </div>
 
-      
-      <div class="row" style="margin-top:10px;">
-  <label for="warbandTraitSelect"><strong>Warband Trait</strong></label>
-  <select id="warbandTraitSelect"></select>
-        <div id="warbandTraitDesc" style="margin-top:6px; color:#444; font-size:13px;"></div>
-</div>
+    <div class="row" style="margin-top:10px;">
+      <label for="warbandTraitSelect"><strong>Warband Trait</strong></label>
+      <select id="warbandTraitSelect"></select>
+      <div id="warbandTraitDesc" style="margin-top:6px; color:#444; font-size:13px;"></div>
+    </div>
 
-<div class="row" style="margin-top:10px;">
-  <label for="leaderTraitSelect"><strong>Leader Trait</strong></label>
-  <select id="leaderTraitSelect"></select>
-    <div id="leaderTraitDesc" style="margin-top:6px; color:#444; font-size:13px;"></div>
-</div>
+    <div class="row" style="margin-top:10px;">
+      <label for="leaderTraitSelect"><strong>Leader Trait</strong></label>
+      <select id="leaderTraitSelect"></select>
+      <div id="leaderTraitDesc" style="margin-top:6px; color:#444; font-size:13px;"></div>
+    </div>
 
-      
+    <!-- NEW: per-model show/hide -->
+    <div id="modelVisibility" style="display:none;">
+      <div style="font-weight:900;">Show / hide model cards</div>
+      <div class="mvGrid" id="modelVisibilityGrid"></div>
+    </div>
+
     <div id="warbandGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-top:14px;"></div>
 
     <div style="margin-top:14px;">
@@ -255,7 +265,6 @@ body.compact #warbandGrid > div > div {
     </div>
   </div>
 
-
   <div class="card" id="errorCard" style="display:none;">
     <div class="warn">Could not load shoot.json</div>
     <p id="errorText" style="margin:8px 0 0;"></p>
@@ -266,15 +275,12 @@ body.compact #warbandGrid > div > div {
 
 <script>
   const els = {
-
     rollD20Btn: document.getElementById("rollD20Btn"),
     clearRollsBtn: document.getElementById("clearRollsBtn"),
     d20Result: document.getElementById("d20Result"),
     d20History: document.getElementById("d20History"),
 
-
     compactToggle: document.getElementById("compactToggle"),
-
     warbandName: document.getElementById("warbandName"),
 
     pointCap: document.getElementById("pointCap"),
@@ -284,10 +290,8 @@ body.compact #warbandGrid > div > div {
 
     warbandTraitSelect: document.getElementById("warbandTraitSelect"),
     leaderTraitSelect: document.getElementById("leaderTraitSelect"),
-
     warbandTraitDesc: document.getElementById("warbandTraitDesc"),
     leaderTraitDesc: document.getElementById("leaderTraitDesc"),
-
 
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
@@ -299,28 +303,21 @@ body.compact #warbandGrid > div > div {
     closeIoBtn: document.getElementById("closeIoBtn"),
     ioMsg: document.getElementById("ioMsg"),
 
+    modelVisibility: document.getElementById("modelVisibility"),
+    modelVisibilityGrid: document.getElementById("modelVisibilityGrid"),
+
     errorCard: document.getElementById("errorCard"),
     errorText: document.getElementById("errorText"),
   };
 
-  const diceState = {
-  history: [] // newest first
-};
-
-function rollDie(sides) {
-  return Math.floor(Math.random() * sides) + 1;
-}
-
-function renderDice() {
-  if (els.d20History) {
-    if (!diceState.history.length) {
-      els.d20History.textContent = "History: —";
-    } else {
-      els.d20History.textContent = "History: " + diceState.history.join(", ");
-    }
+  const diceState = { history: [] }; // newest first
+  function rollDie(sides) { return Math.floor(Math.random() * sides) + 1; }
+  function renderDice() {
+    if (!els.d20History) return;
+    els.d20History.textContent = diceState.history.length
+      ? "History: " + diceState.history.join(", ")
+      : "History: —";
   }
-}
-
 
   function toIntOrNull(v) {
     if (v === null || v === undefined) return null;
@@ -331,25 +328,18 @@ function renderDice() {
   }
 
   // UI preferences
-const uiPrefs = {
-  compact: false
-};
-
-function applyCompactMode(on) {
-  uiPrefs.compact = !!on;
-  document.body.classList.toggle("compact", uiPrefs.compact);
-  try {
-    localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0");
-  } catch {}
-}
-
-function loadCompactPref() {
-  try {
-    const v = localStorage.getItem("chimera_compact");
-    if (v === "1") uiPrefs.compact = true;
-  } catch {}
-}
-
+  const uiPrefs = { compact: false };
+  function applyCompactMode(on) {
+    uiPrefs.compact = !!on;
+    document.body.classList.toggle("compact", uiPrefs.compact);
+    try { localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0"); } catch {}
+  }
+  function loadCompactPref() {
+    try {
+      const v = localStorage.getItem("chimera_compact");
+      if (v === "1") uiPrefs.compact = true;
+    } catch {}
+  }
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -360,190 +350,13 @@ function loadCompactPref() {
       .replaceAll("'", "&#039;");
   }
 
-    function getTextField(obj, keys) {
+  function getTextField(obj, keys) {
     for (const k of keys) {
       const v = obj?.[k];
       if (v !== undefined && v !== null && String(v).trim() !== "") return String(v);
     }
     return "";
   }
-
-  function makeDetailsBox(title, item, fieldSpecs) {
-    const box = document.createElement("div");
-    box.style.marginTop = "8px";
-    box.style.padding = "8px 10px";
-    box.style.border = "1px solid #eee";
-    box.style.borderRadius = "10px";
-    box.style.background = "#fafafa";
-    box.style.fontSize = "13px";
-
-    const head = document.createElement("div");
-    head.style.fontWeight = "900";
-    head.textContent = title;
-    box.appendChild(head);
-
-    if (!item) {
-      const none = document.createElement("div");
-      none.style.marginTop = "6px";
-      none.style.color = "#666";
-      none.textContent = "—";
-      box.appendChild(none);
-      return box;
-    }
-
-    const rows = document.createElement("div");
-    rows.style.marginTop = "6px";
-    rows.style.display = "grid";
-    rows.style.gridTemplateColumns = "120px 1fr";
-    rows.style.gap = "4px 10px";
-
-    for (const spec of fieldSpecs) {
-      const raw = (typeof spec.value === "function") ? spec.value(item) : item?.[spec.value];
-      if (raw === undefined || raw === null || String(raw).trim() === "") continue;
-
-      const label = document.createElement("div");
-      label.style.color = "#555";
-      label.textContent = spec.label;
-
-      const val = document.createElement("div");
-      val.style.fontWeight = "600";
-      val.textContent = String(raw);
-
-      rows.appendChild(label);
-      rows.appendChild(val);
-    }
-
-    // Effect text (common across your tables)
-    const effect = getTextField(item, ["effect_text", "effect", "rule_text", "limits"]);
-    if (effect) {
-      const label = document.createElement("div");
-      label.style.color = "#555";
-      label.textContent = "Effect";
-
-      const val = document.createElement("div");
-      val.style.fontWeight = "600";
-      val.style.whiteSpace = "pre-wrap";
-      val.textContent = effect;
-
-      rows.appendChild(label);
-      rows.appendChild(val);
-    }
-
-    if (!rows.childNodes.length) {
-      const none = document.createElement("div");
-      none.style.marginTop = "6px";
-      none.style.color = "#666";
-      none.textContent = "—";
-      box.appendChild(none);
-      return box;
-    }
-
-    box.appendChild(rows);
-    return box;
-  }
-
-  function makeSelectedWeaponsSummary(m) {
-  const box = document.createElement("div");
-  box.style.marginTop = "10px";
-  box.style.padding = "10px 12px";
-  box.style.border = "1px solid #eee";
-  box.style.borderRadius = "10px";
-  box.style.background = "#fafafa";
-  box.style.fontSize = "13px";
-
-  const head = document.createElement("div");
-  head.style.fontWeight = "900";
-  head.textContent = "Selected Weapons";
-  box.appendChild(head);
-
-  function weaponLine(label, w) {
-    const row = document.createElement("div");
-    row.style.marginTop = "8px";
-    row.style.whiteSpace = "pre-wrap";
-
-    if (!w) {
-      row.textContent = `${label}: —`;
-      row.style.color = "#666";
-      return row;
-    }
-
-    const name = w.name ?? "(Unnamed)";
-    const pts = toIntOrNull(w.points) ?? 0;
-
-    const actions = (w.max_actions !== undefined && String(w.max_actions).trim() !== "") ? `A:${w.max_actions}` : "";
-    const dmg = (w.damage !== undefined && String(w.damage).trim() !== "") ? `D:${w.damage}` : "";
-    const ap = (w.ap !== undefined && String(w.ap).trim() !== "") ? `AP:${w.ap}` : "";
-
-    const statBits = [actions, dmg, ap].filter(Boolean).join(" · ");
-    const eff = getTextField(w, ["effect_text", "effect", "rule_text"]);
-
-    row.textContent =
-      `${label}: ${name} (${pts} pts)` +
-      (statBits ? ` — ${statBits}` : "") +
-      (eff ? ` — ${eff}` : "");
-
-    return row;
-  }
-
-  const ranged = (m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)]);
-  const sidearm =
-    ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER && m.sidearmIdx !== "")
-      ? weapons[Number(m.sidearmIdx)]
-      : null;
-  const melee = (m.meleeIdx === "" ? null : meleeWeapons[Number(m.meleeIdx)]);
-
-  box.appendChild(weaponLine("Ranged", ranged));
-  if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
-    box.appendChild(weaponLine("Sidearm", sidearm));
-  }
-  box.appendChild(weaponLine("Melee", melee));
-
-  return box;
-}
-
-function makeSelectedAccessoriesSummary(m) {
-  const box = document.createElement("div");
-  box.style.marginTop = "10px";
-  box.style.padding = "10px 12px";
-  box.style.border = "1px solid #eee";
-  box.style.borderRadius = "10px";
-  box.style.background = "#fafafa";
-  box.style.fontSize = "13px";
-
-  const head = document.createElement("div");
-  head.style.fontWeight = "900";
-  head.textContent = "Selected Accessories";
-  box.appendChild(head);
-
-  const chosen = (m.accessoryIdx || [])
-    .map(i => accessories[Number(i)])
-    .filter(Boolean);
-
-  if (!chosen.length) {
-    const none = document.createElement("div");
-    none.style.marginTop = "8px";
-    none.style.color = "#666";
-    none.textContent = "—";
-    box.appendChild(none);
-    return box;
-  }
-
-  chosen.forEach(a => {
-    const row = document.createElement("div");
-    row.style.marginTop = "8px";
-    row.style.whiteSpace = "pre-wrap";
-
-    const name = a.name ?? "(Unnamed)";
-    const pts = toIntOrNull(a.points) ?? 0;
-    const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
-
-    row.textContent = `${name} (${pts} pts)` + (eff ? ` — ${eff}` : "");
-    box.appendChild(row);
-  });
-
-  return box;
-}
-
 
   // Data tables (loaded from JSON)
   let weapons = [];
@@ -553,7 +366,6 @@ function makeSelectedAccessoriesSummary(m) {
   let meleeWeapons = [];
   let warbandTraits = [];
   let leaderTraits = [];
-
 
   // === Rules (hardwired for now, easy to change) ===
   const DEFENSE_TO_ACC_CAP = { 0: 0, 1: 1, 2: 2, 3: 3 };
@@ -566,17 +378,15 @@ function makeSelectedAccessoriesSummary(m) {
     2: { mod: 2,  cost: 4 },
     3: { mod: 4,  cost: 8 },
   };
-
   const SHOOT_FIGHT_TABLE = {
     0: { mod: -2, cost: 0 },
     1: { mod: -2, cost: 0 },
     2: { mod: 2,  cost: 3 },
     3: { mod: 4,  cost: 6 },
   };
-
   const SAVE_TARGET_BY_WILL = { 0: 14, 1: 14, 2: 13, 3: 11 };
-
   function clampMin(n, min) { return n < min ? min : n; }
+  function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
   function defenseMod(tier) { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
   function willMod(tier)    { return (DEF_WILL_TABLE[tier] ?? DEF_WILL_TABLE[1]).mod; }
@@ -600,31 +410,36 @@ function makeSelectedAccessoriesSummary(m) {
   function savingThrowTarget(m) { return clampMin((SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1]), 10); }
   function armorClass(m) { return 10 + defenseMod(m.defense ?? 1); }
 
+  // NEW: ensure in-play state fields exist + stay clamped
+  function ensurePlayState(m) {
+    const maxW = woundsTotal(m);
+    if (!Number.isFinite(Number(m.woundsCurrent))) m.woundsCurrent = maxW; // default to full
+    m.woundsCurrent = clamp(Number(m.woundsCurrent), 0, maxW);
+
+    if (!Number.isFinite(Number(m.horror))) m.horror = 0;
+    m.horror = clamp(Number(m.horror), 0, 5);
+
+    if (typeof m.hidden !== "boolean") m.hidden = false;
+  }
+
   // Warband state: leader + 4 models
   const warband = {
-    version: 3,
+    version: 4, // bumped because we added in-play fields
     name: "Unnamed Warband",
     pointCap: 75,
     warbandTraitIdx: "",
     leaderTraitIdx: "",
-
     members: [
-      { role: "Leader", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
-      { role: "Model 1", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: [] },
-      { role: "Model 2", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
-      { role: "Model 3", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
-      { role: "Model 4", name: "",defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], weaponIdx: []  },
+      { role: "Leader", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], meleeIdx: "", woundsCurrent: null, horror: 0, hidden: false },
+      { role: "Model 1", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], meleeIdx: "", woundsCurrent: null, horror: 0, hidden: false },
+      { role: "Model 2", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], meleeIdx: "", woundsCurrent: null, horror: 0, hidden: false },
+      { role: "Model 3", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], meleeIdx: "", woundsCurrent: null, horror: 0, hidden: false },
+      { role: "Model 4", name: "", defense: 1, shoot: 1, fight: 1, will: 1, weaponIdx: "", sidearmIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [], meleeIdx: "", woundsCurrent: null, horror: 0, hidden: false },
     ]
   };
 
-  
-
-
-
-
-    // Remember which collapsibles are open per member index
-    const openPanelsByMember = new Map(); 
-    // shape: memberIndex -> { accessories: true/false, psi: true/false }
+  // Remember which collapsibles are open per member index
+  const openPanelsByMember = new Map(); // memberIndex -> { accessories: true/false, psi: true/false }
 
   function memberWeaponPoints(m) {
     let sum = 0;
@@ -640,13 +455,11 @@ function makeSelectedAccessoriesSummary(m) {
       sum += toIntOrNull(s?.points) ?? 0;
     }
 
-        // Melee weapon points
     if (m.meleeIdx !== "" && m.meleeIdx !== null && m.meleeIdx !== undefined) {
       const mw = meleeWeapons[Number(m.meleeIdx)];
       sum += toIntOrNull(mw?.points) ?? 0;
     }
 
-    
     return sum;
   }
 
@@ -661,30 +474,26 @@ function makeSelectedAccessoriesSummary(m) {
 
   function memberPsiMutPoints(m) {
     let sum = 0;
-
     for (const idx of (m.psychicIdx || [])) {
       const p = psychicPowers[Number(idx)];
       sum += (toIntOrNull(p?.points) ?? 0);
     }
-
     for (const idx of (m.mutationIdx || [])) {
       const mu = mutations[Number(idx)];
       sum += (toIntOrNull(mu?.points) ?? 0);
     }
-
     return sum;
   }
 
-function clearMemberLoadout(m) {
-  m.weaponIdx = "";
-  m.sidearmIdx = "";
-  m.meleeIdx = "";
-  m.accessoryIdx = [];
-  m.psychicIdx = [];
-  m.mutationIdx = [];
-}
+  function clearMemberLoadout(m) {
+    m.weaponIdx = "";
+    m.sidearmIdx = "";
+    m.meleeIdx = "";
+    m.accessoryIdx = [];
+    m.psychicIdx = [];
+    m.mutationIdx = [];
+  }
 
-  
   function memberTotalPoints(m) {
     return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
   }
@@ -693,105 +502,294 @@ function clearMemberLoadout(m) {
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
   }
 
-function warbandTraitPoints() { return 0; }
-function leaderTraitPoints() { return 0; }
+  function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "12px";
+    wrap.style.border = "1px solid #eee";
+    wrap.style.borderRadius = "10px";
+    wrap.style.overflow = "hidden";
 
-  
+    const header = document.createElement("button");
+    header.type = "button";
+    header.style.width = "100%";
+    header.style.textAlign = "left";
+    header.style.padding = "10px 12px";
+    header.style.border = "0";
+    header.style.background = "#f7f7f7";
+    header.style.cursor = "pointer";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.gap = "10px";
+    header.style.fontWeight = "800";
 
-function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
-  const wrap = document.createElement("div");
-  wrap.style.marginTop = "12px";
-  wrap.style.border = "1px solid #eee";
-  wrap.style.borderRadius = "10px";
-  wrap.style.overflow = "hidden";
+    const title = document.createElement("span");
+    title.textContent = titleText;
 
-  const header = document.createElement("button");
-  header.type = "button";
-  header.style.width = "100%";
-  header.style.textAlign = "left";
-  header.style.padding = "10px 12px";
-  header.style.border = "0";
-  header.style.background = "#f7f7f7";
-  header.style.cursor = "pointer";
-  header.style.display = "flex";
-  header.style.justifyContent = "space-between";
-  header.style.alignItems = "center";
-  header.style.gap = "10px";
-  header.style.fontWeight = "800";
+    const chevron = document.createElement("span");
+    chevron.textContent = initiallyOpen ? "▾" : "▸";
+    chevron.style.opacity = "0.8";
 
-  const title = document.createElement("span");
-  title.textContent = titleText;
+    header.appendChild(title);
+    header.appendChild(chevron);
 
-  const chevron = document.createElement("span");
-  chevron.textContent = initiallyOpen ? "▾" : "▸";
-  chevron.style.opacity = "0.8";
+    const body = document.createElement("div");
+    body.style.padding = "10px 12px";
+    body.style.display = initiallyOpen ? "block" : "none";
+    body.style.background = "#fff";
 
-  header.appendChild(title);
-  header.appendChild(chevron);
+    function setOpen(open) {
+      body.style.display = open ? "block" : "none";
+      chevron.textContent = open ? "▾" : "▸";
+      if (typeof onToggle === "function") onToggle(open);
+    }
 
-  const body = document.createElement("div");
-  body.style.padding = "10px 12px";
-  body.style.display = initiallyOpen ? "block" : "none";
-  body.style.background = "#fff";
+    header.addEventListener("click", () => {
+      const open = body.style.display === "none";
+      setOpen(open);
+    });
 
-  function setOpen(open) {
-    body.style.display = open ? "block" : "none";
-    chevron.textContent = open ? "▾" : "▸";
-    if (typeof onToggle === "function") onToggle(open);
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+
+    return { wrap, body, setOpen };
   }
 
-  header.addEventListener("click", () => {
-    const open = body.style.display === "none";
-    setOpen(open);
-  });
-
-  wrap.appendChild(header);
-  wrap.appendChild(body);
-
-  return { wrap, body, setOpen };
-}
-
-
-  
   function setIoVisible(vis, title) {
     els.ioArea.style.display = vis ? "block" : "none";
     if (title) els.ioTitle.textContent = title;
     els.ioMsg.textContent = "";
   }
 
-function makeStatsHeadline(m) {
-  const line = document.createElement("div");
-  line.style.marginTop = "10px";
-  line.style.padding = "8px 10px";
-  line.style.border = "1px solid #eee";
-  line.style.borderRadius = "10px";
-  line.style.background = "#fff";
-  line.style.fontSize = "13px";
-  line.style.fontWeight = "700";
-  line.style.color = "#333";
+  function traitDescription(obj) {
+    const txt = obj?.effect_text ?? obj?.effect ?? obj?.rule_text ?? "";
+    return String(txt ?? "").trim();
+  }
 
-  const ac = armorClass(m);
-  const saveT = savingThrowTarget(m);
-  const wounds = woundsTotal(m);
+  function renderTraitDescriptions() {
+    if (els.warbandTraitDesc) {
+      if (warband.warbandTraitIdx === "") els.warbandTraitDesc.textContent = "";
+      else els.warbandTraitDesc.textContent = traitDescription(warbandTraits[Number(warband.warbandTraitIdx)]) || "—";
+    }
+    if (els.leaderTraitDesc) {
+      if (warband.leaderTraitIdx === "") els.leaderTraitDesc.textContent = "";
+      else els.leaderTraitDesc.textContent = traitDescription(leaderTraits[Number(warband.leaderTraitIdx)]) || "—";
+    }
+  }
 
-  const accCap = equipmentCapacity(m);
-  const accUsed = (m.accessoryIdx || []).length;
+  function makeSelectedWeaponsSummary(m) {
+    const box = document.createElement("div");
+    box.style.marginTop = "10px";
+    box.style.padding = "10px 12px";
+    box.style.border = "1px solid #eee";
+    box.style.borderRadius = "10px";
+    box.style.background = "#fafafa";
+    box.style.fontSize = "13px";
 
-  const pmCap = psychicMutationCapacity(m);
-  const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
+    const head = document.createElement("div");
+    head.style.fontWeight = "900";
+    head.textContent = "Selected Weapons";
+    box.appendChild(head);
 
-  line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${wounds}`;
-  return line;
-}
+    function weaponLine(label, w) {
+      const row = document.createElement("div");
+      row.style.marginTop = "8px";
+      row.style.whiteSpace = "pre-wrap";
 
-  
-  
+      if (!w) {
+        row.textContent = `${label}: —`;
+        row.style.color = "#666";
+        return row;
+      }
+
+      const name = w.name ?? "(Unnamed)";
+      const pts = toIntOrNull(w.points) ?? 0;
+
+      const actions = (w.max_actions !== undefined && String(w.max_actions).trim() !== "") ? `A:${w.max_actions}` : "";
+      const dmg = (w.damage !== undefined && String(w.damage).trim() !== "") ? `D:${w.damage}` : "";
+      const ap = (w.ap !== undefined && String(w.ap).trim() !== "") ? `AP:${w.ap}` : "";
+
+      const statBits = [actions, dmg, ap].filter(Boolean).join(" · ");
+      const eff = getTextField(w, ["effect_text", "effect", "rule_text"]);
+
+      row.textContent =
+        `${label}: ${name} (${pts} pts)` +
+        (statBits ? ` — ${statBits}` : "") +
+        (eff ? ` — ${eff}` : "");
+
+      return row;
+    }
+
+    const ranged = (m.weaponIdx === "" ? null : weapons[Number(m.weaponIdx)]);
+    const sidearm =
+      ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER && m.sidearmIdx !== "")
+        ? weapons[Number(m.sidearmIdx)]
+        : null;
+    const melee = (m.meleeIdx === "" ? null : meleeWeapons[Number(m.meleeIdx)]);
+
+    box.appendChild(weaponLine("Ranged", ranged));
+    if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) box.appendChild(weaponLine("Sidearm", sidearm));
+    box.appendChild(weaponLine("Melee", melee));
+
+    return box;
+  }
+
+  function makeSelectedAccessoriesSummary(m) {
+    const box = document.createElement("div");
+    box.style.marginTop = "10px";
+    box.style.padding = "10px 12px";
+    box.style.border = "1px solid #eee";
+    box.style.borderRadius = "10px";
+    box.style.background = "#fafafa";
+    box.style.fontSize = "13px";
+
+    const head = document.createElement("div");
+    head.style.fontWeight = "900";
+    head.textContent = "Selected Accessories";
+    box.appendChild(head);
+
+    const chosen = (m.accessoryIdx || [])
+      .map(i => accessories[Number(i)])
+      .filter(Boolean);
+
+    if (!chosen.length) {
+      const none = document.createElement("div");
+      none.style.marginTop = "8px";
+      none.style.color = "#666";
+      none.textContent = "—";
+      box.appendChild(none);
+      return box;
+    }
+
+    chosen.forEach(a => {
+      const row = document.createElement("div");
+      row.style.marginTop = "8px";
+      row.style.whiteSpace = "pre-wrap";
+
+      const name = a.name ?? "(Unnamed)";
+      const pts = toIntOrNull(a.points) ?? 0;
+      const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
+
+      row.textContent = `${name} (${pts} pts)` + (eff ? ` — ${eff}` : "");
+      box.appendChild(row);
+    });
+
+    return box;
+  }
+
+  // NEW: headline shows current wounds + horror
+  function makeStatsHeadline(m) {
+    ensurePlayState(m);
+    const line = document.createElement("div");
+    line.style.marginTop = "10px";
+    line.style.padding = "8px 10px";
+    line.style.border = "1px solid #eee";
+    line.style.borderRadius = "10px";
+    line.style.background = "#fff";
+    line.style.fontSize = "13px";
+    line.style.fontWeight = "700";
+    line.style.color = "#333";
+
+    const ac = armorClass(m);
+    const saveT = savingThrowTarget(m);
+    const maxW = woundsTotal(m);
+
+    line.textContent = `AC ${ac} • Save ${saveT} • Wounds ${m.woundsCurrent}/${maxW} • Horror ${m.horror}/5`;
+    return line;
+  }
+
+  // NEW: show/hide list above grid
+  function renderModelVisibilityControls() {
+    if (!els.modelVisibility || !els.modelVisibilityGrid) return;
+
+    els.modelVisibilityGrid.innerHTML = "";
+    els.modelVisibility.style.display = "block";
+
+    warband.members.forEach((m, i) => {
+      ensurePlayState(m);
+      const id = `show_m_${i}`;
+      const label = document.createElement("label");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = id;
+      cb.checked = !m.hidden;
+
+      cb.addEventListener("change", () => {
+        m.hidden = !cb.checked;
+        renderWarband();
+      });
+
+      const name = (m.name && String(m.name).trim()) ? ` — ${m.name}` : "";
+      const txt = document.createElement("span");
+      txt.textContent = `${m.role}${name}`;
+
+      label.appendChild(cb);
+      label.appendChild(txt);
+      els.modelVisibilityGrid.appendChild(label);
+    });
+  }
+
+  // NEW: in-play +/- control factory
+  function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra) {
+    const row = document.createElement("div");
+    row.className = "playrow";
+
+    const l = document.createElement("div");
+    l.style.fontWeight = "900";
+    l.style.color = "#333";
+    l.textContent = labelText;
+
+    const c = document.createElement("div");
+    c.className = "counter";
+
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.textContent = "−";
+    minus.addEventListener("click", onMinus);
+
+    const val = document.createElement("div");
+    val.className = "val";
+    val.textContent = getText();
+
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.textContent = "+";
+    plus.addEventListener("click", onPlus);
+
+    c.appendChild(minus);
+    c.appendChild(val);
+    c.appendChild(plus);
+
+    row.appendChild(l);
+    row.appendChild(c);
+
+    if (extraBtnText && typeof onExtra === "function") {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "smallBtn";
+      b.textContent = extraBtnText;
+      b.addEventListener("click", onExtra);
+      row.appendChild(b);
+    }
+
+    return { row, setValueText: (t) => (val.textContent = t) };
+  }
 
   function renderWarband() {
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+
+    // NEW: draw show/hide controls
+    renderModelVisibilityControls();
+
     els.warbandGrid.innerHTML = "";
 
     warband.members.forEach((m, memberIndex) => {
+      ensurePlayState(m);
+
+      // If hidden, still keep state, just don't render card
+      if (m.hidden) return;
+
       const card = document.createElement("div");
       card.style.border = "1px solid #ddd";
       card.style.borderRadius = "10px";
@@ -804,60 +802,60 @@ function makeStatsHeadline(m) {
       header.style.alignItems = "baseline";
       header.style.gap = "10px";
 
-const title = document.createElement("div");
-title.style.display = "flex";
-title.style.flexDirection = "column";
-title.style.gap = "6px";
+      const title = document.createElement("div");
+      title.style.display = "flex";
+      title.style.flexDirection = "column";
+      title.style.gap = "6px";
 
-const roleLine = document.createElement("div");
-roleLine.style.fontWeight = "900";
-roleLine.style.fontSize = "16px";
-roleLine.textContent = m.role;
+      const roleLine = document.createElement("div");
+      roleLine.style.fontWeight = "900";
+      roleLine.style.fontSize = "16px";
+      roleLine.textContent = m.role;
 
-const nameInput = document.createElement("input");
-nameInput.type = "text";
-nameInput.placeholder = `${m.role} name`;
-nameInput.value = m.name ?? "";
-nameInput.style.width = "100%";
-nameInput.addEventListener("input", () => {
-  m.name = nameInput.value;
-});
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = `${m.role} name`;
+      nameInput.value = m.name ?? "";
+      nameInput.style.width = "100%";
+      nameInput.addEventListener("input", () => {
+        m.name = nameInput.value;
+        // update show/hide labels without re-rendering everything
+        renderModelVisibilityControls();
+      });
 
-title.appendChild(roleLine);
-title.appendChild(nameInput);
+      title.appendChild(roleLine);
+      title.appendChild(nameInput);
 
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "10px";
 
-     const right = document.createElement("div");
-right.style.display = "flex";
-right.style.alignItems = "center";
-right.style.gap = "10px";
+      const pts = document.createElement("div");
+      pts.style.fontWeight = "800";
+      pts.textContent = `${memberTotalPoints(m)} pts`;
 
-const pts = document.createElement("div");
-pts.style.fontWeight = "800";
-pts.textContent = `${memberTotalPoints(m)} pts`;
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.textContent = "Clear Loadout";
+      clearBtn.style.padding = "6px 10px";
+      clearBtn.style.borderRadius = "10px";
+      clearBtn.style.border = "1px solid #ddd";
+      clearBtn.style.background = "#fff";
+      clearBtn.style.cursor = "pointer";
+      clearBtn.addEventListener("click", () => {
+        clearMemberLoadout(m);
+        renderWarband();
+      });
 
-const clearBtn = document.createElement("button");
-clearBtn.type = "button";
-clearBtn.textContent = "Clear Loadout";
-clearBtn.style.padding = "6px 10px";
-clearBtn.style.borderRadius = "10px";
-clearBtn.style.border = "1px solid #ddd";
-clearBtn.style.background = "#fff";
-clearBtn.style.cursor = "pointer";
-clearBtn.addEventListener("click", () => {
-  clearMemberLoadout(m);
-  renderWarband();
-});
+      right.appendChild(pts);
+      right.appendChild(clearBtn);
 
-right.appendChild(pts);
-right.appendChild(clearBtn);
+      header.appendChild(title);
+      header.appendChild(right);
+      card.appendChild(header);
 
-header.appendChild(title);
-header.appendChild(right);
-card.appendChild(header);
-
-
-      // Tier select helper (shows Tier + mod + cost)
+      // Tier select helper (shows Tier + mod)
       function tierSelect(label, key) {
         const wrap = document.createElement("div");
         wrap.style.display = "flex";
@@ -876,21 +874,22 @@ card.appendChild(header);
           (key === "shoot" || key === "fight") ? SHOOT_FIGHT_TABLE :
           null;
 
-s.innerHTML = tiers.map(t => {
-  const entry = table?.[t];
-  const mod = entry?.mod ?? 0;
-  const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-  return `<option value="${t}">T${t} (${modStr})</option>`;
-}).join("");
-
+        s.innerHTML = tiers.map(t => {
+          const entry = table?.[t];
+          const mod = entry?.mod ?? 0;
+          const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+          return `<option value="${t}">T${t} (${modStr})</option>`;
+        }).join("");
 
         s.value = String(m[key] ?? 0);
 
         s.addEventListener("change", () => {
           m[key] = Number(s.value);
-          if (key === "shoot" && (m.shoot ?? 0) < SIDEARM_UNLOCK_SHOOT_TIER) {
-            m.sidearmIdx = "";
-          }
+          if (key === "shoot" && (m.shoot ?? 0) < SIDEARM_UNLOCK_SHOOT_TIER) m.sidearmIdx = "";
+
+          // NEW: re-clamp current wounds when max wounds change
+          ensurePlayState(m);
+
           renderWarband();
         });
 
@@ -914,6 +913,34 @@ s.innerHTML = tiers.map(t => {
       // Headline stats row (always visible)
       card.appendChild(makeStatsHeadline(m));
 
+      // NEW: In-play controls (Wounds +/- and Horror 0–5)
+      const play = document.createElement("div");
+      play.className = "playbar";
+
+      const maxW = woundsTotal(m);
+
+      const woundsCtl = makeCounter(
+        "Wounds",
+        () => `${m.woundsCurrent}/${maxW}`,
+        () => { m.woundsCurrent = clamp(m.woundsCurrent - 1, 0, maxW); renderWarband(); },
+        () => { m.woundsCurrent = clamp(m.woundsCurrent + 1, 0, maxW); renderWarband(); },
+        "Full",
+        () => { m.woundsCurrent = maxW; renderWarband(); }
+      );
+
+      const horrorCtl = makeCounter(
+        "Horror",
+        () => `${m.horror}/5`,
+        () => { m.horror = clamp(m.horror - 1, 0, 5); renderWarband(); },
+        () => { m.horror = clamp(m.horror + 1, 0, 5); renderWarband(); },
+        "Clear",
+        () => { m.horror = 0; renderWarband(); }
+      );
+
+      play.appendChild(woundsCtl.row);
+      play.appendChild(horrorCtl.row);
+      card.appendChild(play);
+
       // Derived stats (collapsible)
       const statsSection = makeCollapsible("Stats", false);
       const derived = statsSection.body;
@@ -933,24 +960,19 @@ s.innerHTML = tiers.map(t => {
 
       derived.appendChild(statLine("Armor Class (AC)", String(armorClass(m))));
       derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
-      derived.appendChild(statLine("Wounds", String(woundsTotal(m))));
-
+      derived.appendChild(statLine("Wounds (Max)", String(woundsTotal(m))));
       derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
       derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m)}`));
-
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
       derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
       derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
       derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
-
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
-
       card.appendChild(statsSection.wrap);
 
-
-      // Primary weapon select
+      // Ranged Weapon
       const weaponRow = document.createElement("div");
       weaponRow.style.marginTop = "12px";
       weaponRow.innerHTML = "<strong>Ranged Weapon</strong>";
@@ -975,10 +997,7 @@ s.innerHTML = tiers.map(t => {
       weaponRow.appendChild(sel);
       card.appendChild(weaponRow);
 
-
-
-
-      // Secondary sidearm select (Shoot >= 3)
+      // Sidearm (Shoot >= 3)
       if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
         const sidearmRow = document.createElement("div");
         sidearmRow.style.marginTop = "10px";
@@ -1010,11 +1029,9 @@ s.innerHTML = tiers.map(t => {
 
         sidearmRow.appendChild(sideSel);
         card.appendChild(sidearmRow);
-
-
       }
 
-            // Melee weapon select
+      // Melee weapon
       const meleeSection = document.createElement("div");
       meleeSection.style.marginTop = "12px";
       meleeSection.innerHTML = "<strong>Melee Weapon</strong>";
@@ -1038,22 +1055,18 @@ s.innerHTML = tiers.map(t => {
 
       meleeSection.appendChild(meleeSel);
       card.appendChild(meleeSection);
-      card.appendChild(makeSelectedWeaponsSummary(m));
 
+      card.appendChild(makeSelectedWeaponsSummary(m));
 
       const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
 
-
-      
       // Accessories
-const accSection = makeCollapsible("Edit Accessories", openState.accessories, (isOpen) => {
-  const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
-  s.accessories = isOpen;
-  openPanelsByMember.set(memberIndex, s);
-  });
-  const accWrap = accSection.body;
-
-
+      const accSection = makeCollapsible("Edit Accessories", openState.accessories, (isOpen) => {
+        const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+        s.accessories = isOpen;
+        openPanelsByMember.set(memberIndex, s);
+      });
+      const accWrap = accSection.body;
 
       const accCap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
       const accUsed = (m.accessoryIdx || []).length;
@@ -1064,48 +1077,6 @@ const accSection = makeCollapsible("Edit Accessories", openState.accessories, (i
         ? `<span style="color:#8a1f11; font-weight:700;">Over capacity: ${accUsed}/${accCap}</span>`
         : `<span style="color:#444;">Capacity: ${accUsed}/${accCap}</span>`;
       accWrap.appendChild(capLine);
-
-      // Selected accessories summary
-      const selectedAcc = (m.accessoryIdx || [])
-        .map(i => accessories[Number(i)])
-        .filter(Boolean);
-
-      const accSummaryBox = document.createElement("div");
-      accSummaryBox.style.marginTop = "10px";
-      accSummaryBox.style.padding = "8px 10px";
-      accSummaryBox.style.border = "1px solid #eee";
-      accSummaryBox.style.borderRadius = "10px";
-      accSummaryBox.style.background = "#fafafa";
-      accSummaryBox.style.fontSize = "12px";
-
-      const accHead = document.createElement("div");
-      accHead.style.fontWeight = "900";
-      accHead.textContent = "Selected Accessories";
-      accSummaryBox.appendChild(accHead);
-
-      if (!selectedAcc.length) {
-        const none = document.createElement("div");
-        none.style.marginTop = "6px";
-        none.style.color = "#666";
-        none.textContent = "—";
-        accSummaryBox.appendChild(none);
-      } else {
-        selectedAcc.forEach(a => {
-          const line = document.createElement("div");
-          line.style.marginTop = "6px";
-          line.style.whiteSpace = "pre-wrap";
-          const nm = a.name ?? "(Unnamed)";
-          const pts = toIntOrNull(a.points) ?? 0;
-          const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
-          line.textContent = `${nm} (${pts} pts) — ${eff || ""}`.trim();
-          accSummaryBox.appendChild(line);
-        });
-      }
-
-// (we will append this outside, below)
-
-
-      
 
       const list = document.createElement("div");
       list.style.marginTop = "6px";
@@ -1145,20 +1116,13 @@ const accSection = makeCollapsible("Edit Accessories", openState.accessories, (i
       card.appendChild(accSection.wrap);
       card.appendChild(makeSelectedAccessoriesSummary(m));
 
- 
-
-
-
       // Psychic Powers + Mutations
-      
-const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (isOpen) => {
-  const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
-  s.psi = isOpen;
-  openPanelsByMember.set(memberIndex, s);
-  });
-  const psiWrap = psiSection.body;
-
-
+      const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (isOpen) => {
+        const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+        s.psi = isOpen;
+        openPanelsByMember.set(memberIndex, s);
+      });
+      const psiWrap = psiSection.body;
 
       const pmCap = psychicMutationCapacity(m);
       const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
@@ -1170,66 +1134,7 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
         : `<span style="color:#444;">Capacity: ${pmUsed}/${pmCap}</span>`;
       psiWrap.appendChild(pmLine);
 
-      // Selected Psychic + Mutations summary
-      const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
-      const selectedMut = (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
-
-      const pmSummary = document.createElement("div");
-      pmSummary.style.marginTop = "8px";
-      pmSummary.style.padding = "8px 10px";
-      pmSummary.style.border = "1px solid #eee";
-      pmSummary.style.borderRadius = "10px";
-      pmSummary.style.background = "#fafafa";
-      pmSummary.style.fontSize = "13px";
-
-      const pmHead = document.createElement("div");
-      pmHead.style.fontWeight = "900";
-      pmHead.textContent = "Selected Powers / Mutations";
-      pmSummary.appendChild(pmHead);
-
-      const addGroup = (groupTitle, arr) => {
-        const t = document.createElement("div");
-        t.style.marginTop = "8px";
-        t.style.fontWeight = "800";
-        t.textContent = groupTitle;
-        pmSummary.appendChild(t);
-
-        if (!arr.length) {
-          const none = document.createElement("div");
-          none.style.marginTop = "4px";
-          none.style.color = "#666";
-          none.textContent = "—";
-          pmSummary.appendChild(none);
-          return;
-        }
-
-        arr.forEach(obj => {
-          const line = document.createElement("div");
-          line.style.marginTop = "6px";
-          line.style.whiteSpace = "pre-wrap";
-
-          const nm = obj.name ?? "(Unnamed)";
-          const pts = toIntOrNull(obj.points) ?? 0;
-
-          // For psychic powers, include a couple useful columns if present
-          const extra =
-            getTextField(obj, ["power_type", "type"]) ||
-            getTextField(obj, ["range"]) ||
-            "";
-
-          const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
-          line.textContent = `${nm} (${pts} pts)${extra ? " — " + extra : ""}${eff ? " — " + eff : ""}`.trim();
-          pmSummary.appendChild(line);
-        });
-      };
-
-      addGroup("Psychic Powers", selectedPsy);
-      addGroup("Mutations", selectedMut);
-
-  // (we will append this outside, below)
-
-
-      
+      // Psychic list
       const psyTitle = document.createElement("div");
       psyTitle.style.marginTop = "8px";
       psyTitle.innerHTML = "<strong style='font-size:13px;'>Psychic Powers</strong>";
@@ -1268,9 +1173,9 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
         line.appendChild(lbl);
         psyList.appendChild(line);
       });
-
       psiWrap.appendChild(psyList);
 
+      // Mutations list
       const mutTitle = document.createElement("div");
       mutTitle.style.marginTop = "10px";
       mutTitle.innerHTML = "<strong style='font-size:13px;'>Mutations</strong>";
@@ -1309,11 +1214,60 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
         line.appendChild(lbl);
         mutList.appendChild(line);
       });
-
       psiWrap.appendChild(mutList);
+
+      // Summary box (unchanged from your original)
+      const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
+      const selectedMut = (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
+
+      const pmSummary = document.createElement("div");
+      pmSummary.style.marginTop = "10px";
+      pmSummary.style.padding = "10px 12px";
+      pmSummary.style.border = "1px solid #eee";
+      pmSummary.style.borderRadius = "10px";
+      pmSummary.style.background = "#fafafa";
+      pmSummary.style.fontSize = "13px";
+
+      const pmHead = document.createElement("div");
+      pmHead.style.fontWeight = "900";
+      pmHead.textContent = "Selected Powers / Mutations";
+      pmSummary.appendChild(pmHead);
+
+      const addGroup = (groupTitle, arr) => {
+        const t = document.createElement("div");
+        t.style.marginTop = "8px";
+        t.style.fontWeight = "800";
+        t.textContent = groupTitle;
+        pmSummary.appendChild(t);
+
+        if (!arr.length) {
+          const none = document.createElement("div");
+          none.style.marginTop = "4px";
+          none.style.color = "#666";
+          none.textContent = "—";
+          pmSummary.appendChild(none);
+          return;
+        }
+
+        arr.forEach(obj => {
+          const line = document.createElement("div");
+          line.style.marginTop = "6px";
+          line.style.whiteSpace = "pre-wrap";
+
+          const nm = obj.name ?? "(Unnamed)";
+          const pts = toIntOrNull(obj.points) ?? 0;
+          const extra = getTextField(obj, ["power_type", "type"]) || getTextField(obj, ["range"]) || "";
+          const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
+          line.textContent = `${nm} (${pts} pts)${extra ? " — " + extra : ""}${eff ? " — " + eff : ""}`.trim();
+          pmSummary.appendChild(line);
+        });
+      };
+
+      addGroup("Psychic Powers", selectedPsy);
+      addGroup("Mutations", selectedMut);
+
       card.appendChild(psiSection.wrap);
       card.appendChild(pmSummary);
-
 
       els.warbandGrid.appendChild(card);
     });
@@ -1331,6 +1285,8 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
 
   function exportWarband() {
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+    // NEW: make sure in-play fields are present before exporting
+    warband.members.forEach(ensurePlayState);
     setIoVisible(true, "Export Warband");
     els.ioText.value = JSON.stringify(warband, null, 2);
     els.ioMsg.textContent = "Copy this JSON to save/share the warband.";
@@ -1351,25 +1307,25 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
       warband.version = parsed.version ?? warband.version;
       warband.pointCap = toIntOrNull(parsed.pointCap) ?? (toIntOrNull(els.pointCap.value) ?? warband.pointCap);
 
-            warband.name = String(parsed.name ?? warband.name ?? "");
+      warband.name = String(parsed.name ?? warband.name ?? "");
       if (els.warbandName) els.warbandName.value = warband.name ?? "";
 
-
-            warband.warbandTraitIdx = (parsed.warbandTraitIdx === "" || parsed.warbandTraitIdx === null || parsed.warbandTraitIdx === undefined)
+      warband.warbandTraitIdx = (parsed.warbandTraitIdx === "" || parsed.warbandTraitIdx === null || parsed.warbandTraitIdx === undefined)
         ? "" : String(parsed.warbandTraitIdx);
 
       warband.leaderTraitIdx = (parsed.leaderTraitIdx === "" || parsed.leaderTraitIdx === null || parsed.leaderTraitIdx === undefined)
         ? "" : String(parsed.leaderTraitIdx);
 
-
       const defaultMembers = warband.members.map(m => ({
-        ...m, weaponIdx: "", sidearmIdx: "", meleeIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: []
+        ...m,
+        weaponIdx: "", sidearmIdx: "", meleeIdx: "", accessoryIdx: [], psychicIdx: [], mutationIdx: [],
+        woundsCurrent: null, horror: 0, hidden: false
       }));
       const incoming = parsed.members.slice(0, defaultMembers.length);
 
       warband.members = defaultMembers.map((def, i) => {
         const inc = incoming[i] ?? {};
-        return {
+        const merged = {
           role: def.role,
           name: String(inc.name ?? def.name ?? ""),
           defense: toIntOrNull(inc.defense) ?? def.defense,
@@ -1382,49 +1338,26 @@ const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (i
           accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           psychicIdx: Array.isArray(inc.psychicIdx) ? inc.psychicIdx.map(Number).filter(n => Number.isFinite(n)) : [],
           mutationIdx: Array.isArray(inc.mutationIdx) ? inc.mutationIdx.map(Number).filter(n => Number.isFinite(n)) : [],
+          // NEW: in-play fields (optional in older exports)
+          woundsCurrent: toIntOrNull(inc.woundsCurrent),
+          horror: toIntOrNull(inc.horror) ?? 0,
+          hidden: (typeof inc.hidden === "boolean") ? inc.hidden : false,
         };
+        ensurePlayState(merged);
+        return merged;
       });
 
       els.pointCap.value = String(warband.pointCap);
-
       if (els.warbandTraitSelect) els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
       if (els.leaderTraitSelect) els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
 
       renderTraitDescriptions();
-
-      
       renderWarband();
       els.ioMsg.textContent = "Loaded warband successfully.";
     } catch (e) {
       els.ioMsg.textContent = `Import failed: ${String(e.message || e)}`;
     }
   }
-
-  function traitDescription(obj) {
-  const txt = obj?.effect_text ?? obj?.effect ?? obj?.rule_text ?? "";
-  return String(txt ?? "").trim();
-}
-function renderTraitDescriptions() {
-  // Warband
-  if (els.warbandTraitDesc) {
-    if (warband.warbandTraitIdx === "") {
-      els.warbandTraitDesc.textContent = "";
-    } else {
-      const t = warbandTraits[Number(warband.warbandTraitIdx)];
-      els.warbandTraitDesc.textContent = traitDescription(t) || "—";
-    }
-  }
-
-  // Leader
-  if (els.leaderTraitDesc) {
-    if (warband.leaderTraitIdx === "") {
-      els.leaderTraitDesc.textContent = "";
-    } else {
-      const t = leaderTraits[Number(warband.leaderTraitIdx)];
-      els.leaderTraitDesc.textContent = traitDescription(t) || "—";
-    }
-  }
-}
 
   async function loadData() {
     try {
@@ -1442,7 +1375,7 @@ function renderTraitDescriptions() {
       if (!fRes.ok) throw new Error(`HTTP ${fRes.status} when fetching fight.json`);
       meleeWeapons = await fRes.json();
       if (!Array.isArray(meleeWeapons)) throw new Error("fight.json must be an array of objects");
-      
+
       const pRes = await fetch("./data/psychic_powers.json", { cache: "no-store" });
       if (!pRes.ok) throw new Error(`HTTP ${pRes.status} when fetching psychic_powers.json`);
       psychicPowers = await pRes.json();
@@ -1484,17 +1417,14 @@ function renderTraitDescriptions() {
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
 
-            warbandTraits.sort((a, b) =>
+      warbandTraits.sort((a, b) =>
         ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
-
       leaderTraits.sort((a, b) =>
         ((toIntOrNull(a.points) ?? 0) - (toIntOrNull(b.points) ?? 0)) ||
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
-
-      
 
       // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
@@ -1509,84 +1439,66 @@ function renderTraitDescriptions() {
         }
       });
       els.loadBtn.addEventListener("click", loadPastedWarband);
+
       // Warband Trait select
       els.warbandTraitSelect.innerHTML =
         `<option value="">— None —</option>` +
         warbandTraits.map((t, idx) => {
-          const p = toIntOrNull(t.points) ?? 0;
           const nm = escapeHtml(t.name ?? "(Unnamed)");
           return `<option value="${idx}">${nm}</option>`;
         }).join("");
-
       els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
       renderTraitDescriptions();
-
       els.warbandTraitSelect.addEventListener("change", () => {
-  warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
-  renderTraitDescriptions();
-        
-  renderWarband();
-});
-
+        warband.warbandTraitIdx = els.warbandTraitSelect.value === "" ? "" : els.warbandTraitSelect.value;
+        renderTraitDescriptions();
+        renderWarband();
+      });
 
       // Leader Trait select
       els.leaderTraitSelect.innerHTML =
         `<option value="">— None —</option>` +
         leaderTraits.map((t, idx) => {
-          const p = toIntOrNull(t.points) ?? 0;
           const nm = escapeHtml(t.name ?? "(Unnamed)");
           return `<option value="${idx}">${nm}</option>`;
         }).join("");
-
       els.leaderTraitSelect.value = warband.leaderTraitIdx === "" ? "" : String(warband.leaderTraitIdx);
       renderTraitDescriptions();
-      
       els.leaderTraitSelect.addEventListener("change", () => {
-  warband.leaderTraitIdx = els.leaderTraitSelect.value === "" ? "" : els.leaderTraitSelect.value;
-  renderTraitDescriptions();
-  renderWarband();
-});
+        warband.leaderTraitIdx = els.leaderTraitSelect.value === "" ? "" : els.leaderTraitSelect.value;
+        renderTraitDescriptions();
+        renderWarband();
+      });
 
-
-            // Warband name input
+      // Warband name input
       if (els.warbandName) {
         els.warbandName.value = warband.name ?? "";
-        els.warbandName.addEventListener("input", () => {
-          warband.name = els.warbandName.value;
-        });
+        els.warbandName.addEventListener("input", () => { warband.name = els.warbandName.value; });
       }
-      
+
       // Compact mode toggle (persisted)
       loadCompactPref();
       applyCompactMode(uiPrefs.compact);
-
       if (els.compactToggle) {
         els.compactToggle.checked = uiPrefs.compact;
-        els.compactToggle.addEventListener("change", () => {
-          applyCompactMode(els.compactToggle.checked);
-        });
+        els.compactToggle.addEventListener("change", () => applyCompactMode(els.compactToggle.checked));
       }
 
       // Dice Tray
-            if (els.rollD20Btn && els.d20Result) {
+      if (els.rollD20Btn && els.d20Result) {
         els.rollD20Btn.addEventListener("click", () => {
-          // prevent spamming while rolling
           els.rollD20Btn.disabled = true;
 
-          // restart animation
           els.d20Result.classList.remove("dice-rolling");
-          // force reflow so the animation restarts reliably
           void els.d20Result.offsetWidth;
           els.d20Result.classList.add("dice-rolling");
 
-          // "rolling" flicker for ~350ms
           const start = Date.now();
           const flicker = setInterval(() => {
             els.d20Result.textContent = String(rollDie(20));
             if (Date.now() - start > 350) clearInterval(flicker);
           }, 45);
 
-          // final result at ~380ms
           setTimeout(() => {
             const r = rollDie(20);
             els.d20Result.textContent = String(r);
@@ -1600,8 +1512,19 @@ function renderTraitDescriptions() {
         });
       }
 
+      // Clear dice
+      if (els.clearRollsBtn) {
+        els.clearRollsBtn.addEventListener("click", () => {
+          diceState.history = [];
+          if (els.d20Result) els.d20Result.textContent = "—";
+          renderDice();
+        });
+      }
 
       renderDice();
+
+      // Ensure play state defaults
+      warband.members.forEach(ensurePlayState);
 
       renderWarband();
     } catch (err) {
@@ -1611,7 +1534,6 @@ function renderTraitDescriptions() {
     }
   }
 
-  
   loadData();
 </script>
 
