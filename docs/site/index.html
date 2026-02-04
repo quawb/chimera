@@ -838,6 +838,10 @@
     renderModelVisibilityControls();
 
     els.warbandGrid.innerHTML = "";
+    const collapseModelsOnPhone =
+  document.body.classList.contains("compact") &&
+  window.matchMedia("(max-width: 480px)").matches;
+
 
     warband.members.forEach((m, memberIndex) => {
       ensurePlayState(m);
@@ -908,7 +912,29 @@
 
       header.appendChild(title);
       header.appendChild(right);
-      card.appendChild(header);
+      
+      // In phone-compact view, wrap the whole model UI in a collapsible
+let outer = card;
+let contentHost = card;
+
+if (collapseModelsOnPhone) {
+  // Title shown when collapsed (keep it short)
+  const nm = (m.name && String(m.name).trim()) ? ` — ${m.name.trim()}` : "";
+  const titleText = `${m.role}${nm} (${memberTotalPoints(m)} pts)`;
+
+  // Open Leader by default, others closed
+  const col = makeCollapsible(titleText, memberIndex === 0);
+
+  // Make the collapsible body feel like the old card (padding, etc.)
+  col.body.style.padding = "12px";
+  col.body.style.background = "#fff";
+
+  // Put original card content into collapsible body instead of the grid
+  outer = col.wrap;
+  contentHost = col.body;
+}
+contentHost.appendChild(header);
+
 
       // Tier select helper (shows Tier + mod)
       function tierSelect(label, key) {
@@ -1324,7 +1350,8 @@
       card.appendChild(psiSection.wrap);
       card.appendChild(pmSummary);
 
-      els.warbandGrid.appendChild(card);
+      els.warbandGrid.appendChild(outer);
+
     });
 
     const total = warbandTotalPoints();
