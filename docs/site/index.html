@@ -109,6 +109,13 @@
 
     #warbandName { max-width: 280px; padding: 6px 8px; font-size: 14px; }
     #pointCap { max-width: 96px; padding: 6px 8px; font-size: 14px; }
+    /* Make trait descriptions span full row (prevents odd wrapping / overflow) */
+    #warbandTraitDesc,
+    #leaderTraitDesc {
+  grid-column: 1 / -1;
+  max-width: 100%;
+}
+
 
     /* --- Compact mode --- */
     body.compact { margin: 16px; }
@@ -189,6 +196,54 @@
       font-size: 13px;
       color:#333;
     }
+
+    /* ---------- Mobile / small screens ---------- */
+@media (max-width: 640px) {
+  body { margin: 12px; }
+
+  /* Stack label + control instead of 240px label column */
+  .row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  /* Inputs stop being artificially narrow */
+  #warbandName,
+  #pointCap {
+    max-width: none;
+    width: 100%;
+  }
+
+  /* Model cards / grids: allow narrower columns */
+  #warbandGrid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  /* In-play tracker bars: stack instead of 2-up */
+  .playbar {
+    grid-template-columns: 1fr;
+  }
+
+  .playrow {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .counter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .counter .val {
+    min-width: 36px;
+  }
+
+  /* Optional: make the extra button (Full/Clear) not squeeze layout */
+  .smallBtn {
+    width: 100%;
+  }
+}
+
   </style>
 </head>
 
