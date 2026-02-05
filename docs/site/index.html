@@ -1141,10 +1141,10 @@ contentHost.appendChild(header);
       statsBlock.appendChild(tierSelect("Shoot", "shoot"));
       statsBlock.appendChild(tierSelect("Fight", "fight"));
       statsBlock.appendChild(tierSelect("Willpower", "will"));
-      card.appendChild(statsBlock);
+      contentHost.appendChild(statsBlock);
 
       // Headline stats row (always visible)
-      card.appendChild(makeStatsHeadline(m));
+      contentHost.appendChild(makeStatsHeadline(m));
 
       // NEW: In-play controls (Wounds +/- and Horror 0–5)
       const play = document.createElement("div");
@@ -1172,7 +1172,7 @@ contentHost.appendChild(header);
 
       play.appendChild(woundsCtl.row);
       play.appendChild(horrorCtl.row);
-      card.appendChild(play);
+      contentHost.appendChild(play);
 
       // Derived stats (collapsible)
       const statsSection = makeCollapsible("Stats", false);
@@ -1203,7 +1203,7 @@ contentHost.appendChild(header);
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
-      card.appendChild(statsSection.wrap);
+      contentHost.appendChild(statsSection.wrap);
 
       // Ranged Weapon
       const weaponRow = document.createElement("div");
@@ -1228,7 +1228,7 @@ contentHost.appendChild(header);
       });
 
       weaponRow.appendChild(sel);
-      card.appendChild(weaponRow);
+      contentHost.appendChild(weaponRow);
 
       // Sidearm (Shoot >= 3)
       if ((m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER) {
@@ -1261,7 +1261,7 @@ contentHost.appendChild(header);
         });
 
         sidearmRow.appendChild(sideSel);
-        card.appendChild(sidearmRow);
+        contentHost.appendChild(sidearmRow);
       }
 
       // Melee weapon
@@ -1287,9 +1287,9 @@ contentHost.appendChild(header);
       });
 
       meleeSection.appendChild(meleeSel);
-      card.appendChild(meleeSection);
+      contentHost.appendChild(meleeSection);
 
-      card.appendChild(makeSelectedWeaponsSummary(m));
+      contentHost.appendChild(makeSelectedWeaponsSummary(m));
 
       const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
 
@@ -1346,8 +1346,8 @@ contentHost.appendChild(header);
       });
 
       accWrap.appendChild(list);
-      card.appendChild(accSection.wrap);
-      card.appendChild(makeSelectedAccessoriesSummary(m));
+      contentHost.appendChild(accSection.wrap);
+      contentHost.appendChild(makeSelectedAccessoriesSummary(m));
 
       // Psychic Powers + Mutations
       const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (isOpen) => {
@@ -1499,8 +1499,8 @@ contentHost.appendChild(header);
       addGroup("Psychic Powers", selectedPsy);
       addGroup("Mutations", selectedMut);
 
-      card.appendChild(psiSection.wrap);
-      card.appendChild(pmSummary);
+      contentHost.appendChild(psiSection.wrap);
+      contentHost.appendChild(pmSummary);
 
       els.warbandGrid.appendChild(outer);
 
