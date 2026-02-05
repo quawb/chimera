@@ -861,7 +861,7 @@ function makeStatsHeadline(m) {
     (arr || []).map((idx) => safeName(lookup[Number(idx)])).filter(Boolean).join(", ");
 
   // Weapons: Ranged / Melee / (Pistol if unlocked)
-  c  const rangedObj =
+  const rangedObj =
     (m.weaponIdx !== "" && m.weaponIdx != null) ? weapons[Number(m.weaponIdx)] : null;
 
   const meleeObj =
