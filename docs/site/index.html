@@ -1155,6 +1155,7 @@ contentHost.appendChild(header);
       statsBlock.style.display = "grid";
       statsBlock.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
       statsBlock.style.gap = "10px";
+      
 const isPlayMode = document.body.classList.contains("compact");
 
 if (!isPlayMode) {
@@ -1164,8 +1165,6 @@ if (!isPlayMode) {
   statsBlock.appendChild(tierSelect("Willpower", "will"));
   contentHost.appendChild(statsBlock);
 }
-
-      contentHost.appendChild(statsBlock);
 
       // Headline stats row (Play Mode only)
 const isPlayMode = document.body.classList.contains("compact");
