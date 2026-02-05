@@ -18,7 +18,7 @@
     "type": "Passive",
     "max_actions": 0,
     "effect_text": "Armor Class +1",
-    "points": 1
+    "points": 1,
     "ac_bonus": 1
   },
   {
