@@ -143,10 +143,11 @@ body.compact .compactHeadline .v{
 
 /* When the value is long (accessories/powers), allow wrapping instead of overflow */
 body.compact .compactHeadline .v.wrap{
-  white-space: normal;
+  white-space: pre-wrap;
   overflow: visible;
   text-overflow: unset;
 }
+
 
 
     /* In-play controls */
@@ -827,30 +828,71 @@ function makeStatsHeadline(m) {
   const safeName = (x) =>
     (x && (x.name ?? x.title ?? x.label)) ? String(x.name ?? x.title ?? x.label) : "";
 
+    const safeText = (v) => String(v ?? "").trim();
+
+  const getNote = (obj) => {
+    // prefer effect_text, then effect, then rule_text
+    const note = safeText(getTextField(obj, ["effect_text", "effect", "rule_text"]));
+    if (!note) return "";
+    // keep compact view readable: trim long notes
+    const max = 80; // tweak if you want
+    return note.length > max ? note.slice(0, max - 1) + "…" : note;
+  };
+
+  const itemLine = (obj) => {
+    if (!obj) return "—";
+    const nm = safeName(obj) || "—";
+    const note = getNote(obj);
+    return note ? `${nm} — ${note}` : nm;
+  };
+
+  const joinItemLines = (idxArr, lookup) => {
+    const items = (idxArr || [])
+      .map((idx) => lookup[Number(idx)])
+      .filter(Boolean)
+      .map(itemLine);
+
+    // In compact mode, newlines are nice since you already allow wrapping
+    return items.length ? items.join("\n") : "—";
+  };
+
+
   const joinNames = (arr, lookup) =>
     (arr || []).map((idx) => safeName(lookup[Number(idx)])).filter(Boolean).join(", ");
 
   // Weapons: Ranged / Melee / (Pistol if unlocked)
-  const rangedName =
-    (m.weaponIdx !== "" && m.weaponIdx != null)
-      ? (safeName(weapons[Number(m.weaponIdx)]) || "—")
-      : "—";
+  c  const rangedObj =
+    (m.weaponIdx !== "" && m.weaponIdx != null) ? weapons[Number(m.weaponIdx)] : null;
 
-  const meleeName =
-    (m.meleeIdx !== "" && m.meleeIdx != null)
-      ? (safeName(meleeWeapons[Number(m.meleeIdx)]) || "—")
-      : "—";
+  const meleeObj =
+    (m.meleeIdx !== "" && m.meleeIdx != null) ? meleeWeapons[Number(m.meleeIdx)] : null;
 
   const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
-  const pistolName =
-    (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx != null)
-      ? (safeName(weapons[Number(m.sidearmIdx)]) || "—")
-      : (sidearmUnlocked ? "—" : "");
 
-  const accText = joinNames(m.accessoryIdx, accessories) || "—";
-  const psiText = joinNames(m.psychicIdx, psychicPowers) || "";
-  const mutText = joinNames(m.mutationIdx, mutations) || "";
-  const psiMutText = (psiText && mutText) ? `${psiText}; ${mutText}` : (psiText || mutText || "—");
+  const pistolObj =
+    (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx != null)
+      ? weapons[Number(m.sidearmIdx)]
+      : null;
+
+  const weaponsText =
+    `R: ${itemLine(rangedObj)}\n` +
+    `M: ${itemLine(meleeObj)}` +
+    (sidearmUnlocked ? `\nP: ${itemLine(pistolObj)}` : "");
+
+
+  const accText = joinItemLines(m.accessoryIdx, accessories);
+  const psiText = joinItemLines(m.psychicIdx, psychicPowers);
+  const mutText = joinItemLines(m.mutationIdx, mutations);
+
+  const psiMutText = (() => {
+    const psiHas = psiText && psiText !== "—";
+    const mutHas = mutText && mutText !== "—";
+    if (psiHas && mutHas) return `Psychic:\n${psiText}\n\nMut:\n${mutText}`;
+    if (psiHas) return `Psychic:\n${psiText}`;
+    if (mutHas) return `Mut:\n${mutText}`;
+    return "—";
+  })();
+
 
   const ac = armorClass(m);
   const saveT = savingThrowTarget(m);
@@ -890,11 +932,7 @@ function makeStatsHeadline(m) {
     wrap.appendChild(kv);
   };
 
-  addKV(
-    "Weapons",
-    `R: ${rangedName} • M: ${meleeName}` + (sidearmUnlocked ? ` • P: ${pistolName}` : ""),
-    true
-  );
+  addKV("Weapons", weaponsText, true);
   addKV("Accessories", accText, true);
   addKV("Powers / Mut", psiMutText, true);
   addKV("AC / Save", `AC ${ac} • Save ${saveT}`);
