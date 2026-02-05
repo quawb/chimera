@@ -605,14 +605,13 @@ function woundsTotal(m) {
 }
 
 function armorClass(m) {
-  return 10 + defenseMod(m.defense ?? 1) + bonusAC(m);
+  return 10 + defenseMod(m.defense ?? 1) + acBonus(m);
 }
-
 
   function equipmentCapacity(m) { return m.defense ?? 0; }
   function psychicMutationCapacity(m) { return m.will ?? 0; }
   function savingThrowTarget(m) { return clampMin((SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1]), 10); }
-  function armorClass(m) { return 10 + defenseMod(m.defense ?? 1); }
+//  function armorClass(m) { return 10 + defenseMod(m.defense ?? 1); }
 
   // NEW: ensure in-play state fields exist + stay clamped
   function ensurePlayState(m) {
@@ -697,6 +696,51 @@ function sumBonusesFromList(idxArr, lookup, fieldName) {
   }
   return sum;
 }
+
+  function selectedAccessories(m) {
+  return (m.accessoryIdx || []).map(i => accessories[Number(i)]).filter(Boolean);
+}
+function selectedMutations(m) {
+  return (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
+}
+
+// Pull a numeric AC bonus from either explicit fields OR text like "+1 AC", "AC +2", "Armor Class +1"
+function acBonusFromObj(obj) {
+  if (!obj) return 0;
+
+  // 1) Prefer explicit numeric fields if you have them
+  const direct =
+    toIntOrNull(obj.ac_bonus) ??
+    toIntOrNull(obj.armor_class_bonus) ??
+    toIntOrNull(obj.acBonus) ??
+    toIntOrNull(obj.AC) ??        // if you used AC as a bonus value (not recommended, but supported)
+    toIntOrNull(obj.ac);          // if you used ac as a bonus value
+
+  if (direct !== null) return direct;
+
+  // 2) Fallback: parse effect text
+  const txt = String(getTextField(obj, ["effect_text", "effect", "rule_text"]) || "");
+
+  // matches: "+1 AC", "AC +1", "+2 Armor Class", "Armor Class -1"
+  const m1 = txt.match(/([+-]\s*\d+)\s*(ac|armor\s*class)\b/i);
+  if (m1) return parseInt(m1[1].replace(/\s+/g, ""), 10) || 0;
+
+  const m2 = txt.match(/\b(ac|armor\s*class)\b\s*([+-]\s*\d+)/i);
+  if (m2) return parseInt(m2[2].replace(/\s+/g, ""), 10) || 0;
+
+  return 0;
+}
+
+function acBonus(m) {
+  let sum = 0;
+
+  // Accessories and mutations can affect AC (as you mentioned)
+  for (const a of selectedAccessories(m)) sum += acBonusFromObj(a);
+  for (const mu of selectedMutations(m)) sum += acBonusFromObj(mu);
+
+  return sum;
+}
+
 
 function bonusAC(m) {
   const acc = sumBonusesFromList(m.accessoryIdx, accessories, "ac_bonus");
@@ -1638,7 +1682,13 @@ if (!isPlayMode) {
         return row;
       };
 
-      derived.appendChild(statLine("Armor Class (AC)", String(armorClass(m))));
+    //  derived.appendChild(statLine("Armor Class (AC)", String(armorClass(m))));
+
+      const acB = acBonus(m);
+derived.appendChild(
+  statLine("Armor Class (AC)", acB ? `${armorClass(m)} (includes +${acB})` : String(armorClass(m)))
+);
+
       derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
       derived.appendChild(statLine("Wounds (Max)", String(woundsTotal(m))));
       derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
