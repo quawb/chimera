@@ -97,7 +97,7 @@
     /* Compact: "read at a glance" per-model summary */
 body.compact .compactHeadline{
   display: grid;
-  grid-template-columns: 1fr 1fr;   /* 2 columns on phone */
+  grid-template-columns: 1fr;   /* 2 columns on phone */
   gap: 6px 10px;
   font-size: 12px;
   line-height: 1.15;
@@ -366,6 +366,12 @@ body.compact .compactHeadline .v.wrap{
       <input id="warbandName" type="text" placeholder="e.g., The Quawb Cult" style="width:100%;" />
     </div>
 
+        <!-- NEW: per-model show/hide -->
+    <div id="modelVisibility" style="display:none;">
+      <div style="font-weight:900;">Show / hide model cards</div>
+      <div class="mvGrid" id="modelVisibilityGrid"></div>
+    </div>
+
     <div class="row" style="margin-top:10px;">
       <label for="warbandTraitSelect"><strong>Warband Trait</strong></label>
       <select id="warbandTraitSelect"></select>
@@ -376,12 +382,6 @@ body.compact .compactHeadline .v.wrap{
       <label for="leaderTraitSelect"><strong>Leader Trait</strong></label>
       <select id="leaderTraitSelect"></select>
       <div id="leaderTraitDesc" style="margin-top:6px; color:#444; font-size:13px;"></div>
-    </div>
-
-    <!-- NEW: per-model show/hide -->
-    <div id="modelVisibility" style="display:none;">
-      <div style="font-weight:900;">Show / hide model cards</div>
-      <div class="mvGrid" id="modelVisibilityGrid"></div>
     </div>
 
     <div id="warbandGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-top:14px;"></div>
@@ -839,12 +839,28 @@ function makeStatsHeadline(m) {
     return note.length > max ? note.slice(0, max - 1) + "…" : note;
   };
 
-  const itemLine = (obj) => {
-    if (!obj) return "—";
-    const nm = safeName(obj) || "—";
-    const note = getNote(obj);
-    return note ? `${nm} — ${note}` : nm;
-  };
+const itemLine = (obj) => {
+  if (!obj) return "—";
+  const nm = safeName(obj) || "—";
+
+  // Weapon-ish stats (only show if present)
+  const a = safeText(obj.max_actions);
+  const d = safeText(obj.damage);
+  const ap = safeText(obj.ap);
+
+  const statBits = [
+    a ? `A:${a}` : "",
+    d ? `D:${d}` : "",
+    ap ? `AP:${ap}` : ""
+  ].filter(Boolean).join(" ");
+
+  const note = getNote(obj);
+
+  // Put stats before note so it reads like: "Rifle (A:2 D:1 AP:0) — blah"
+  const core = statBits ? `${nm} (${statBits})` : nm;
+  return note ? `${core} — ${note}` : core;
+};
+
 
   const joinItemLines = (idxArr, lookup) => {
     const items = (idxArr || [])
@@ -936,7 +952,6 @@ function makeStatsHeadline(m) {
   addKV("Accessories", accText, true);
   addKV("Powers / Mut", psiMutText, true);
   addKV("AC / Save", `AC ${ac} • Save ${saveT}`);
-  addKV("Wounds / Horror", `${m.woundsCurrent}/${maxW} • H ${m.horror}/5`);
   addKV("Mods", `D${fmtSigned(dMod)} S${fmtSigned(sMod)} F${fmtSigned(fMod)} W${fmtSigned(wMod)}`);
 
   return wrap;
