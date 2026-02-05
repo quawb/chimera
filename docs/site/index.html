@@ -598,9 +598,16 @@ function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
     return d + w + s + f;
   }
 
-  function woundsTotal(m) {
-    return (m.defense ?? 0) + (m.shoot ?? 0) + (m.fight ?? 0) + (m.will ?? 0);
-  }
+function woundsTotal(m) {
+  const base =
+    (m.defense ?? 0) + (m.shoot ?? 0) + (m.fight ?? 0) + (m.will ?? 0);
+  return base + bonusWounds(m);
+}
+
+function armorClass(m) {
+  return 10 + defenseMod(m.defense ?? 1) + bonusAC(m);
+}
+
 
   function equipmentCapacity(m) { return m.defense ?? 0; }
   function psychicMutationCapacity(m) { return m.will ?? 0; }
@@ -681,6 +688,27 @@ function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
     }
     return sum;
   }
+function sumBonusesFromList(idxArr, lookup, fieldName) {
+  let sum = 0;
+  for (const idx of (idxArr || [])) {
+    const obj = lookup[Number(idx)];
+    const v = toIntOrNull(obj?.[fieldName]) ?? 0;
+    sum += v;
+  }
+  return sum;
+}
+
+function bonusAC(m) {
+  const acc = sumBonusesFromList(m.accessoryIdx, accessories, "ac_bonus");
+  const mut = sumBonusesFromList(m.mutationIdx, mutations, "ac_bonus");
+  return acc + mut;
+}
+
+function bonusWounds(m) {
+  const acc = sumBonusesFromList(m.accessoryIdx, accessories, "wounds_bonus");
+  const mut = sumBonusesFromList(m.mutationIdx, mutations, "wounds_bonus");
+  return acc + mut;
+}
 
   function clearMemberLoadout(m) {
     m.weaponIdx = "";
@@ -1753,6 +1781,7 @@ if (!isPlayMode) {
           if (cb.checked) s.add(String(idx));
           else s.delete(String(idx));
           m.accessoryIdx = [...s].map(Number);
+          ensurePlayState(m);
           renderWarband();
         });
 
@@ -1858,7 +1887,9 @@ if (!isPlayMode) {
           if (cb.checked) s.add(String(idx));
           else s.delete(String(idx));
           m.mutationIdx = [...s].map(Number);
+          ensurePlayState(m);
           renderWarband();
+
         });
 
         const lbl = document.createElement("label");
