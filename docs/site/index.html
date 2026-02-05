@@ -155,22 +155,18 @@ body.compact .compactHeadline .v.wrap{
   align-items: start;
 }
 
-/* each tracker row: label | counter | extra button (stays inside card) */
+/* each tracker row: label | counter | extra button */
 .playrow{
-  display:grid;
-  grid-template-columns:auto 1fr auto;
-  gap:10px;
-  align-items:center;
-  min-width:0;
-}
-    /* When the card gets narrow, stack within each row (prevents overlap) */
-@media (max-width: 640px){
-  .playrow{ grid-template-columns: 1fr; align-items: stretch; }
-  .smallBtn{ width: 100%; }
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
 }
 
+/* counter should flex nicely and never overflow */
 .counter {
-  display: inline-flex;
+  display: flex;              /* (not inline-flex) lets it size better in grid */
   align-items: center;
   gap: 8px;
   border: 1px solid #ddd;
@@ -179,8 +175,12 @@ body.compact .compactHeadline .v.wrap{
   background: #fff;
   user-select: none;
   min-width: 0;
+  width: 100%;                /* fill the middle column */
   justify-content: space-between;
-  
+}
+
+.counter button {
+  flex: 0 0 auto;
 }
 
 .counter .val {
@@ -198,10 +198,10 @@ body.compact .compactHeadline .v.wrap{
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  white-space: nowrap; /* don't break Full/Clear */
+  white-space: nowrap; /* keep Full/Clear on one line */
 }
 
-/* When the card column gets narrow, stack within each row */
+/* When narrow, stack everything so nothing overlaps */
 @media (max-width: 640px) {
   .playbar { grid-template-columns: 1fr; }
 
