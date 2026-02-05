@@ -359,6 +359,7 @@ body.compact .compactHeadline .v.wrap{
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button id="exportBtn" type="button">Export Warband</button>
         <button id="importBtn" type="button">Import Warband</button>
+        <button id="randomWarbandBtn" type="button">🎲 Random Warband</button>
       </div>
     </div>
 
@@ -437,6 +438,7 @@ body.compact .compactHeadline .v.wrap{
 
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
+    randomWarbandBtn: document.getElementById("randomWarbandBtn"),
     ioArea: document.getElementById("ioArea"),
     ioTitle: document.getElementById("ioTitle"),
     ioText: document.getElementById("ioText"),
@@ -468,6 +470,57 @@ body.compact .compactHeadline .v.wrap{
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
+
+  // ---------- Random name + loadout helpers ----------
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const SILLY_FIRST = [
+  "Bob", "Smokey", "Gummy", "Fizzy", "Cranky", "Spicy", "Wobble", "Soggy", "Porkchop", "Mister", "Doctor",
+  "Grub", "Biscuit", "Doodle", "Noodle", "Pickle", "Beans", "Honk", "Goober", "Zappy", "Moldy", "Captain"
+];
+const SILLY_LAST = [
+  "the Blob", "the Bear", "the Unwise", "the Damp", "the Loud", "the Unforgiven", "the Greasy", "the Gentle",
+  "the Infinite", "the Suspicious", "the Mildly Haunted", "the Crunchy", "the Misplaced", "the Wretched",
+  "of Westchester", "of the Sewer", "from Accounting", "the Knife-Collector", "the Rust King", "the Moon-Licker"
+];
+const SILLY_ROLE = [
+  "Warden", "Janitor", "Oracle", "Squire", "Bouncer", "Archivist", "Fence", "Cook", "Scout", "Prophet", "Clerk"
+];
+
+const WARBAND_PREFIX = [
+  "The", "The Honorable", "The Questionable", "The Blessed", "The Cursed", "The Extremely Normal"
+];
+const WARBAND_ADJ = [
+  "Quawb", "Sewer", "Gutter", "Moon", "Rust", "Mold", "Neon", "Bone", "Goo", "Ferret", "Goblin", "Liminal"
+];
+const WARBAND_NOUN = [
+  "Cult", "Union", "Cabal", "Choir", "Committee", "Collective", "Crew", "Squad", "Coven", "Congregation", "Society"
+];
+
+function randomWarbandName() {
+  // e.g. "The Neon Cabal", "The Questionable Rust Union"
+  return `${pick(WARBAND_PREFIX)} ${pick(WARBAND_ADJ)} ${pick(WARBAND_NOUN)}`;
+}
+
+function randomModelName(role) {
+  // e.g. "Bob the Blob", "Captain Pickle the Mildly Haunted"
+  const style = randInt(1, 3);
+  if (style === 1) return `${pick(SILLY_FIRST)} ${pick(SILLY_LAST)}`;
+  if (style === 2) return `${pick(SILLY_FIRST)} ${pick(SILLY_ROLE)}`;
+  return `${pick(SILLY_FIRST)} ${pick(SILLY_FIRST).toLowerCase()} ${pick(SILLY_LAST)}`;
+}
+
+function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
+
 
   // UI preferences
   const uiPrefs = { compact: false };
@@ -645,6 +698,211 @@ body.compact .compactHeadline .v.wrap{
   function warbandTotalPoints() {
     return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
   }
+
+  function randomizeMemberLoadout(member, budget, opts = {}) {
+  // opts: { allowNames: true/false }
+  const allowNames = opts.allowNames !== false;
+
+  // Start conservative so we can buy toys first
+  member.defense = 1;
+  member.shoot   = 1;
+  member.fight   = 1;
+  member.will    = 1;
+
+  // Clear gear
+  member.weaponIdx = "";
+  member.sidearmIdx = "";
+  member.meleeIdx = "";
+  member.accessoryIdx = [];
+  member.psychicIdx = [];
+  member.mutationIdx = [];
+
+  if (allowNames && (!member.name || !String(member.name).trim())) {
+    member.name = randomModelName(member.role);
+  }
+
+  // Always keep play-state sane
+  ensurePlayState(member);
+
+  const remaining = () => budget - memberTotalPoints(member);
+
+  // ---- Step 1: pick weapons first (fun core) ----
+  // Choose a ranged weapon if we can afford one
+  const rangedCandidates = weapons
+    .map((w, idx) => ({ w, idx, pts: itemPoints(w) }))
+    .filter(x => x.pts >= 0)
+    .filter(x => x.pts <= remaining());
+
+  if (rangedCandidates.length) {
+    // Favor cheap-to-mid items so we can buy more stuff
+    const sorted = rangedCandidates.sort((a, b) => a.pts - b.pts);
+    const pool = sorted.slice(0, Math.min(sorted.length, 10)); // cheapest 10
+    const choice = pick(pool);
+    member.weaponIdx = String(choice.idx);
+  }
+
+  // Choose a melee weapon if affordable
+  const meleeCandidates = meleeWeapons
+    .map((w, idx) => ({ w, idx, pts: itemPoints(w) }))
+    .filter(x => x.pts >= 0)
+    .filter(x => x.pts <= remaining());
+
+  if (meleeCandidates.length) {
+    const sorted = meleeCandidates.sort((a, b) => a.pts - b.pts);
+    const pool = sorted.slice(0, Math.min(sorted.length, 10));
+    const choice = pick(pool);
+    member.meleeIdx = String(choice.idx);
+  }
+
+  // ---- Step 2: buy accessories + powers/muts within capacity ----
+  // Accessories capacity depends on defense tier, but we’re still at tier 1 here -> small capacity.
+  // We can still fill what we can afford within capacity.
+  const tryAddAccessories = () => {
+    const cap = DEFENSE_TO_ACC_CAP[member.defense] ?? 0;
+    if (cap <= 0) return;
+
+    const already = new Set((member.accessoryIdx || []).map(String));
+    const candidates = accessories
+      .map((a, idx) => ({ a, idx, pts: itemPoints(a) }))
+      .filter(x => !already.has(String(x.idx)))
+      .filter(x => x.pts <= remaining());
+
+    // 0..cap items
+    const want = randInt(0, cap);
+    for (const c of shuffle(candidates)) {
+      if ((member.accessoryIdx || []).length >= want) break;
+      if (c.pts <= remaining()) {
+        member.accessoryIdx.push(Number(c.idx));
+      }
+    }
+  };
+
+  const tryAddPsiMut = () => {
+    const cap = psychicMutationCapacity(member);
+    if (cap <= 0) return;
+
+    const used = () => (member.psychicIdx?.length || 0) + (member.mutationIdx?.length || 0);
+    const slotsLeft = () => cap - used();
+    if (slotsLeft() <= 0) return;
+
+    // Blend psychic + mutations into one candidate list
+    const psiCandidates = psychicPowers.map((p, idx) => ({ kind: "psi", obj: p, idx, pts: itemPoints(p) }));
+    const mutCandidates = mutations.map((mu, idx) => ({ kind: "mut", obj: mu, idx, pts: itemPoints(mu) }));
+
+    const alreadyPsi = new Set((member.psychicIdx || []).map(String));
+    const alreadyMut = new Set((member.mutationIdx || []).map(String));
+
+    const candidates = psiCandidates.concat(mutCandidates)
+      .filter(x => x.kind === "psi" ? !alreadyPsi.has(String(x.idx)) : !alreadyMut.has(String(x.idx)))
+      .filter(x => x.pts <= remaining());
+
+    // 0..cap picks
+    const want = randInt(0, cap);
+    for (const c of shuffle(candidates)) {
+      if (used() >= want) break;
+      if (slotsLeft() <= 0) break;
+      if (c.pts <= remaining()) {
+        if (c.kind === "psi") member.psychicIdx.push(Number(c.idx));
+        else member.mutationIdx.push(Number(c.idx));
+      }
+    }
+  };
+
+  // First pass at tier 1 capacity
+  tryAddAccessories();
+  tryAddPsiMut();
+
+  // ---- Step 3: only now upgrade tiers with leftover points ----
+  // We’ll do small upgrades, and after each upgrade we try to buy more toys.
+  // This keeps the “fun stuff” prioritized.
+  const upgradeOptions = [
+    { key: "defense", to: 2 }, { key: "shoot", to: 2 }, { key: "fight", to: 2 }, { key: "will", to: 2 },
+    { key: "defense", to: 3 }, { key: "shoot", to: 3 }, { key: "fight", to: 3 }, { key: "will", to: 3 },
+  ];
+
+  // weighted order: more likely to do 2s than 3s
+  const upgradeBag = [
+    ...upgradeOptions.filter(x => x.to === 2),
+    ...upgradeOptions.filter(x => x.to === 2),
+    ...upgradeOptions.filter(x => x.to === 2),
+    ...upgradeOptions.filter(x => x.to === 3),
+  ];
+
+  let safety = 30;
+  while (safety-- > 0) {
+    if (remaining() <= 0) break;
+
+    const u = pick(upgradeBag);
+    if ((member[u.key] ?? 1) >= u.to) continue;
+
+    const before = memberTotalPoints(member);
+    member[u.key] = u.to;
+    ensurePlayState(member);
+
+    const after = memberTotalPoints(member);
+    const delta = after - before;
+
+    if (delta <= remaining() + delta) {
+      // ok, we can afford it (remaining() already accounts for new points)
+      // if we upgraded shoot to 3, consider sidearm too
+      if (u.key === "shoot" && member.shoot >= SIDEARM_UNLOCK_SHOOT_TIER) {
+        const sideCandidates = weapons
+          .map((w, idx) => ({ w, idx, pts: itemPoints(w) }))
+          .filter(x =>
+            String(x.w.name ?? "").toLowerCase().includes("sidearm") ||
+            String(x.w.name ?? "").toLowerCase().includes("pistol")
+          )
+          .filter(x => x.pts <= remaining());
+
+        if (sideCandidates.length) {
+          const sorted = sideCandidates.sort((a, b) => a.pts - b.pts);
+          const pool = sorted.slice(0, Math.min(sorted.length, 10));
+          member.sidearmIdx = String(pick(pool).idx);
+        }
+      }
+
+      // Upgrading defense/will increases capacities: try to fill new slots
+      tryAddAccessories();
+      tryAddPsiMut();
+    } else {
+      // revert if it somehow busted budget (belt+suspenders)
+      member[u.key] = 1;
+      ensurePlayState(member);
+      break;
+    }
+  }
+
+  // Final clamp
+  ensurePlayState(member);
+}
+
+
+  function randomizeWarband() {
+  // Name warband + any unnamed models
+  warband.name = randomWarbandName();
+  if (els.warbandName) els.warbandName.value = warband.name;
+
+  // Budget strategy: spend most of cap, but leave a tiny buffer so we don’t constantly overflow
+  const cap = toIntOrNull(els.pointCap.value) ?? warband.pointCap ?? 75;
+  warband.pointCap = cap;
+
+  // Give each model a “soft budget” so gear gets spread around.
+  // Leader gets a little more.
+  const base = Math.floor(cap / warband.members.length);
+  const budgets = warband.members.map((m, i) => base + (i === 0 ? 6 : 0));
+
+  // Randomize each member under their budget
+  warband.members.forEach((m, i) => {
+    // keep role, randomize name and kit
+    m.name = randomModelName(m.role);
+    randomizeMemberLoadout(m, budgets[i], { allowNames: true });
+  });
+
+  // If total is still under cap by a lot, sprinkle extra upgrades (gear-first is already done)
+  // We’ll just let the normal render show “within cap” rather than forcing exact spend.
+  renderWarband();
+}
+
 
   function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
     const wrap = document.createElement("div");
@@ -1176,6 +1434,28 @@ function loadWarbandFromStorage() {
 
       right.appendChild(pts);
       right.appendChild(clearBtn);
+
+      const randomBtn = document.createElement("button");
+randomBtn.type = "button";
+randomBtn.textContent = "🎲 Random Loadout";
+randomBtn.style.padding = "6px 10px";
+randomBtn.style.borderRadius = "10px";
+randomBtn.style.border = "1px solid #ddd";
+randomBtn.style.background = "#fff";
+randomBtn.style.cursor = "pointer";
+
+randomBtn.addEventListener("click", () => {
+  // Give this model a reasonable slice of the overall cap.
+  // Slightly more for Leader.
+  const cap = toIntOrNull(els.pointCap.value) ?? warband.pointCap ?? 75;
+  const slice = Math.floor(cap / warband.members.length) + (memberIndex === 0 ? 6 : 0);
+
+  randomizeMemberLoadout(m, slice, { allowNames: true });
+  renderWarband();
+});
+
+right.appendChild(randomBtn);
+
 
       header.appendChild(title);
       header.appendChild(right);
@@ -1810,6 +2090,14 @@ if (!isPlayMode) {
       els.exportBtn.addEventListener("click", exportWarband);
       els.importBtn.addEventListener("click", importWarbandUI);
       els.closeIoBtn.addEventListener("click", () => setIoVisible(false));
+  if (els.randomWarbandBtn) {
+  els.randomWarbandBtn.addEventListener("click", () => {
+    randomizeWarband();
+    saveWarbandToStorage(); // optional, but nice so refresh keeps it
+  });
+}
+
+      
       els.copyBtn.addEventListener("click", async () => {
         try {
           await navigator.clipboard.writeText(els.ioText.value);
