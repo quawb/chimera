@@ -1480,7 +1480,7 @@ if (!isPlayMode) {
         mutList.appendChild(line);
       });
       psiWrap.appendChild(mutList);
-      }
+      
 
       // Summary box (unchanged from your original)
       const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
@@ -1533,6 +1533,7 @@ if (!isPlayMode) {
       addGroup("Mutations", selectedMut);
 
       contentHost.appendChild(psiSection.wrap);
+      }
       contentHost.appendChild(pmSummary);
 
       els.warbandGrid.appendChild(outer);
