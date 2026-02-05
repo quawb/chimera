@@ -142,76 +142,87 @@ body.compact .compactHeadline .v.wrap{
 
 
 
-/* --- In-play controls: keep buttons inside card at any width --- */
-.playbar {
+/* --- In-play controls: Wounds + Horror always on their own lines --- */
+.playbar{
   margin-top: 10px;
   padding: 10px 12px;
   border: 1px solid #eee;
   border-radius: 10px;
   background: #fafafa;
+
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr; /* ✅ one column = one row per tracker */
+  gap: 8px;
   align-items: start;
+
+  font-size: 13px; /* ✅ shrink overall text a bit */
 }
 
-/* each tracker row: label | counter | extra button */
+/* each tracker row: label | controls */
 .playrow{
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: center;
   min-width: 0;
 }
 
-/* counter should flex nicely and never overflow */
-.counter {
-  display: flex;              /* (not inline-flex) lets it size better in grid */
-  align-items: center;
+.playrow > div:first-child{
+  font-weight: 900;
+  font-size: 12px; /* slightly smaller label */
+}
+
+/* right side (counter + Full/Clear) */
+.playrow .counter{
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 30px 1fr 30px auto; /* - | value | + | button */
   gap: 8px;
+  align-items: center;
+
   border: 1px solid #ddd;
   border-radius: 999px;
   padding: 4px 8px;
   background: #fff;
-  user-select: none;
-  min-width: 0;
-  width: 100%;                /* fill the middle column */
-  justify-content: space-between;
 }
 
-.counter button {
-  flex: 0 0 auto;
+.counter button{
+  width: 30px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.counter .val {
-  min-width: 48px;
+.counter .val{
   text-align: center;
   font-weight: 900;
-  flex: 0 0 auto;
+  font-size: 12px; /* ✅ smaller number text */
+  min-width: 0;
+  white-space: nowrap;
 }
 
-.smallBtn {
+.smallBtn{
   padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
   background: #fff;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap; /* keep Full/Clear on one line */
+  font-size: 12px; /* ✅ smaller Full/Clear */
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-/* When narrow, stack everything so nothing overlaps */
-@media (max-width: 640px) {
-  .playbar { grid-template-columns: 1fr; }
-
-  .playrow {
-    grid-template-columns: 1fr; /* stack label, counter, button */
-    align-items: stretch;
-  }
-
-  .smallBtn { width: 100%; }
+/* phone: stack label above controls */
+@media (max-width: 640px){
+  .playrow{ grid-template-columns: 1fr; align-items: stretch; }
+  .playrow .counter{ grid-template-columns: 30px 1fr 30px auto; }
 }
+
 
 
     /* Card visibility toggles */
@@ -1382,14 +1393,17 @@ const itemLine = (obj) => {
     row.appendChild(l);
     row.appendChild(c);
 
-    if (extraBtnText && typeof onExtra === "function") {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "smallBtn";
-      b.textContent = extraBtnText;
-      b.addEventListener("click", onExtra);
-      row.appendChild(b);
-    }
+if (extraBtnText && typeof onExtra === "function") {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "smallBtn";
+  b.textContent = extraBtnText;
+  b.addEventListener("click", onExtra);
+  c.appendChild(b); // ✅ inside pill
+}
+
+row.appendChild(c);
+
 
     return { row, setValueText: (t) => (val.textContent = t) };
   }
