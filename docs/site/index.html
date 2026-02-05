@@ -137,6 +137,11 @@ body.compact .compactHeadline{
   border-radius: 10px;
   padding: 8px;
 }
+body.compact .compactHeadline{
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
 
 body.compact .compactHeadline .kv{
   min-width: 0;
@@ -822,11 +827,24 @@ function makeStatsHeadline(m) {
   const joinNames = (arr, lookup) =>
     (arr || []).map((idx) => safeName(lookup[Number(idx)])).filter(Boolean).join(", ");
 
-  // Weapons
-  let weaponText = "—";
-  if (m.weaponIdx !== "" && m.weaponIdx !== null && m.weaponIdx !== undefined) {
-    weaponText = safeName(weapons[Number(m.weaponIdx)]) || "—";
-  }
+
+// Weapons (Ranged / Sidearm / Melee)
+const rangedName =
+  (m.weaponIdx !== "" && m.weaponIdx != null)
+    ? (safeName(weapons[Number(m.weaponIdx)]) || "—")
+    : "—";
+
+const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
+const sidearmName =
+  (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx != null)
+    ? (safeName(weapons[Number(m.sidearmIdx)]) || "—")
+    : (sidearmUnlocked ? "—" : "n/a");
+
+const meleeName =
+  (m.meleeIdx !== "" && m.meleeIdx != null)
+    ? (safeName(meleeWeapons[Number(m.meleeIdx)]) || "—")
+    : "—";
+
   // Sidearm (if unlocked + selected)
   const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
   if (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx !== null && m.sidearmIdx !== undefined) {
@@ -893,7 +911,7 @@ function makeStatsHeadline(m) {
     wrap.appendChild(kv);
   };
 
-  addKV("Weapon", weaponText, true);
+  addKV("Weapons", `R: ${rangedName} • M: ${meleeName}` + (sidearmUnlocked ? ` • P: ${sidearmName}` : ""), true);
   addKV("Accessories", accText, true);
   addKV("Powers / Mut", psiMutText, true);
   addKV("AC / Save", `AC ${ac} • Save ${saveT}`);
@@ -1137,14 +1155,24 @@ contentHost.appendChild(header);
       statsBlock.style.display = "grid";
       statsBlock.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
       statsBlock.style.gap = "10px";
-      statsBlock.appendChild(tierSelect("Defense", "defense"));
-      statsBlock.appendChild(tierSelect("Shoot", "shoot"));
-      statsBlock.appendChild(tierSelect("Fight", "fight"));
-      statsBlock.appendChild(tierSelect("Willpower", "will"));
+const isPlayMode = document.body.classList.contains("compact");
+
+if (!isPlayMode) {
+  statsBlock.appendChild(tierSelect("Defense", "defense"));
+  statsBlock.appendChild(tierSelect("Shoot", "shoot"));
+  statsBlock.appendChild(tierSelect("Fight", "fight"));
+  statsBlock.appendChild(tierSelect("Willpower", "will"));
+  contentHost.appendChild(statsBlock);
+}
+
       contentHost.appendChild(statsBlock);
 
-      // Headline stats row (always visible)
-      contentHost.appendChild(makeStatsHeadline(m));
+      // Headline stats row (Play Mode only)
+const isPlayMode = document.body.classList.contains("compact");
+if (isPlayMode) {
+  contentHost.appendChild(makeStatsHeadline(m));
+}
+
 
       // NEW: In-play controls (Wounds +/- and Horror 0–5)
       const play = document.createElement("div");
@@ -1204,7 +1232,8 @@ contentHost.appendChild(header);
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
       contentHost.appendChild(statsSection.wrap);
-
+      
+if (!isPlayMode) {
       // Ranged Weapon
       const weaponRow = document.createElement("div");
       weaponRow.style.marginTop = "12px";
@@ -1288,11 +1317,12 @@ contentHost.appendChild(header);
 
       meleeSection.appendChild(meleeSel);
       contentHost.appendChild(meleeSection);
-
+}
       contentHost.appendChild(makeSelectedWeaponsSummary(m));
 
-      const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
 
+      const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
+if (!isPlayMode) {
       // Accessories
       const accSection = makeCollapsible("Edit Accessories", openState.accessories, (isOpen) => {
         const s = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
@@ -1347,7 +1377,10 @@ contentHost.appendChild(header);
 
       accWrap.appendChild(list);
       contentHost.appendChild(accSection.wrap);
+}
       contentHost.appendChild(makeSelectedAccessoriesSummary(m));
+
+      if (!isPlayMode) {
 
       // Psychic Powers + Mutations
       const psiSection = makeCollapsible("Edit Psychic / Mutations", openState.psi, (isOpen) => {
@@ -1448,6 +1481,7 @@ contentHost.appendChild(header);
         mutList.appendChild(line);
       });
       psiWrap.appendChild(mutList);
+      }
 
       // Summary box (unchanged from your original)
       const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
