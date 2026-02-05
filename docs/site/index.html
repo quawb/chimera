@@ -473,6 +473,8 @@ body.compact .compactHeadline .v.wrap{
     uiPrefs.compact = !!on;
     document.body.classList.toggle("compact", uiPrefs.compact);
     try { localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0"); } catch {}
+      // ✅ rebuild UI immediately so play/edit mode switches live
+  renderWarband();
   }
   function loadCompactPref() {
     try {
@@ -983,6 +985,68 @@ function makeStatsHeadline(m) {
     return { row, setValueText: (t) => (val.textContent = t) };
   }
 
+  const STORAGE_KEY = "chimera_warband_v4";
+
+function saveWarbandToStorage() {
+  try {
+    // make sure derived/in-play fields are sane before saving
+    warband.members.forEach(ensurePlayState);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(warband));
+  } catch (e) {
+    // ignore storage errors (private mode/quota)
+  }
+}
+
+function loadWarbandFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.members)) return false;
+
+    // reuse your existing import logic by injecting into warband cleanly:
+    warband.version = parsed.version ?? warband.version;
+    warband.pointCap = toIntOrNull(parsed.pointCap) ?? warband.pointCap;
+    warband.name = String(parsed.name ?? warband.name ?? "");
+    warband.warbandTraitIdx = (parsed.warbandTraitIdx == null || parsed.warbandTraitIdx === "") ? "" : String(parsed.warbandTraitIdx);
+    warband.leaderTraitIdx  = (parsed.leaderTraitIdx  == null || parsed.leaderTraitIdx  === "") ? "" : String(parsed.leaderTraitIdx);
+
+    const incoming = parsed.members.slice(0, warband.members.length);
+
+    warband.members = warband.members.map((def, i) => {
+      const inc = incoming[i] ?? {};
+      const merged = {
+        ...def,
+        name: String(inc.name ?? def.name ?? ""),
+        defense: toIntOrNull(inc.defense) ?? def.defense,
+        shoot:   toIntOrNull(inc.shoot)   ?? def.shoot,
+        fight:   toIntOrNull(inc.fight)   ?? def.fight,
+        will:    toIntOrNull(inc.will)    ?? def.will,
+
+        weaponIdx: (inc.weaponIdx == null || inc.weaponIdx === "") ? "" : String(inc.weaponIdx),
+        sidearmIdx:(inc.sidearmIdx== null || inc.sidearmIdx=== "") ? "" : String(inc.sidearmIdx),
+        meleeIdx:  (inc.meleeIdx  == null || inc.meleeIdx  === "") ? "" : String(inc.meleeIdx),
+
+        accessoryIdx: Array.isArray(inc.accessoryIdx) ? inc.accessoryIdx.map(Number).filter(Number.isFinite) : [],
+        psychicIdx:   Array.isArray(inc.psychicIdx)   ? inc.psychicIdx.map(Number).filter(Number.isFinite)   : [],
+        mutationIdx:  Array.isArray(inc.mutationIdx)  ? inc.mutationIdx.map(Number).filter(Number.isFinite)  : [],
+
+        woundsCurrent: toIntOrNull(inc.woundsCurrent),
+        horror: toIntOrNull(inc.horror) ?? 0,
+        hidden: (typeof inc.hidden === "boolean") ? inc.hidden : false,
+      };
+      ensurePlayState(merged);
+      return merged;
+    });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+
   function renderWarband() {
     warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
 
@@ -1181,6 +1245,21 @@ if (isPlayMode) {
 
       play.appendChild(woundsCtl.row);
       play.appendChild(horrorCtl.row);
+
+// ✅ Regular mode: show AC/Save above the Wounds tracker
+if (!isPlayMode) {
+  const quick = document.createElement("div");
+  quick.style.marginTop = "10px";
+  quick.style.padding = "8px 10px";
+  quick.style.border = "1px solid #eee";
+  quick.style.borderRadius = "10px";
+  quick.style.background = "#fafafa";
+  quick.style.fontSize = "13px";
+  quick.style.fontWeight = "800";
+  quick.textContent = `AC ${armorClass(m)} • Save ${savingThrowTarget(m)}`;
+  contentHost.appendChild(quick);
+}
+      
       contentHost.appendChild(play);
 
       // Derived stats (collapsible)
@@ -1529,6 +1608,7 @@ if (!isPlayMode) {
     } else {
       els.warbandCapStatus.innerHTML = `<span style="color:#0b5; font-weight:600;">Within cap (${cap - total} left)</span>`;
     }
+    saveWarbandToStorage();
   }
 
   function exportWarband() {
@@ -1674,6 +1754,7 @@ if (!isPlayMode) {
         String(a.name ?? "").localeCompare(String(b.name ?? ""))
       );
 
+
       // IO buttons
       els.exportBtn.addEventListener("click", exportWarband);
       els.importBtn.addEventListener("click", importWarbandUI);
@@ -1687,6 +1768,19 @@ if (!isPlayMode) {
         }
       });
       els.loadBtn.addEventListener("click", loadPastedWarband);
+      
+// Load saved warband if present (so reload doesn’t wipe selections)
+loadWarbandFromStorage();
+
+// reflect loaded values into UI controls
+els.pointCap.value = String(warband.pointCap ?? 75);
+if (els.warbandName) els.warbandName.value = warband.name ?? "";
+if (els.warbandTraitSelect) els.warbandTraitSelect.value = warband.warbandTraitIdx === "" ? "" : String(warband.warbandTraitIdx);
+if (els.leaderTraitSelect)  els.leaderTraitSelect.value  = warband.leaderTraitIdx  === "" ? "" : String(warband.leaderTraitIdx);
+
+renderTraitDescriptions();
+warband.members.forEach(ensurePlayState);
+renderWarband();
 
       // Warband Trait select
       els.warbandTraitSelect.innerHTML =
