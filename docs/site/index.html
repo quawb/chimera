@@ -13,29 +13,6 @@
     <a href="./sandbox.html">Sandbox</a>
   </div>
 
-  <div class="card" style="margin-top:12px;">
-    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-      <div style="font-weight:900;">Dice</div>
-
-      <button id="rollD20Btn" type="button"
-        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
-        Roll d20
-      </button>
-
-      <div style="display:flex; gap:8px; align-items:baseline;">
-        <div style="color:#666;">Result</div>
-        <div id="d20Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
-      </div>
-
-      <button id="clearRollsBtn" type="button"
-        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
-        Clear
-      </button>
-    </div>
-
-    <div id="d20History" style="margin-top:10px; color:#444; font-size:14px;"></div>
-  </div>
-
   <style>
     /* Dice animation */
     .dice-result { display: inline-block; min-width: 2ch; }
@@ -333,7 +310,30 @@ body.compact .compactHeadline .v.wrap{
 </head>
 
 <body>
-  <h1>Chimera Builder (Prototype)</h1>
+  <h1>Chimera Builder</h1>
+
+    <div class="card" style="margin-top:12px;">
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div style="font-weight:900;">Dice</div>
+
+      <button id="rollD20Btn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Roll d20
+      </button>
+
+      <div style="display:flex; gap:8px; align-items:baseline;">
+        <div style="color:#666;">Result</div>
+        <div id="d20Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
+      </div>
+
+      <button id="clearRollsBtn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Clear
+      </button>
+    </div>
+
+    <div id="d20History" style="margin-top:10px; color:#444; font-size:14px;"></div>
+  </div>
 
   <div class="row">
     <label for="pointCap"><strong>Point Cap</strong></label>
