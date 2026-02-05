@@ -822,48 +822,38 @@ function makeStatsHeadline(m) {
   ensurePlayState(m);
   const isCompact = document.body.classList.contains("compact");
 
-  // Helpers
-  const safeName = (x) => (x && (x.name ?? x.title ?? x.label)) ? String(x.name ?? x.title ?? x.label) : "";
+  const safeName = (x) =>
+    (x && (x.name ?? x.title ?? x.label)) ? String(x.name ?? x.title ?? x.label) : "";
+
   const joinNames = (arr, lookup) =>
     (arr || []).map((idx) => safeName(lookup[Number(idx)])).filter(Boolean).join(", ");
 
+  // Weapons: Ranged / Melee / (Pistol if unlocked)
+  const rangedName =
+    (m.weaponIdx !== "" && m.weaponIdx != null)
+      ? (safeName(weapons[Number(m.weaponIdx)]) || "—")
+      : "—";
 
-// Weapons (Ranged / Sidearm / Melee)
-const rangedName =
-  (m.weaponIdx !== "" && m.weaponIdx != null)
-    ? (safeName(weapons[Number(m.weaponIdx)]) || "—")
-    : "—";
+  const meleeName =
+    (m.meleeIdx !== "" && m.meleeIdx != null)
+      ? (safeName(meleeWeapons[Number(m.meleeIdx)]) || "—")
+      : "—";
 
-const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
-const sidearmName =
-  (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx != null)
-    ? (safeName(weapons[Number(m.sidearmIdx)]) || "—")
-    : (sidearmUnlocked ? "—" : "n/a");
-
-const meleeName =
-  (m.meleeIdx !== "" && m.meleeIdx != null)
-    ? (safeName(meleeWeapons[Number(m.meleeIdx)]) || "—")
-    : "—";
-
-  // Sidearm (if unlocked + selected)
   const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
-  if (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx !== null && m.sidearmIdx !== undefined) {
-    const s = safeName(weapons[Number(m.sidearmIdx)]) || "";
-    if (s) weaponText += ` / ${s}`;
-  }
+  const pistolName =
+    (sidearmUnlocked && m.sidearmIdx !== "" && m.sidearmIdx != null)
+      ? (safeName(weapons[Number(m.sidearmIdx)]) || "—")
+      : (sidearmUnlocked ? "—" : "");
 
   const accText = joinNames(m.accessoryIdx, accessories) || "—";
-
   const psiText = joinNames(m.psychicIdx, psychicPowers) || "";
   const mutText = joinNames(m.mutationIdx, mutations) || "";
   const psiMutText = (psiText && mutText) ? `${psiText}; ${mutText}` : (psiText || mutText || "—");
 
-  // AC / Save / Wounds / Horror
   const ac = armorClass(m);
   const saveT = savingThrowTarget(m);
   const maxW = woundsTotal(m);
 
-  // Modifiers
   const dMod = defenseMod(m.defense ?? 1);
   const sMod = shootMod(m.shoot ?? 1);
   const fMod = fightMod(m.fight ?? 1);
@@ -871,26 +861,13 @@ const meleeName =
 
   const fmtSigned = (n) => {
     const v = Number(n) || 0;
-    return (v >= 0 ? `+${v}` : `${v}`);
+    return v >= 0 ? `+${v}` : `${v}`;
   };
 
-  // Desktop / non-compact: keep it simple
-  if (!isCompact) {
-    const line = document.createElement("div");
-    line.style.marginTop = "8px";
-    line.style.padding = "8px 10px";
-    line.style.background = "#fff";
-    line.style.fontSize = "13px";
-    line.style.fontWeight = "700";
-    line.style.color = "#333";
-    line.textContent =
-      `Weapon: ${weaponText} • Acc: ${accText} • Psi/Mut: ${psiMutText} • ` +
-      `AC ${ac} • Save ${saveT} • Wounds ${m.woundsCurrent}/${maxW} • Horror ${m.horror}/5 • ` +
-      `Mods D${fmtSigned(dMod)} S${fmtSigned(sMod)} F${fmtSigned(fMod)} W${fmtSigned(wMod)}`;
-    return line;
-  }
+  // Non-compact: return nothing (you wanted this hidden in edit mode)
+  if (!isCompact) return document.createElement("div");
 
-  // Compact: 2-col "at a glance" grid
+  // Compact: grid
   const wrap = document.createElement("div");
   wrap.className = "compactHeadline";
 
@@ -911,7 +888,11 @@ const meleeName =
     wrap.appendChild(kv);
   };
 
-  addKV("Weapons", `R: ${rangedName} • M: ${meleeName}` + (sidearmUnlocked ? ` • P: ${sidearmName}` : ""), true);
+  addKV(
+    "Weapons",
+    `R: ${rangedName} • M: ${meleeName}` + (sidearmUnlocked ? ` • P: ${pistolName}` : ""),
+    true
+  );
   addKV("Accessories", accText, true);
   addKV("Powers / Mut", psiMutText, true);
   addKV("AC / Save", `AC ${ac} • Save ${saveT}`);
@@ -920,6 +901,7 @@ const meleeName =
 
   return wrap;
 }
+
 
 
 
@@ -1316,8 +1298,8 @@ if (!isPlayMode) {
 
       meleeSection.appendChild(meleeSel);
       contentHost.appendChild(meleeSection);
-}
       contentHost.appendChild(makeSelectedWeaponsSummary(m));
+}
 
 
       const openState = openPanelsByMember.get(memberIndex) || { accessories: false, psi: false };
@@ -1376,9 +1358,8 @@ if (!isPlayMode) {
 
       accWrap.appendChild(list);
       contentHost.appendChild(accSection.wrap);
-}
       contentHost.appendChild(makeSelectedAccessoriesSummary(m));
-
+}
       if (!isPlayMode) {
 
       // Psychic Powers + Mutations
@@ -1533,11 +1514,10 @@ if (!isPlayMode) {
       addGroup("Mutations", selectedMut);
 
       contentHost.appendChild(psiSection.wrap);
-      }
       contentHost.appendChild(pmSummary);
 
       els.warbandGrid.appendChild(outer);
-
+      }
     });
 
     const total = warbandTotalPoints();
