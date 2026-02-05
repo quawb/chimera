@@ -155,13 +155,18 @@ body.compact .compactHeadline .v.wrap{
   align-items: start;
 }
 
-/* each row: label | counter | extra button */
-.playrow {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  min-width: 0; /* prevents overflow */
+/* each tracker row: label | counter | extra button (stays inside card) */
+.playrow{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:center;
+  min-width:0;
+}
+    /* When the card gets narrow, stack within each row (prevents overlap) */
+@media (max-width: 640px){
+  .playrow{ grid-template-columns: 1fr; align-items: stretch; }
+  .smallBtn{ width: 100%; }
 }
 
 .counter {
@@ -175,6 +180,7 @@ body.compact .compactHeadline .v.wrap{
   user-select: none;
   min-width: 0;
   justify-content: space-between;
+  
 }
 
 .counter .val {
