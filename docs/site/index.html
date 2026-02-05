@@ -455,6 +455,10 @@ body.compact .compactHeadline .v.wrap{
   };
 
   const diceState = { history: [] }; // newest first
+  let d20FlickerTimer = null;
+let d20FinalTimer = null;
+let d20RollToken = 0;
+
   function rollDie(sides) { return Math.floor(Math.random() * sides) + 1; }
   function renderDice() {
     if (!els.d20History) return;
@@ -2247,32 +2251,60 @@ renderWarband();
       }
 
       // Dice Tray
-      if (els.rollD20Btn && els.d20Result) {
-        els.rollD20Btn.addEventListener("click", () => {
-          els.rollD20Btn.disabled = true;
+// Dice Tray (mobile-safe)
+if (els.rollD20Btn && els.d20Result) {
+  const doRoll = () => {
+    const token = ++d20RollToken;
 
-          els.d20Result.classList.remove("dice-rolling");
-          void els.d20Result.offsetWidth;
-          els.d20Result.classList.add("dice-rolling");
+    // cancel any in-flight timers (important on mobile)
+    if (d20FlickerTimer) { clearInterval(d20FlickerTimer); d20FlickerTimer = null; }
+    if (d20FinalTimer)   { clearTimeout(d20FinalTimer);   d20FinalTimer = null; }
 
-          const start = Date.now();
-          const flicker = setInterval(() => {
-            els.d20Result.textContent = String(rollDie(20));
-            if (Date.now() - start > 350) clearInterval(flicker);
-          }, 45);
+    els.rollD20Btn.disabled = true;
 
-          setTimeout(() => {
-            const r = rollDie(20);
-            els.d20Result.textContent = String(r);
+    // restart animation
+    els.d20Result.classList.remove("dice-rolling");
+    void els.d20Result.offsetWidth;
+    els.d20Result.classList.add("dice-rolling");
 
-            diceState.history.unshift(r);
-            diceState.history = diceState.history.slice(0, 10);
-            renderDice();
+    const start = Date.now();
 
-            els.rollD20Btn.disabled = false;
-          }, 380);
-        });
+    d20FlickerTimer = setInterval(() => {
+      if (token !== d20RollToken) return;
+
+      els.d20Result.textContent = String(rollDie(20));
+
+      if (Date.now() - start > 350) {
+        clearInterval(d20FlickerTimer);
+        d20FlickerTimer = null;
       }
+    }, 45);
+
+    d20FinalTimer = setTimeout(() => {
+      if (token !== d20RollToken) return;
+
+      // ensure flicker is fully stopped before final write
+      if (d20FlickerTimer) { clearInterval(d20FlickerTimer); d20FlickerTimer = null; }
+
+      const r = rollDie(20);
+      els.d20Result.textContent = String(r);
+
+      diceState.history.unshift(r);
+      diceState.history = diceState.history.slice(0, 10);
+      renderDice();
+
+      els.rollD20Btn.disabled = false;
+      d20FinalTimer = null;
+    }, 380);
+  };
+
+  // Use pointerup for mobile consistency
+  els.rollD20Btn.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    doRoll();
+  });
+}
+
 
       // Clear dice
       if (els.clearRollsBtn) {
