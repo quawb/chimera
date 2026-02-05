@@ -831,14 +831,11 @@ function makeStatsHeadline(m) {
 
     const safeText = (v) => String(v ?? "").trim();
 
-  const getNote = (obj) => {
-    // prefer effect_text, then effect, then rule_text
-    const note = safeText(getTextField(obj, ["effect_text", "effect", "rule_text"]));
-    if (!note) return "";
-    // keep compact view readable: trim long notes
-    const max = 80; // tweak if you want
-    return note.length > max ? note.slice(0, max - 1) + "…" : note;
-  };
+const getNote = (obj) => {
+  const note = safeText(getTextField(obj, ["effect_text", "effect", "rule_text"]));
+  return note; // no truncation
+};
+
 
 const itemLine = (obj) => {
   if (!obj) return "—";
