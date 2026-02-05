@@ -142,53 +142,71 @@ body.compact .compactHeadline .v.wrap{
 
 
 
-    /* In-play controls */
-    .playbar {
-      margin-top: 10px;
-      padding: 10px 12px;
-      border: 1px solid #eee;
-      border-radius: 10px;
-      background: #fafafa;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      align-items: center;
-    }
-    .playrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .counter {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid #ddd;
-      border-radius: 999px;
-      padding: 4px 8px;
-      background: #fff;
-      user-select: none;
-    }
-    .counter button {
-      width: 30px;
-      height: 28px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 900;
-      line-height: 1;
-    }
-    .counter .val {
-      min-width: 48px;
-      text-align: center;
-      font-weight: 900;
-    }
-    .smallBtn {
-      padding: 6px 10px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      background: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 700;
-    }
+/* --- In-play controls: keep buttons inside card at any width --- */
+.playbar {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #fafafa;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+/* each row: label | counter | extra button */
+.playrow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0; /* prevents overflow */
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #fff;
+  user-select: none;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+.counter .val {
+  min-width: 48px;
+  text-align: center;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.smallBtn {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap; /* don't break Full/Clear */
+}
+
+/* When the card column gets narrow, stack within each row */
+@media (max-width: 640px) {
+  .playbar { grid-template-columns: 1fr; }
+
+  .playrow {
+    grid-template-columns: 1fr; /* stack label, counter, button */
+    align-items: stretch;
+  }
+
+  .smallBtn { width: 100%; }
+}
+
 
     /* Card visibility toggles */
     #modelVisibility {
