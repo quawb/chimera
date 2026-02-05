@@ -294,10 +294,11 @@ body.compact .compactHeadline .v{
 }
 
 body.compact .compactHeadline .v.wrap{
-  white-space: normal;
+  white-space: pre-wrap;   /* ✅ preserves \n line breaks */
   overflow: visible;
   text-overflow: unset;
 }
+
 
   </style>
 </head>
@@ -869,7 +870,7 @@ const itemLine = (obj) => {
       .map(itemLine);
 
     // In compact mode, newlines are nice since you already allow wrapping
-    return items.length ? items.join("\n") : "—";
+    return items.length ? items.map(x => `• ${x}`).join("\n") : "—";
   };
 
 
