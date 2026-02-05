@@ -15,7 +15,7 @@
     "name": "Chitin Armor",
     "type": "Passive",
     "effect_text": "Add 1 to AC",
-    "points": 1
+    "points": 1,
     "ac_bonus": 1
   },
   {
@@ -52,7 +52,7 @@
     "name": "Monstrous",
     "type": "Passive",
     "effect_text": "Add +1 Wound and +1 Damage on Melee attacks. The model cannot benefit from Cover.",
-    "points": 3
+    "points": 3,
     "wounds_bonus": 1
   },
   {
