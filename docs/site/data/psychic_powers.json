@@ -63,14 +63,13 @@
     "points": 1
   },
   {
-  "name": "Horrible Chorus",
-  "effect_text": "All models in this warband gain Horrible Scream for free. Cannot purchase equipment. Nonleaders cannot purchase other Psychic Powers. Each model may use Horrible Scream once per round.",
-  "rules": {
-    "free_psychic_by_name_all": ["Horrible Scream"],
-    "forbid_accessories_all": true,
-    "forbid_psychic_nonleader": true,
-    "allow_psychic_nonleader_by_name": ["Horrible Scream"]
-  }
+  "name": "Horrible Scream",
+  "power_type": "Attack",
+  "max_actions": 1,
+  "range": LoS,
+  "effect": "LoS, Auto hit Blast AoE, Save or gain 1 Horror",
+  "horror_generated": 1,
+  "points": 2
 },
   {
     "name": "Mind Control",
