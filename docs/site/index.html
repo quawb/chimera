@@ -1716,9 +1716,6 @@ function makeSelectedAccessoriesSummary(m, memberIndex) {
       .map(i => accessories[Number(i)])
       .filter(Boolean);
 
-    const freeAccSet = getFreeAccessoryIdxSet(m, -1); // memberIndex not available here
-
-
     if (!chosen.length) {
       const none = document.createElement("div");
       none.style.marginTop = "8px";
@@ -1771,11 +1768,6 @@ const getNote = (obj) => {
 const freePsySet = getFreePsychicIdxSet(m, memberIndex);
 const freeMutSet = getFreeMutationIdxSet(m, memberIndex);
 
-const accText = joinItemLines(m.accessoryIdx, accessories, freeAccSet);
-const psiText = joinItemLines(m.psychicIdx, psychicPowers, freePsySet);
-const mutText = joinItemLines(m.mutationIdx, mutations, freeMutSet);
-
-
 const itemLine = (obj) => {
   if (!obj) return "—";
   const nm = safeName(obj) || "—";
@@ -1816,6 +1808,10 @@ const joinItemLines = (idxArr, lookup, freeSet) => {
 };
 
 
+const accText = joinItemLines(m.accessoryIdx, accessories, freeAccSet);
+const psiText = joinItemLines(m.psychicIdx, psychicPowers, freePsySet);
+const mutText = joinItemLines(m.mutationIdx, mutations, freeMutSet);
+
 
   const joinNames = (arr, lookup) =>
     (arr || []).map((idx) => safeName(lookup[Number(idx)])).filter(Boolean).join(", ");
@@ -1839,8 +1835,6 @@ const joinItemLines = (idxArr, lookup, freeSet) => {
     `M: ${itemLine(meleeObj)}` +
     (sidearmUnlocked ? `\nP: ${itemLine(pistolObj)}` : "");
 
-
-const freeAccSet = getFreeAccessoryIdxSet(m, memberIndex ?? -1); // memberIndex not in scope here
 
  // const psiText = joinItemLines(m.psychicIdx, psychicPowers);
 //  const mutText = joinItemLines(m.mutationIdx, mutations);
@@ -2732,79 +2726,23 @@ psyList.appendChild(line);
       psiWrap.appendChild(mutList);
       
 
-      // Summary box (unchanged from your original)
-      const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
-      const selectedMut = (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
+// Summary box (FREE-aware)
+const selectedPsyIdx = (m.psychicIdx || []).map(Number).filter(Number.isFinite);
+const selectedMutIdx = (m.mutationIdx || []).map(Number).filter(Number.isFinite);
 
-        const freePsySet = getFreePsychicIdxSet(m, memberIndex);
-const freeMutSet = getFreeMutationIdxSet(m, memberIndex);
+const freePsySet2 = getFreePsychicIdxSet(m, memberIndex);
+const freeMutSet2 = getFreeMutationIdxSet(m, memberIndex);
 
-
-      const pmSummary = document.createElement("div");
-      pmSummary.style.marginTop = "10px";
-      pmSummary.style.padding = "10px 12px";
-      pmSummary.style.border = "1px solid #eee";
-      pmSummary.style.borderRadius = "10px";
-      pmSummary.style.background = "#fafafa";
-      pmSummary.style.fontSize = "13px";
-
-      const pmHead = document.createElement("div");
-      pmHead.style.fontWeight = "900";
-      pmHead.textContent = "Selected Powers / Mutations";
-      pmSummary.appendChild(pmHead);
-
-const addGroup = (groupTitle, entries) => {
-  const t = document.createElement("div");
-  t.style.marginTop = "8px";
-  t.style.fontWeight = "800";
-  t.textContent = groupTitle;
-  pmSummary.appendChild(t);
-
-  if (!entries.length) {
-    const none = document.createElement("div");
-    none.style.marginTop = "4px";
-    none.style.color = "#666";
-    none.textContent = "—";
-    pmSummary.appendChild(none);
-    return;
-  }
-
-  entries.forEach(({ obj, isFree }) => {
-    const line = document.createElement("div");
-    line.style.marginTop = "6px";
-    line.style.whiteSpace = "pre-wrap";
-
-    const nm = obj.name ?? "(Unnamed)";
-    const pts = toIntOrNull(obj.points) ?? 0;
-    const extra = getTextField(obj, ["power_type", "type"]) || getTextField(obj, ["range"]) || "";
-    const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
-
-    line.textContent =
-      `${nm} (${pts} pts)` +
-      (isFree ? " (FREE)" : "") +
-      (extra ? " — " + extra : "") +
-      (eff ? " — " + eff : "");
-
-    pmSummary.appendChild(line);
-  });
-};
-
-        const psyEntries = selectedPsyIdx
-  .map(idx => ({ obj: psychicPowers[idx], isFree: freePsySet.has(idx) }))
+const psyEntries = selectedPsyIdx
+  .map(idx => ({ obj: psychicPowers[idx], isFree: freePsySet2.has(idx) }))
   .filter(x => x.obj);
 
 const mutEntries = selectedMutIdx
-  .map(idx => ({ obj: mutations[idx], isFree: freeMutSet.has(idx) }))
+  .map(idx => ({ obj: mutations[idx], isFree: freeMutSet2.has(idx) }))
   .filter(x => x.obj);
 
 addGroup("Psychic Powers", psyEntries);
 addGroup("Mutations", mutEntries);
-
-
-
-const selectedPsyIdx = (m.psychicIdx || []).map(Number).filter(Number.isFinite);
-const selectedMutIdx = (m.mutationIdx || []).map(Number).filter(Number.isFinite);
-
 
       contentHost.appendChild(psiSection.wrap);
       contentHost.appendChild(pmSummary);
