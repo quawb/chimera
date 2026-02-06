@@ -66,7 +66,7 @@
   "name": "Horrible Scream",
   "power_type": "Attack",
   "max_actions": 1,
-  "range": LoS,
+  "range": "LoS",
   "effect": "LoS, Auto hit Blast AoE, Save or gain 1 Horror",
   "horror_generated": 1,
   "points": 2
