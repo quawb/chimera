@@ -59,6 +59,47 @@
       margin: 4px 6px 0 0;
       font-size: 14px;
     }
+
+    /* Segmented fill inside the counter "pill" */
+.segVal{
+  position: relative;
+  height: 22px;
+  min-width: 120px;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.seg{
+  flex: 1 1 0;
+  height: 100%;
+  border-radius: 4px;
+  background: #e6e6e6; /* empty */
+}
+
+/* Filled colors */
+.seg.f-green { background: #22c55e; }
+.seg.f-yellow { background: #f59e0b; }
+.seg.f-red { background: #ef4444; }
+.seg.f-purple { background: #8b5cf6; }
+
+/* Optional: number overlay */
+.segText{
+  position:absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 900;
+  font-size: 13px;
+  color: #111;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+  pointer-events:none;
+}
+
     .warn { color: #8a1f11; font-weight: 600; }
     .ok { color: #0b5; font-weight: 600; }
     code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
@@ -1345,8 +1386,7 @@ const itemLine = (obj) => {
     });
   }
 
-  // NEW: in-play +/- control factory
-function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra) {
+function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra, opts = null) {
   const row = document.createElement("div");
   row.className = "playrow";
 
@@ -1360,17 +1400,15 @@ function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra)
 
   const minus = document.createElement("button");
   minus.type = "button";
-  minus.className = "ctrBtn";
   minus.textContent = "−";
   minus.addEventListener("click", onMinus);
 
+  // Middle "val" holder (can be text OR segmented bar)
   const val = document.createElement("div");
   val.className = "val";
-  val.textContent = getText();
 
   const plus = document.createElement("button");
   plus.type = "button";
-  plus.className = "ctrBtn";
   plus.textContent = "+";
   plus.addEventListener("click", onPlus);
 
@@ -1378,21 +1416,63 @@ function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra)
   c.appendChild(val);
   c.appendChild(plus);
 
-  // ✅ Put Full/Clear INSIDE the pill as the right-most segment
-  if (extraBtnText && typeof onExtra === "function") {
-    const extra = document.createElement("button");
-    extra.type = "button";
-    extra.className = "ctrExtra";
-    extra.textContent = extraBtnText;
-    extra.addEventListener("click", onExtra);
-    c.appendChild(extra);
-  }
-
   row.appendChild(l);
   row.appendChild(c);
 
-  return { row, setValueText: (t) => (val.textContent = t) };
+  if (extraBtnText && typeof onExtra === "function") {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "smallBtn";
+    b.textContent = extraBtnText;
+    b.addEventListener("click", onExtra);
+    row.appendChild(b);
+  }
+
+  // --- Rendering: text OR segmented ---
+  function renderVal() {
+    if (opts && opts.type === "segments") {
+      const total = Math.max(0, Number(opts.totalFn?.() ?? 0));
+      const filled = Math.max(0, Math.min(total, Number(opts.filledFn?.() ?? 0)));
+
+      // class for filled segments (wounds changes by state, horror always purple)
+      const fillClass =
+        (typeof opts.fillClassFn === "function")
+          ? String(opts.fillClassFn(filled, total) || "")
+          : String(opts.fillClass || "");
+
+      val.innerHTML = "";
+
+      const segWrap = document.createElement("div");
+      segWrap.className = "segVal";
+
+      for (let i = 1; i <= total; i++) {
+        const s = document.createElement("div");
+        s.className = "seg" + (i <= filled ? (" " + fillClass) : "");
+        segWrap.appendChild(s);
+      }
+
+      if (opts.showText) {
+        const t = document.createElement("div");
+        t.className = "segText";
+        t.textContent = opts.textFn ? String(opts.textFn(filled, total)) : `${filled}/${total}`;
+        segWrap.appendChild(t);
+      }
+
+      val.appendChild(segWrap);
+    } else {
+      val.textContent = getText();
+    }
+  }
+
+  renderVal();
+
+  return {
+    row,
+    refresh: renderVal,                 // call this if you ever stop doing full renderWarband()
+    setValueText: (t) => (val.textContent = t), // backward compat (unused in segmented mode)
+  };
 }
+
 
 
 
@@ -1662,23 +1742,46 @@ if (isPlayMode) {
 
       const maxW = woundsTotal(m);
 
-      const woundsCtl = makeCounter(
-        "Wounds",
-        () => `${m.woundsCurrent}/${maxW}`,
-        () => { m.woundsCurrent = clamp(m.woundsCurrent - 1, 0, maxW); renderWarband(); },
-        () => { m.woundsCurrent = clamp(m.woundsCurrent + 1, 0, maxW); renderWarband(); },
-        "Full",
-        () => { m.woundsCurrent = maxW; renderWarband(); }
-      );
+const woundsCtl = makeCounter(
+  "Wounds",
+  () => `${m.woundsCurrent}/${maxW}`, // fallback if opts removed
+  () => { m.woundsCurrent = clamp(m.woundsCurrent - 1, 0, maxW); renderWarband(); },
+  () => { m.woundsCurrent = clamp(m.woundsCurrent + 1, 0, maxW); renderWarband(); },
+  "Full",
+  () => { m.woundsCurrent = maxW; renderWarband(); },
+  {
+    type: "segments",
+    totalFn: () => maxW,
+    filledFn: () => m.woundsCurrent,
+    showText: true,
+    textFn: (filled, total) => `${filled}/${total}`,
+    fillClassFn: (filled, total) => {
+      if (filled <= 1) return "f-red";
+      const half = Math.ceil(total / 2);
+      if (filled <= half) return "f-yellow";
+      return "f-green";
+    }
+  }
+);
 
-      const horrorCtl = makeCounter(
-        "Horror",
-        () => `${m.horror}/5`,
-        () => { m.horror = clamp(m.horror - 1, 0, 5); renderWarband(); },
-        () => { m.horror = clamp(m.horror + 1, 0, 5); renderWarband(); },
-        "Clear",
-        () => { m.horror = 0; renderWarband(); }
-      );
+
+const horrorCtl = makeCounter(
+  "Horror",
+  () => `${m.horror}/5`, // fallback if opts removed
+  () => { m.horror = clamp(m.horror - 1, 0, 5); renderWarband(); },
+  () => { m.horror = clamp(m.horror + 1, 0, 5); renderWarband(); },
+  "Clear",
+  () => { m.horror = 0; renderWarband(); },
+  {
+    type: "segments",
+    totalFn: () => 5,
+    filledFn: () => m.horror,
+    showText: true,
+    textFn: (filled, total) => `${filled}/${total}`,
+    fillClass: "f-purple"
+  }
+);
+
 
       play.appendChild(woundsCtl.row);
       play.appendChild(horrorCtl.row);
