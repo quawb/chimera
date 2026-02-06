@@ -3,12 +3,10 @@
     "name": "Monstrous",
     "effect_text": "Enemy models in LoS of the leader must take a Horror test at the start of the Leader's activation. Fails produce a −1 Horror token. The leader may gain 1 Horror to force one additional Horror test on a model within 1 M."
   },
-    {
-    "name": "Sorcerer",
-    "effect_text": "Your leader can purchase two Psychic Powers costing 1 for free Recasting the same Psychic Power in a round costs 1 Command Point.",
-    "rules": {
-    "leader_free_psychic_powers_cost_1": 2
-    }
+  {
+  "name": "Sorcerer",
+  "effect_text": "Your leader can purchase two Psychic Powers costing 1 for free. Recasting the same Psychic Power in a round costs 1 Command Point.",
+  "rules": { "leader_free_psychic_powers_cost_1": 2 }
   },
   {
     "name": "Executioner",
