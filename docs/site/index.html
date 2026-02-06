@@ -628,78 +628,8 @@ function isLeader(memberIndex) {
 }
 
 // Merge warband trait rules + leader trait rules into one object
-function getTraitRules() {
-  const out = {};
 
-  // warband trait
-  if (warband.warbandTraitIdx !== "" && warbandTraits[Number(warband.warbandTraitIdx)]) {
-    Object.assign(out, warbandTraits[Number(warband.warbandTraitIdx)].rules || {});
-  }
 
-  // leader trait
-  if (warband.leaderTraitIdx !== "" && leaderTraits[Number(warband.leaderTraitIdx)]) {
-    Object.assign(out, leaderTraits[Number(warband.leaderTraitIdx)].rules || {});
-  }
-
-  return out;
-}
-
-function findPsychicIndexByName(name) {
-  const n = normName(name);
-  const idx = psychicPowers.findIndex(p => normName(p?.name) === n);
-  return idx >= 0 ? idx : null;
-}
-
-// Apply "free stuff" + "cannot buy X" constraints directly to warband state
-function enforceTraitEffects() {
-  const rules = getTraitRules();
-
-  // --- Auto-add free psychic powers to all models ---
-  const freePsychicNames = Array.isArray(rules.free_psychic_by_name_all)
-    ? rules.free_psychic_by_name_all
-    : [];
-
-  if (freePsychicNames.length) {
-    for (let i = 0; i < warband.members.length; i++) {
-      const m = warband.members[i];
-      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
-
-      for (const nm of freePsychicNames) {
-        const pi = findPsychicIndexByName(nm);
-        if (pi == null) continue;
-        if (!m.psychicIdx.includes(pi)) m.psychicIdx.push(pi);
-      }
-    }
-  }
-
-  // --- Horrible Chorus restriction: nonleaders can ONLY have allowed psychic names ---
-  if (rules.forbid_psychic_nonleader) {
-    const allowNames = Array.isArray(rules.allow_psychic_nonleader_by_name)
-      ? rules.allow_psychic_nonleader_by_name.map(normName)
-      : [];
-
-    const allowIdx = new Set(
-      allowNames
-        .map(findPsychicIndexByName)
-        .filter(v => v != null)
-        .map(Number)
-    );
-
-    for (let i = 0; i < warband.members.length; i++) {
-      if (isLeader(i)) continue;
-      const m = warband.members[i];
-      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
-      m.psychicIdx = m.psychicIdx.map(Number).filter(idx => allowIdx.has(idx));
-    }
-  }
-
-  // --- Horrible Chorus restriction: cannot purchase equipment/accessories ---
-  if (rules.forbid_accessories_all) {
-    for (let i = 0; i < warband.members.length; i++) {
-      warband.members[i].accessoryIdx = [];
-    }
-  }
-}
 
   
   // Data tables (loaded from JSON)
@@ -803,13 +733,6 @@ function enforceTraitEffects() {
 }
 
 
-function isLeader(memberIndex) {
-  return memberIndex === 0 || String(warband.members?.[memberIndex]?.role ?? "").toLowerCase() === "leader";
-}
-
-function normName(s) {
-  return String(s ?? "").trim().toLowerCase();
-}
 
 
   // === Rules (hardwired for now, easy to change) ===
@@ -1172,41 +1095,9 @@ function bonusWounds(m) {
 function memberTotalPoints(m, memberIndex = -1) {
   return statPointsCost(m)
     + memberWeaponPoints(m)
-    + 
-function memberAccessoryPoints(m, memberIndex = -1) {
-  let sum = 0;
-  const rules = getTraitRules();
-
-  // Cyborgs-style: per model, up to N accessories that cost 1 are free
-  const freeCost1 = toIntOrNull(rules.free_accessory_cost_1) ?? 0;
-  let remainingFree1 = Math.max(0, freeCost1);
-
-  // We’ll compute total, skipping:
-  // - named freebies (if you use those)
-  // - the first N items with points==1 (Cyborgs)
-  for (const idx of (m.accessoryIdx || [])) {
-    const a = accessories[Number(idx)];
-    if (!a) continue;
-
-    // named freebies still win first
-    if (memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) continue;
-
-    const pts = toIntOrNull(a?.points) ?? 0;
-
-    if (pts === 1 && remainingFree1 > 0) {
-      remainingFree1--;
-      continue;
-    }
-
-    sum += pts;
-  }
-
-  return sum;
-}
-
+    + memberAccessoryPoints(m, memberIndex)
     + memberPsiMutPoints(m, memberIndex);
 }
-
 
   function warbandTotalPoints() {
   return warband.members.reduce((acc, m, i) => acc + memberTotalPoints(m, i), 0);
@@ -2374,22 +2265,27 @@ if (!isPlayMode) {
         const line = document.createElement("div");
         line.style.marginBottom = "6px";
 
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.id = id;
-        cb.checked = selected.has(String(idx));
-        cb.addEventListener("change", () => {
-          const s = new Set((m.accessoryIdx || []).map(String));
-          if (cb.checked) s.add(String(idx));
-          else s.delete(String(idx));
-          m.accessoryIdx = [...s].map(Number);
-          ensurePlayState(m);
-          renderWarband();
-        }
-         const rules = getTraitRules();
+ const cb = document.createElement("input");
+cb.type = "checkbox";
+cb.id = id;
+cb.checked = selected.has(String(idx));
+
+// disable if trait forbids accessories
+const rules = getTraitRules();
 if (rules.forbid_accessories_all) {
   cb.disabled = true;
+  cb.checked = false;
+}
+
+cb.addEventListener("change", () => {
+  const s = new Set((m.accessoryIdx || []).map(String));
+  if (cb.checked) s.add(String(idx));
+  else s.delete(String(idx));
+  m.accessoryIdx = [...s].map(Number);
+  ensurePlayState(m);
+  renderWarband();
 });
+
 
         const lbl = document.createElement("label");
         lbl.htmlFor = id;
@@ -2443,25 +2339,7 @@ if (rules.forbid_accessories_all) {
         const line = document.createElement("div");
         line.style.marginBottom = "6px";
 
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.id = id;
-        cb.checked = psySelected.has(String(idx));
-        
-const lbl = document.createElement("label");
-lbl.htmlFor = id;
-lbl.style.cursor = "pointer";
-lbl.textContent = ` ${name} (${pts} pts)`;
-
-cb.addEventListener("change", () => {
-  const s = new Set((m.psychicIdx || []).map(String));
-  if (cb.checked) s.add(String(idx));
-  else s.delete(String(idx));
-  m.psychicIdx = [...s].map(Number);
-  renderWarband();
-});
-
-       const cb = document.createElement("input");
+const cb = document.createElement("input");
 cb.type = "checkbox";
 cb.id = id;
 cb.checked = psySelected.has(String(idx));
@@ -2483,14 +2361,12 @@ if (forbidNonLeaderPsychic) {
     s.delete(String(idx));
     m.psychicIdx = [...s].map(Number);
   }
-
   cb.disabled = true;
   lbl.style.opacity = "0.55";
   lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
 }
 
 cb.addEventListener("change", () => {
-  // block changes if forbidden (extra safety)
   const rulesNow = getTraitRules();
   if (!!rulesNow.forbid_psychic_nonleader && !isLeader(memberIndex)) return;
 
@@ -2503,11 +2379,8 @@ cb.addEventListener("change", () => {
 
 line.appendChild(cb);
 line.appendChild(lbl);
- 
+psyList.appendChild(line);
 
-
-        line.appendChild(cb);
-        line.appendChild(lbl);
         psyList.appendChild(line);
       });
       psiWrap.appendChild(psyList);
