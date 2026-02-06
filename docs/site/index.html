@@ -619,6 +619,89 @@ function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
     return "";
   }
 
+function normName(s) {
+  return String(s ?? "").trim().toLowerCase();
+}
+
+function isLeader(memberIndex) {
+  return memberIndex === 0; // your leader is members[0]
+}
+
+// Merge warband trait rules + leader trait rules into one object
+function getTraitRules() {
+  const out = {};
+
+  // warband trait
+  if (warband.warbandTraitIdx !== "" && warbandTraits[Number(warband.warbandTraitIdx)]) {
+    Object.assign(out, warbandTraits[Number(warband.warbandTraitIdx)].rules || {});
+  }
+
+  // leader trait
+  if (warband.leaderTraitIdx !== "" && leaderTraits[Number(warband.leaderTraitIdx)]) {
+    Object.assign(out, leaderTraits[Number(warband.leaderTraitIdx)].rules || {});
+  }
+
+  return out;
+}
+
+function findPsychicIndexByName(name) {
+  const n = normName(name);
+  const idx = psychicPowers.findIndex(p => normName(p?.name) === n);
+  return idx >= 0 ? idx : null;
+}
+
+// Apply "free stuff" + "cannot buy X" constraints directly to warband state
+function enforceTraitEffects() {
+  const rules = getTraitRules();
+
+  // --- Auto-add free psychic powers to all models ---
+  const freePsychicNames = Array.isArray(rules.free_psychic_by_name_all)
+    ? rules.free_psychic_by_name_all
+    : [];
+
+  if (freePsychicNames.length) {
+    for (let i = 0; i < warband.members.length; i++) {
+      const m = warband.members[i];
+      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
+
+      for (const nm of freePsychicNames) {
+        const pi = findPsychicIndexByName(nm);
+        if (pi == null) continue;
+        if (!m.psychicIdx.includes(pi)) m.psychicIdx.push(pi);
+      }
+    }
+  }
+
+  // --- Horrible Chorus restriction: nonleaders can ONLY have allowed psychic names ---
+  if (rules.forbid_psychic_nonleader) {
+    const allowNames = Array.isArray(rules.allow_psychic_nonleader_by_name)
+      ? rules.allow_psychic_nonleader_by_name.map(normName)
+      : [];
+
+    const allowIdx = new Set(
+      allowNames
+        .map(findPsychicIndexByName)
+        .filter(v => v != null)
+        .map(Number)
+    );
+
+    for (let i = 0; i < warband.members.length; i++) {
+      if (isLeader(i)) continue;
+      const m = warband.members[i];
+      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
+      m.psychicIdx = m.psychicIdx.map(Number).filter(idx => allowIdx.has(idx));
+    }
+  }
+
+  // --- Horrible Chorus restriction: cannot purchase equipment/accessories ---
+  if (rules.forbid_accessories_all) {
+    for (let i = 0; i < warband.members.length; i++) {
+      warband.members[i].accessoryIdx = [];
+    }
+  }
+}
+
+  
   // Data tables (loaded from JSON)
   let weapons = [];
   let accessories = [];
@@ -627,6 +710,107 @@ function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
   let meleeWeapons = [];
   let warbandTraits = [];
   let leaderTraits = [];
+
+  function getSelectedWarbandTrait() {
+  if (warband.warbandTraitIdx === "" || warband.warbandTraitIdx == null) return null;
+  return warbandTraits[Number(warband.warbandTraitIdx)] ?? null;
+}
+
+function getSelectedLeaderTrait() {
+  if (warband.leaderTraitIdx === "" || warband.leaderTraitIdx == null) return null;
+  return leaderTraits[Number(warband.leaderTraitIdx)] ?? null;
+}
+
+// Merge rules objects from warband + leader traits
+function getTraitRules() {
+  const wt = getSelectedWarbandTrait();
+  const lt = getSelectedLeaderTrait();
+  const wr = wt?.rules && typeof wt.rules === "object" ? wt.rules : {};
+  const lr = lt?.rules && typeof lt.rules === "object" ? lt.rules : {};
+
+  // Leader trait + Warband trait both apply; leader gets both.
+  // If keys overlap, we’ll add numbers and concat arrays.
+  const out = {};
+
+  const mergeVal = (k, v) => {
+    if (v == null) return;
+    if (Array.isArray(v)) {
+      out[k] = (out[k] || []).concat(v);
+    } else if (typeof v === "number") {
+      out[k] = (out[k] || 0) + v;
+    } else if (typeof v === "string") {
+      // if you ever use strings, last wins
+      out[k] = v;
+    } else if (typeof v === "boolean") {
+      out[k] = v;
+    } else if (typeof v === "object") {
+      // shallow merge objects
+      out[k] = { ...(out[k] || {}), ...v };
+    }
+  };
+
+  for (const [k, v] of Object.entries(wr)) mergeVal(k, v);
+  for (const [k, v] of Object.entries(lr)) mergeVal(k, v);
+
+  return out;
+}
+
+  function findPsychicIndexByName(name) {
+  const n = normName(name);
+  const idx = psychicPowers.findIndex(p => normName(p?.name) === n);
+  return idx >= 0 ? idx : null;
+}
+
+function enforceTraitEffects() {
+  const rules = getTraitRules();
+  const freePsychicNames = rules.free_psychic_by_name_all || [];
+  const allowNonleader = rules.allow_psychic_nonleader_by_name || [];
+
+  // Auto-add free psychic powers to everyone (if present in data)
+  if (Array.isArray(freePsychicNames) && freePsychicNames.length) {
+    for (let i = 0; i < warband.members.length; i++) {
+      const m = warband.members[i];
+      m.psychicIdx = Array.isArray(m.psychicIdx) ? m.psychicIdx : [];
+
+      for (const nm of freePsychicNames) {
+        const pi = findPsychicIndexByName(nm);
+        if (pi == null) continue;
+        if (!m.psychicIdx.includes(pi)) m.psychicIdx.push(pi);
+      }
+    }
+  }
+
+  // Horrible Chorus restriction: nonleaders cannot purchase other psychic powers
+  if (rules.forbid_psychic_nonleader) {
+    for (let i = 0; i < warband.members.length; i++) {
+      if (isLeader(i)) continue;
+      const m = warband.members[i];
+      const keep = new Set(
+        (allowNonleader || [])
+          .map(findPsychicIndexByName)
+          .filter(v => v != null)
+      );
+      m.psychicIdx = (m.psychicIdx || []).filter(idx => keep.has(Number(idx)));
+    }
+  }
+
+  // Cannot purchase equipment: wipe accessories if rule says so
+  if (rules.forbid_accessories_all) {
+    for (let i = 0; i < warband.members.length; i++) {
+      warband.members[i].accessoryIdx = [];
+    }
+  }
+}
+
+
+function isLeader(memberIndex) {
+  return memberIndex === 0 || String(warband.members?.[memberIndex]?.role ?? "").toLowerCase() === "leader";
+}
+
+function normName(s) {
+  return String(s ?? "").trim().toLowerCase();
+}
+
 
   // === Rules (hardwired for now, easy to change) ===
   const DEFENSE_TO_ACC_CAP = { 0: 0, 1: 1, 2: 2, 3: 3 };
@@ -769,8 +953,26 @@ function armorClass(m) {
   return 10 + defenseMod(m.defense ?? 1) + acBonus(m);
 }
 
-  function equipmentCapacity(m) { return m.defense ?? 0; }
-  function psychicMutationCapacity(m) { return m.will ?? 0; }
+function equipmentCapacity(m, memberIndex = -1) {
+  const base = m.defense ?? 0;
+  const rules = getTraitRules();
+
+  const bonusAll = toIntOrNull(rules.acc_capacity_bonus_all) ?? 0;
+  const bonusLeader = (memberIndex >= 0 && isLeader(memberIndex)) ? (toIntOrNull(rules.acc_capacity_bonus_leader) ?? 0) : 0;
+
+  return base + bonusAll + bonusLeader;
+}
+
+function psychicMutationCapacity(m, memberIndex = -1) {
+  const base = m.will ?? 0;
+  const rules = getTraitRules();
+
+  const bonusAll = toIntOrNull(rules.psi_capacity_bonus_all) ?? 0;
+  const bonusLeader = (memberIndex >= 0 && isLeader(memberIndex)) ? (toIntOrNull(rules.psi_capacity_bonus_leader) ?? 0) : 0;
+
+  return base + bonusAll + bonusLeader;
+}
+
   function savingThrowTarget(m) { return clampMin((SAVE_TARGET_BY_WILL[m.will] ?? SAVE_TARGET_BY_WILL[1]), 10); }
 //  function armorClass(m) { return 10 + defenseMod(m.defense ?? 1); }
 
@@ -829,27 +1031,68 @@ function armorClass(m) {
     return sum;
   }
 
-  function memberAccessoryPoints(m) {
-    let sum = 0;
-    for (const idx of (m.accessoryIdx || [])) {
-      const a = accessories[Number(idx)];
-      sum += (toIntOrNull(a?.points) ?? 0);
-    }
-    return sum;
+function memberAccessoryPoints(m, memberIndex = -1) {
+  let sum = 0;
+  for (const idx of (m.accessoryIdx || [])) {
+    const a = accessories[Number(idx)];
+    if (!a) continue;
+
+    if (memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) continue;
+
+    sum += (toIntOrNull(a?.points) ?? 0);
+  }
+  return sum;
+}
+
+
+function memberPsiMutPoints(m, memberIndex = -1) {
+  const rules = getTraitRules();
+
+  // Psychic
+  const psychicObjs = (m.psychicIdx || [])
+    .map(i => psychicPowers[Number(i)])
+    .filter(Boolean);
+
+  // Mutations
+  const mutationObjs = (m.mutationIdx || [])
+    .map(i => mutations[Number(i)])
+    .filter(Boolean);
+
+  let sum = 0;
+
+  // First: add psychic, skipping named-free
+  // Also collect 1-point psychics for the Sorcerer-style free allowance
+  const onePointPsychics = [];
+
+  for (const p of psychicObjs) {
+    if (memberIndex >= 0 && psychicIsFreeByTrait(p, memberIndex)) continue;
+
+    const pts = toIntOrNull(p?.points) ?? 0;
+
+    // track for leader-only free 1-point psychic allowance
+    if (memberIndex >= 0 && isLeader(memberIndex) && pts === 1) onePointPsychics.push(p);
+
+    sum += pts;
   }
 
-  function memberPsiMutPoints(m) {
-    let sum = 0;
-    for (const idx of (m.psychicIdx || [])) {
-      const p = psychicPowers[Number(idx)];
-      sum += (toIntOrNull(p?.points) ?? 0);
-    }
-    for (const idx of (m.mutationIdx || [])) {
-      const mu = mutations[Number(idx)];
-      sum += (toIntOrNull(mu?.points) ?? 0);
-    }
-    return sum;
+  // Then: add mutations, skipping named-free
+  for (const mu of mutationObjs) {
+    if (memberIndex >= 0 && mutationIsFreeByTrait(mu, memberIndex)) continue;
+    sum += (toIntOrNull(mu?.points) ?? 0);
   }
+
+  // Apply "leader_free_psychic_powers_cost_1"
+  if (memberIndex >= 0 && isLeader(memberIndex)) {
+    const freeN = toIntOrNull(rules.leader_free_psychic_powers_cost_1) ?? 0;
+    if (freeN > 0) {
+      // each qualifying psychic is exactly 1 pt, so subtract up to freeN
+      sum -= Math.min(freeN, onePointPsychics.length) * 1;
+    }
+  }
+
+  return sum;
+}
+
 function sumBonusesFromList(idxArr, lookup, fieldName) {
   let sum = 0;
   for (const idx of (idxArr || [])) {
@@ -926,13 +1169,84 @@ function bonusWounds(m) {
     m.mutationIdx = [];
   }
 
-  function memberTotalPoints(m) {
-    return statPointsCost(m) + memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m);
+function memberTotalPoints(m, memberIndex = -1) {
+  return statPointsCost(m)
+    + memberWeaponPoints(m)
+    + 
+function memberAccessoryPoints(m, memberIndex = -1) {
+  let sum = 0;
+  const rules = getTraitRules();
+
+  // Cyborgs-style: per model, up to N accessories that cost 1 are free
+  const freeCost1 = toIntOrNull(rules.free_accessory_cost_1) ?? 0;
+  let remainingFree1 = Math.max(0, freeCost1);
+
+  // We’ll compute total, skipping:
+  // - named freebies (if you use those)
+  // - the first N items with points==1 (Cyborgs)
+  for (const idx of (m.accessoryIdx || [])) {
+    const a = accessories[Number(idx)];
+    if (!a) continue;
+
+    // named freebies still win first
+    if (memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) continue;
+
+    const pts = toIntOrNull(a?.points) ?? 0;
+
+    if (pts === 1 && remainingFree1 > 0) {
+      remainingFree1--;
+      continue;
+    }
+
+    sum += pts;
   }
 
+  return sum;
+}
+
+    + memberPsiMutPoints(m, memberIndex);
+}
+
+
   function warbandTotalPoints() {
-    return warband.members.reduce((acc, m) => acc + memberTotalPoints(m), 0);
-  }
+  return warband.members.reduce((acc, m, i) => acc + memberTotalPoints(m, i), 0);
+}
+
+  function isNameInList(name, list) {
+  const n = normName(name);
+  return Array.isArray(list) && list.some(x => normName(x) === n);
+}
+
+function accessoryIsFreeByTrait(accObj, memberIndex) {
+  const rules = getTraitRules();
+  if (!accObj) return false;
+
+  if (isNameInList(accObj.name, rules.free_accessories_by_name_all)) return true;
+  if (isLeader(memberIndex) && isNameInList(accObj.name, rules.free_accessories_by_name_leader)) return true;
+
+  return false;
+}
+
+function psychicIsFreeByTrait(powObj, memberIndex) {
+  const rules = getTraitRules();
+  if (!powObj) return false;
+
+  if (isNameInList(powObj.name, rules.free_psychic_by_name_all)) return true;
+  if (isLeader(memberIndex) && isNameInList(powObj.name, rules.free_psychic_by_name_leader)) return true;
+
+  return false;
+}
+
+function mutationIsFreeByTrait(mutObj, memberIndex) {
+  const rules = getTraitRules();
+  if (!mutObj) return false;
+
+  if (isNameInList(mutObj.name, rules.free_mutations_by_name_all)) return true;
+  if (isLeader(memberIndex) && isNameInList(mutObj.name, rules.free_mutations_by_name_leader)) return true;
+
+  return false;
+}
+
 
   function randomizeMemberLoadout(member, budget, opts = {}) {
   // opts: { allowNames: true/false }
@@ -1636,8 +1950,11 @@ function loadWarbandFromStorage() {
 }
 
 
-  function renderWarband() {
-    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+function renderWarband() {
+  warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+
+  // ✅ Apply trait rules before drawing + point totals
+  enforceTraitEffects();
 
     // NEW: draw show/hide controls
     renderModelVisibilityControls();
@@ -1697,7 +2014,7 @@ function loadWarbandFromStorage() {
 
       const pts = document.createElement("div");
       pts.style.fontWeight = "800";
-      pts.textContent = `${memberTotalPoints(m)} pts`;
+      pts.textContent = `${memberTotalPoints(m, memberIndex)} pts`;
 
       const clearBtn = document.createElement("button");
       clearBtn.type = "button";
@@ -1746,7 +2063,7 @@ let contentHost = card;
 
 if (collapseModelsOnPhone) {
   const nm = (m.name && String(m.name).trim()) ? ` — ${m.name.trim()}` : "";
-  const titleText = `${m.role}${nm} (${memberTotalPoints(m)} pts)`;
+  const titleText = `${m.role}${nm} (${memberTotalPoints(m, memberIndex)} pts)`;
 
   // ✅ persist open/closed state across renderWarband() calls
   const remembered = openOuterByMember.get(memberIndex);
@@ -1926,14 +2243,14 @@ derived.appendChild(
 
       derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
       derived.appendChild(statLine("Wounds (Max)", String(woundsTotal(m))));
-      derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
-      derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m)}`));
+      derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m, memberIndex)}`));
+      derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m, memberIndex)}`));
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
       derived.appendChild(statLine("Shoot Mod", String(totalShootMod(m))));
       derived.appendChild(statLine("Fight Mod", String(totalFightMod(m))));
       derived.appendChild(statLine("Willpower Mod", String(totalWillMod(m))));
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
-      derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
+      derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m, memberIndex) + memberPsiMutPoints(m, memberIndex))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
       contentHost.appendChild(statsSection.wrap);
       
@@ -2035,7 +2352,7 @@ if (!isPlayMode) {
       });
       const accWrap = accSection.body;
 
-      const accCap = DEFENSE_TO_ACC_CAP[m.defense] ?? 0;
+      const accCap = equipmentCapacity(m, memberIndex);
       const accUsed = (m.accessoryIdx || []).length;
 
       const capLine = document.createElement("div");
@@ -2068,7 +2385,11 @@ if (!isPlayMode) {
           m.accessoryIdx = [...s].map(Number);
           ensurePlayState(m);
           renderWarband();
-        });
+        }
+         const rules = getTraitRules();
+if (rules.forbid_accessories_all) {
+  cb.disabled = true;
+});
 
         const lbl = document.createElement("label");
         lbl.htmlFor = id;
@@ -2094,7 +2415,7 @@ if (!isPlayMode) {
       });
       const psiWrap = psiSection.body;
 
-      const pmCap = psychicMutationCapacity(m);
+      const pmCap = psychicMutationCapacity(m, memberIndex);
       const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
 
       const pmLine = document.createElement("div");
@@ -2132,7 +2453,13 @@ if (!isPlayMode) {
           else s.delete(String(idx));
           m.psychicIdx = [...s].map(Number);
           renderWarband();
-        });
+        }
+                            const rules = getTraitRules();
+if (rules.forbid_psychic_nonleader && !isLeader(memberIndex)) {
+  const allow = new Set((rules.allow_psychic_nonleader_by_name || []).map(normName));
+  const isAllowed = allow.has(normName(p.name));
+  cb.disabled = !isAllowed;
+});
 
         const lbl = document.createElement("label");
         lbl.htmlFor = id;
@@ -2426,6 +2753,8 @@ if (!isPlayMode) {
       
 // Load saved warband if present (so reload doesn’t wipe selections)
 loadWarbandFromStorage();
+      enforceTraitEffects();
+
 
 // reflect loaded values into UI controls
 els.pointCap.value = String(warband.pointCap ?? 75);
