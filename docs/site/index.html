@@ -654,6 +654,103 @@ function itemPoints(obj) { return toIntOrNull(obj?.points) ?? 0; }
   function shootMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
   function fightMod(tier)   { return (SHOOT_FIGHT_TABLE[tier] ?? SHOOT_FIGHT_TABLE[1]).mod; }
 
+  // ---------- Bonus modifiers from items ----------
+function numBonus(obj, key) {
+  return toIntOrNull(obj?.[key]) ?? 0;
+}
+
+function sumIdxBonus(idxArr, lookup, key, predicate = null) {
+  let sum = 0;
+  for (const idx of (idxArr || [])) {
+    const obj = lookup[Number(idx)];
+    if (!obj) continue;
+    if (typeof predicate === "function" && !predicate(obj)) continue;
+    sum += numBonus(obj, key);
+  }
+  return sum;
+}
+
+function getSelectedRangedWeapon(m) {
+  return (m.weaponIdx !== "" && m.weaponIdx != null) ? weapons[Number(m.weaponIdx)] : null;
+}
+
+function getSelectedSidearm(m) {
+  const sidearmUnlocked = (m.shoot ?? 0) >= SIDEARM_UNLOCK_SHOOT_TIER;
+  if (!sidearmUnlocked) return null;
+  return (m.sidearmIdx !== "" && m.sidearmIdx != null) ? weapons[Number(m.sidearmIdx)] : null;
+}
+
+function getSelectedMeleeWeapon(m) {
+  return (m.meleeIdx !== "" && m.meleeIdx != null) ? meleeWeapons[Number(m.meleeIdx)] : null;
+}
+
+function isUnarmedMeleeSelected(m) {
+  const melee = getSelectedMeleeWeapon(m);
+  return !!melee && String(melee.name ?? "").trim().toLowerCase() === "unarmed";
+}
+
+// Special-case: Clawed Limbs only works if melee is Unarmed
+function clawedLimbsPredicate(m) {
+  return (obj) => {
+    const nm = String(obj?.name ?? "").trim().toLowerCase();
+    if (nm === "clawed limbs") return isUnarmedMeleeSelected(m);
+    return true;
+  };
+}
+
+// Totals by stat
+function fightBonus(m) {
+  const melee = getSelectedMeleeWeapon(m);
+  let sum = 0;
+
+  // Weapon itself can modify fight
+  sum += numBonus(melee, "f_bonus");
+
+  // Accessories / Powers / Mutations can modify fight
+  sum += sumIdxBonus(m.accessoryIdx, accessories, "f_bonus");
+  sum += sumIdxBonus(m.psychicIdx, psychicPowers, "f_bonus");
+  sum += sumIdxBonus(m.mutationIdx, mutations, "f_bonus", clawedLimbsPredicate(m));
+
+  return sum;
+}
+
+function shootBonus(m) {
+  const ranged = getSelectedRangedWeapon(m);
+  const sidearm = getSelectedSidearm(m);
+
+  let sum = 0;
+
+  // Weapons can modify shoot
+  sum += numBonus(ranged, "s_bonus");
+  sum += numBonus(sidearm, "s_bonus");
+
+  // Accessories / Powers / Mutations can modify shoot
+  sum += sumIdxBonus(m.accessoryIdx, accessories, "s_bonus");
+  sum += sumIdxBonus(m.psychicIdx, psychicPowers, "s_bonus");
+  sum += sumIdxBonus(m.mutationIdx, mutations, "s_bonus");
+
+  return sum;
+}
+
+function willBonus(m) {
+  let sum = 0;
+  sum += sumIdxBonus(m.accessoryIdx, accessories, "wp_bonus");
+  sum += sumIdxBonus(m.psychicIdx, psychicPowers, "wp_bonus");
+  sum += sumIdxBonus(m.mutationIdx, mutations, "wp_bonus");
+  return sum;
+}
+
+function totalFightMod(m) {
+  return fightMod(m.fight ?? 1) + fightBonus(m);
+}
+function totalShootMod(m) {
+  return shootMod(m.shoot ?? 1) + shootBonus(m);
+}
+function totalWillMod(m) {
+  return willMod(m.will ?? 1) + willBonus(m);
+}
+
+
   function statPointsCost(m) {
     const d = (DEF_WILL_TABLE[m.defense] ?? DEF_WILL_TABLE[1]).cost;
     const w = (DEF_WILL_TABLE[m.will] ?? DEF_WILL_TABLE[1]).cost;
@@ -1308,10 +1405,11 @@ const itemLine = (obj) => {
   const saveT = savingThrowTarget(m);
   const maxW = woundsTotal(m);
 
-  const dMod = defenseMod(m.defense ?? 1);
-  const sMod = shootMod(m.shoot ?? 1);
-  const fMod = fightMod(m.fight ?? 1);
-  const wMod = willMod(m.will ?? 1);
+const dMod = defenseMod(m.defense ?? 1);
+const sMod = totalShootMod(m);
+const fMod = totalFightMod(m);
+const wMod = totalWillMod(m);
+
 
   const fmtSigned = (n) => {
     const v = Number(n) || 0;
@@ -1831,9 +1929,9 @@ derived.appendChild(
       derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
       derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m)}`));
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
-      derived.appendChild(statLine("Shoot Mod", String(shootMod(m.shoot ?? 1))));
-      derived.appendChild(statLine("Fight Mod", String(fightMod(m.fight ?? 1))));
-      derived.appendChild(statLine("Willpower Mod", String(willMod(m.will ?? 1))));
+      derived.appendChild(statLine("Shoot Mod", `${shootMod(m.fight ?? 1)} + ${shootBonus(m)} = ${totalShootMod(m)}`));
+      derived.appendChild(statLine("Fight Mod", `${fightMod(m.fight ?? 1)} + ${fightBonus(m)} = ${totalFightMod(m)}`));
+      derived.appendChild(statLine("Willpower Mod", `${willpowerMod(m.fight ?? 1)} + ${willpowerBonus(m)} = ${totalWillpowerMod(m)}`));
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
