@@ -865,6 +865,23 @@ function totalShootMod(m) {
 function totalWillMod(m) {
   return willMod(m.will ?? 1) + willBonus(m);
 }
+// ---------- Horror penalty to all modifiers ----------
+function horrorPenalty(m) {
+  return clamp(toIntOrNull(m?.horror) ?? 0, 0, 5);
+}
+
+function effectiveDefenseMod(m) {
+  return defenseMod(m.defense ?? 1) - horrorPenalty(m);
+}
+function effectiveShootMod(m) {
+  return totalShootMod(m) - horrorPenalty(m);
+}
+function effectiveFightMod(m) {
+  return totalFightMod(m) - horrorPenalty(m);
+}
+function effectiveWillMod(m) {
+  return totalWillMod(m) - horrorPenalty(m);
+}
 
 
   function statPointsCost(m) {
@@ -1853,10 +1870,10 @@ const mutText = joinItemLines(m.mutationIdx, mutations, freeMutSet);
   const saveT = savingThrowTarget(m);
   const maxW = woundsTotal(m);
 
-const dMod = defenseMod(m.defense ?? 1);
-const sMod = totalShootMod(m);
-const fMod = totalFightMod(m);
-const wMod = totalWillMod(m);
+const dMod = effectiveDefenseMod(m);
+const sMod = effectiveShootMod(m);
+const fMod = effectiveFightMod(m);
+const wMod = effectiveWillMod(m);
 
 
   const fmtSigned = (n) => {
@@ -2384,10 +2401,11 @@ derived.appendChild(
 derived.appendChild(
   statLine("Psi/Mut Slots", `${paidPsiMutSlotsUsed(m, memberIndex)}/${psychicMutationCapacity(m, memberIndex)}`)
 );
-      derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
-      derived.appendChild(statLine("Shoot Mod", String(totalShootMod(m))));
-      derived.appendChild(statLine("Fight Mod", String(totalFightMod(m))));
-      derived.appendChild(statLine("Willpower Mod", String(totalWillMod(m))));
+derived.appendChild(statLine("Defense Mod", String(effectiveDefenseMod(m))));
+derived.appendChild(statLine("Shoot Mod", String(effectiveShootMod(m))));
+derived.appendChild(statLine("Fight Mod", String(effectiveFightMod(m))));
+derived.appendChild(statLine("Willpower Mod", String(effectiveWillMod(m))));
+
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m, memberIndex) + memberPsiMutPoints(m, memberIndex))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
