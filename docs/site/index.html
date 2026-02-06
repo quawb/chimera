@@ -143,85 +143,77 @@ body.compact .compactHeadline .v.wrap{
 
 
 /* --- In-play controls: Wounds + Horror always on their own lines --- */
-.playbar{
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  background: #fafafa;
-
-  display: grid;
-  grid-template-columns: 1fr; /* ✅ one column = one row per tracker */
-  gap: 8px;
-  align-items: start;
-
-  font-size: 13px; /* ✅ shrink overall text a bit */
-}
-
-/* each tracker row: label | controls */
+/* Label + one pill, pill starts right after label */
 .playrow{
-  display: grid;
-  grid-template-columns: 84px 1fr; /* ✅ fixed label column */
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
+  display:grid;
+  grid-template-columns: 78px 1fr; /* label width; tweak 70–90 */
+  gap: 8px;
+  align-items:center;
+  min-width:0;
 }
 
-.playrow > div:first-child{
-  font-weight: 900;
-  font-size: 12px; /* slightly smaller label */
-}
-
-/* right side (counter + Full/Clear) */
-.playrow .counter{
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 30px 1fr 30px auto; /* - | value | + | button */
-  gap: 6px;
-  align-items: center;
-
+/* The pill (now the whole control group) */
+.counter{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;   /* ✅ keep it left, not spread out */
+  gap: 8px;
   border: 1px solid #ddd;
   border-radius: 999px;
-  padding: 3px 6px;
-  background: #fff;
+  padding: 4px 8px;
+  background:#fff;
+  min-width:0;
 }
 
+/* +/- buttons */
 .counter button{
   width: 28px;
   height: 26px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.counter .val{
-  text-align: center;
-  font-weight: 900;
-  font-size: 12px; /* ✅ smaller number text */
-  letter-spacing: 0.2px;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.smallBtn{
-  padding: 5px 9px;
   border-radius: 10px;
   border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-  font-size: 12px; /* ✅ smaller Full/Clear */
-  font-weight: 800;
-  white-space: nowrap;
+  background:#fff;
+  cursor:pointer;
+  font-weight: 900;
+  line-height: 1;
+  flex: 0 0 auto;
 }
 
-/* phone: stack label above controls */
-@media (max-width: 640px){
-  .playrow{ grid-template-columns: 1fr; align-items: stretch; }
-  .playrow .counter{ grid-template-columns: 30px 1fr 30px auto; }
+/* 7/7 */
+.counter .val{
+  min-width: 44px;
+  text-align:center;
+  font-weight:900;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+/* Divider before Full/Clear */
+.counter .divider{
+  width: 1px;
+  align-self: stretch;
+  background: #ddd;
+  opacity: .9;
+  margin: 0 2px; /* little breathing room */
+}
+
+/* Full/Clear inside pill */
+.counter .extra{
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background:#fafafa;
+  cursor:pointer;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Narrow cards: allow the pill to wrap cleanly if needed */
+@media (max-width: 420px){
+  .playrow{ grid-template-columns: 1fr; }
+  .counter{ flex-wrap: wrap; }
+  .counter .divider{ display:none; } /* avoid weird divider wrap */
 }
 
 
@@ -1361,53 +1353,56 @@ const itemLine = (obj) => {
   }
 
   // NEW: in-play +/- control factory
-  function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra) {
-    const row = document.createElement("div");
-    row.className = "playrow";
+function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra) {
+  const row = document.createElement("div");
+  row.className = "playrow";
 
-    const l = document.createElement("div");
-    l.style.fontWeight = "900";
-    l.style.color = "#333";
-    l.textContent = labelText;
+  const l = document.createElement("div");
+  l.style.fontWeight = "900";
+  l.style.color = "#333";
+  l.textContent = labelText;
 
-    const c = document.createElement("div");
-    c.className = "counter";
+  const c = document.createElement("div");
+  c.className = "counter";
 
-    const minus = document.createElement("button");
-    minus.type = "button";
-    minus.textContent = "−";
-    minus.addEventListener("click", onMinus);
+  const minus = document.createElement("button");
+  minus.type = "button";
+  minus.textContent = "−";
+  minus.addEventListener("click", onMinus);
 
-    const val = document.createElement("div");
-    val.className = "val";
-    val.textContent = getText();
+  const val = document.createElement("div");
+  val.className = "val";
+  val.textContent = getText();
 
-    const plus = document.createElement("button");
-    plus.type = "button";
-    plus.textContent = "+";
-    plus.addEventListener("click", onPlus);
+  const plus = document.createElement("button");
+  plus.type = "button";
+  plus.textContent = "+";
+  plus.addEventListener("click", onPlus);
 
-    c.appendChild(minus);
-    c.appendChild(val);
-    c.appendChild(plus);
+  c.appendChild(minus);
+  c.appendChild(val);
+  c.appendChild(plus);
 
-    row.appendChild(l);
-    row.appendChild(c);
+  if (extraBtnText && typeof onExtra === "function") {
+    const div = document.createElement("div");
+    div.className = "divider";
 
-if (extraBtnText && typeof onExtra === "function") {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "smallBtn";
-  b.textContent = extraBtnText;
-  b.addEventListener("click", onExtra);
-  c.appendChild(b); // ✅ inside pill
+    const extra = document.createElement("button");
+    extra.type = "button";
+    extra.className = "extra";
+    extra.textContent = extraBtnText;
+    extra.addEventListener("click", onExtra);
+
+    c.appendChild(div);
+    c.appendChild(extra);
+  }
+
+  row.appendChild(l);
+  row.appendChild(c);
+
+  return { row, setValueText: (t) => (val.textContent = t) };
 }
 
-row.appendChild(c);
-
-
-    return { row, setValueText: (t) => (val.textContent = t) };
-  }
 
   const STORAGE_KEY = "chimera_warband_v4";
 
