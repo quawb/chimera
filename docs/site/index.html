@@ -2448,6 +2448,11 @@ if (rules.forbid_accessories_all) {
         cb.id = id;
         cb.checked = psySelected.has(String(idx));
         
+const lbl = document.createElement("label");
+lbl.htmlFor = id;
+lbl.style.cursor = "pointer";
+lbl.textContent = ` ${name} (${pts} pts)`;
+
 cb.addEventListener("change", () => {
   const s = new Set((m.psychicIdx || []).map(String));
   if (cb.checked) s.add(String(idx));
@@ -2455,20 +2460,18 @@ cb.addEventListener("change", () => {
   m.psychicIdx = [...s].map(Number);
   renderWarband();
 });
-                            
-// ✅ all warband/leader trait rules
-const rules = getTraitRules();
-if (rules.forbid_psychic_nonleader && !isLeader(memberIndex)) {
-  cb.checked = false;
-  cb.disabled = true;
-  lbl.style.opacity = "0.55";
-  lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
+
+// ✅ all warband/leader trait rules (safe)
+if (typeof getTraitRules === "function" && typeof isLeader === "function") {
+  const rules = getTraitRules();
+  if (rules?.forbid_psychic_nonleader && !isLeader(memberIndex)) {
+    cb.checked = false;
+    cb.disabled = true;
+    lbl.style.opacity = "0.55";
+    lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
+  }
 }
 
-        const lbl = document.createElement("label");
-        lbl.htmlFor = id;
-        lbl.style.cursor = "pointer";
-        lbl.textContent = ` ${name} (${pts} pts)`;
 
         line.appendChild(cb);
         line.appendChild(lbl);
