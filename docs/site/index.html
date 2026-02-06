@@ -2727,6 +2727,58 @@ psyList.appendChild(line);
       
 
 // Summary box (FREE-aware)
+const pmSummary = document.createElement("div");
+pmSummary.style.marginTop = "10px";
+pmSummary.style.padding = "10px 12px";
+pmSummary.style.border = "1px solid #eee";
+pmSummary.style.borderRadius = "10px";
+pmSummary.style.background = "#fafafa";
+pmSummary.style.fontSize = "13px";
+
+const pmHead = document.createElement("div");
+pmHead.style.fontWeight = "900";
+pmHead.textContent = "Selected Powers / Mutations";
+pmSummary.appendChild(pmHead);
+
+// ✅ define helper RIGHT HERE so it's in scope
+const addGroup = (groupTitle, entries) => {
+  const t = document.createElement("div");
+  t.style.marginTop = "8px";
+  t.style.fontWeight = "800";
+  t.textContent = groupTitle;
+  pmSummary.appendChild(t);
+
+  if (!entries.length) {
+    const none = document.createElement("div");
+    none.style.marginTop = "4px";
+    none.style.color = "#666";
+    none.textContent = "—";
+    pmSummary.appendChild(none);
+    return;
+  }
+
+  entries.forEach(({ obj, isFree }) => {
+    const line = document.createElement("div");
+    line.style.marginTop = "6px";
+    line.style.whiteSpace = "pre-wrap";
+
+    const nm = obj?.name ?? "(Unnamed)";
+    const pts = toIntOrNull(obj?.points) ?? 0;
+    const extra =
+      getTextField(obj, ["power_type", "type"]) ||
+      getTextField(obj, ["range"]) || "";
+    const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
+
+    line.textContent =
+      `${nm} (${pts} pts)` +
+      (isFree ? " (FREE)" : "") +
+      (extra ? " — " + extra : "") +
+      (eff ? " — " + eff : "");
+
+    pmSummary.appendChild(line);
+  });
+};
+
 const selectedPsyIdx = (m.psychicIdx || []).map(Number).filter(Number.isFinite);
 const selectedMutIdx = (m.mutationIdx || []).map(Number).filter(Number.isFinite);
 
