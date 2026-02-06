@@ -112,7 +112,7 @@
     "power_type": "Effect",
     "max_actions": 1,
     "range": "Self",
-    "effect": "Pick a or b: a. Spawn a Bio Spawn from Caster b. Shape Bio Spawn into Mimic -OR- Shape Mimic into an Abomination",
+    "effect": "Pick a or b: a. Spawn a Bio Spawn from Caster b. Shape Bio Spawn into Mimic -OR- Shape Mimic into an Abomination. This model cannot be moved for any reason.",
     "horror_generated": 0,
     "points": 3
   }
