@@ -1134,6 +1134,104 @@ function paidPsiMutSlotsUsed(m, memberIndex = -1) {
   const mutPaid = mutationCountsForCapacity(m, memberIndex).paid;
   return psiPaid + mutPaid;
 }
+
+  // ---------------- FREE item sets for UI labeling (deterministic) ----------------
+
+// Returns Set of accessory indices that are free for this member (named-free OR cost-1 allowance)
+function getFreeAccessoryIdxSet(m, memberIndex = -1) {
+  const rules = getTraitRules();
+  const free = new Set();
+
+  // 1) named freebies
+  for (const idx of (m.accessoryIdx || [])) {
+    const a = accessories[Number(idx)];
+    if (a && memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) {
+      free.add(Number(idx));
+    }
+  }
+
+  // 2) cost-1 freebies (Cyborgs): pick first N selected that cost exactly 1, excluding named-free already
+  let remainingFree1 = Math.max(0, toIntOrNull(rules.free_accessory_cost_1) ?? 0);
+  if (remainingFree1 > 0) {
+    const selectedCost1 = (m.accessoryIdx || [])
+      .map(Number)
+      .filter(Number.isFinite)
+      .filter(idx => !free.has(idx))
+      .filter(idx => (toIntOrNull(accessories[idx]?.points) ?? 0) === 1)
+      .sort((a, b) => a - b); // deterministic
+
+    for (const idx of selectedCost1) {
+      if (remainingFree1 <= 0) break;
+      free.add(idx);
+      remainingFree1--;
+    }
+  }
+
+  return free;
+}
+
+// Returns Set of psychic indices that are free (named-free OR leader free 1-pt allowance)
+function getFreePsychicIdxSet(m, memberIndex = -1) {
+  const rules = getTraitRules();
+  const free = new Set();
+
+  // 1) named freebies
+  for (const idx of (m.psychicIdx || [])) {
+    const p = psychicPowers[Number(idx)];
+    if (p && memberIndex >= 0 && psychicIsFreeByTrait(p, memberIndex)) {
+      free.add(Number(idx));
+    }
+  }
+
+  // 2) leader free 1-pt psychics
+  if (memberIndex >= 0 && isLeader(memberIndex)) {
+    let remaining = Math.max(0, toIntOrNull(rules.leader_free_psychic_powers_cost_1) ?? 0);
+    if (remaining > 0) {
+      const selectedCost1 = (m.psychicIdx || [])
+        .map(Number)
+        .filter(Number.isFinite)
+        .filter(idx => !free.has(idx))
+        .filter(idx => (toIntOrNull(psychicPowers[idx]?.points) ?? 0) === 1)
+        .sort((a, b) => a - b); // deterministic
+
+      for (const idx of selectedCost1) {
+        if (remaining <= 0) break;
+        free.add(idx);
+        remaining--;
+      }
+    }
+  }
+
+  return free;
+}
+
+// Returns Set of mutation indices that are free (named-free)
+function getFreeMutationIdxSet(m, memberIndex = -1) {
+  const free = new Set();
+  for (const idx of (m.mutationIdx || [])) {
+    const mu = mutations[Number(idx)];
+    if (mu && memberIndex >= 0 && mutationIsFreeByTrait(mu, memberIndex)) {
+      free.add(Number(idx));
+    }
+  }
+  return free;
+}
+
+// Small UI badge
+function makeFreeBadge() {
+  const b = document.createElement("span");
+  b.textContent = "FREE";
+  b.style.marginLeft = "8px";
+  b.style.fontSize = "11px";
+  b.style.fontWeight = "900";
+  b.style.padding = "2px 6px";
+  b.style.borderRadius = "999px";
+  b.style.border = "1px solid #cfe9d8";
+  b.style.background = "#eaf7ef";
+  b.style.color = "#166534";
+  return b;
+}
+
   
 
 function sumBonusesFromList(idxArr, lookup, fieldName) {
@@ -1596,7 +1694,11 @@ function mutationIsFreeByTrait(mutObj, memberIndex) {
     return box;
   }
 
-  function makeSelectedAccessoriesSummary(m) {
+function makeSelectedAccessoriesSummary(m, memberIndex) {
+
+  const freeAccSet = getFreeAccessoryIdxSet(m, memberIndex);
+
+  
     const box = document.createElement("div");
     box.style.marginTop = "10px";
     box.style.padding = "10px 12px";
@@ -1614,6 +1716,9 @@ function mutationIsFreeByTrait(mutObj, memberIndex) {
       .map(i => accessories[Number(i)])
       .filter(Boolean);
 
+    const freeAccSet = getFreeAccessoryIdxSet(m, -1); // memberIndex not available here
+
+
     if (!chosen.length) {
       const none = document.createElement("div");
       none.style.marginTop = "8px";
@@ -1623,24 +1728,32 @@ function mutationIsFreeByTrait(mutObj, memberIndex) {
       return box;
     }
 
-    chosen.forEach(a => {
-      const row = document.createElement("div");
-      row.style.marginTop = "8px";
-      row.style.whiteSpace = "pre-wrap";
+(m.accessoryIdx || []).map(Number).filter(Number.isFinite).forEach((idx) => {
+  const a = accessories[idx];
+  if (!a) return;
 
-      const name = a.name ?? "(Unnamed)";
-      const pts = toIntOrNull(a.points) ?? 0;
-      const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
+  const row = document.createElement("div");
+  row.style.marginTop = "8px";
+  row.style.whiteSpace = "pre-wrap";
 
-      row.textContent = `${name} (${pts} pts)` + (eff ? ` — ${eff}` : "");
-      box.appendChild(row);
-    });
+  const name = a.name ?? "(Unnamed)";
+  const pts = toIntOrNull(a.points) ?? 0;
+  const eff = getTextField(a, ["effect_text", "effect", "rule_text"]);
+
+  row.textContent =
+    `${name} (${pts} pts)` +
+    (freeAccSet.has(idx) ? " (FREE)" : "") +
+    (eff ? ` — ${eff}` : "");
+
+  box.appendChild(row);
+});
+
 
     return box;
   }
 
   // NEW: headline shows current wounds + horror
-function makeStatsHeadline(m) {
+function makeStatsHeadline(m, memberIndex) {
   ensurePlayState(m);
   const isCompact = document.body.classList.contains("compact");
 
@@ -1653,6 +1766,14 @@ const getNote = (obj) => {
   const note = safeText(getTextField(obj, ["effect_text", "effect", "rule_text"]));
   return note; // no truncation
 };
+
+  const freeAccSet = getFreeAccessoryIdxSet(m, memberIndex);
+const freePsySet = getFreePsychicIdxSet(m, memberIndex);
+const freeMutSet = getFreeMutationIdxSet(m, memberIndex);
+
+const accText = joinItemLines(m.accessoryIdx, accessories, freeAccSet);
+const psiText = joinItemLines(m.psychicIdx, psychicPowers, freePsySet);
+const mutText = joinItemLines(m.mutationIdx, mutations, freeMutSet);
 
 
 const itemLine = (obj) => {
@@ -1678,15 +1799,22 @@ const itemLine = (obj) => {
 };
 
 
-  const joinItemLines = (idxArr, lookup) => {
-    const items = (idxArr || [])
-      .map((idx) => lookup[Number(idx)])
-      .filter(Boolean)
-      .map(itemLine);
+const joinItemLines = (idxArr, lookup, freeSet) => {
+  const items = (idxArr || [])
+    .map(Number)
+    .filter(Number.isFinite)
+    .map((idx) => {
+      const obj = lookup[idx];
+      if (!obj) return null;
+      const base = itemLine(obj);
+      const freeTag = (freeSet && freeSet.has(idx)) ? " (FREE)" : "";
+      return `• ${base}${freeTag}`;
+    })
+    .filter(Boolean);
 
-    // In compact mode, newlines are nice since you already allow wrapping
-    return items.length ? items.map(x => `• ${x}`).join("\n") : "—";
-  };
+  return items.length ? items.join("\n") : "—";
+};
+
 
 
   const joinNames = (arr, lookup) =>
@@ -1712,9 +1840,10 @@ const itemLine = (obj) => {
     (sidearmUnlocked ? `\nP: ${itemLine(pistolObj)}` : "");
 
 
-  const accText = joinItemLines(m.accessoryIdx, accessories);
-  const psiText = joinItemLines(m.psychicIdx, psychicPowers);
-  const mutText = joinItemLines(m.mutationIdx, mutations);
+const freeAccSet = getFreeAccessoryIdxSet(m, memberIndex ?? -1); // memberIndex not in scope here
+
+ // const psiText = joinItemLines(m.psychicIdx, psychicPowers);
+//  const mutText = joinItemLines(m.mutationIdx, mutations);
 
   const psiMutText = (() => {
     const psiHas = psiText && psiText !== "—";
@@ -2157,7 +2286,8 @@ if (!isPlayMode) {
 
 // Headline stats row (Play Mode only)
 if (isPlayMode) {
-  contentHost.appendChild(makeStatsHeadline(m));
+contentHost.appendChild(makeStatsHeadline(m, memberIndex));
+
 }
 
 
@@ -2382,6 +2512,10 @@ if (!isPlayMode) {
       list.style.marginTop = "6px";
 
       const selected = new Set((m.accessoryIdx || []).map(String));
+
+
+  const freeAccSet = getFreeAccessoryIdxSet(m, memberIndex);
+
       accessories.forEach((a, idx) => {
         const p = toIntOrNull(a.points) ?? 0;
         const name = a.name ?? "(Unnamed)";
@@ -2417,6 +2551,11 @@ cb.addEventListener("change", () => {
         lbl.style.cursor = "pointer";
         lbl.textContent = ` ${name} (${p} pts)`;
 
+        if (selected.has(String(idx)) && freeAccSet.has(Number(idx))) {
+  lbl.appendChild(makeFreeBadge());
+}
+
+        
         line.appendChild(cb);
         line.appendChild(lbl);
         list.appendChild(line);
@@ -2424,7 +2563,8 @@ cb.addEventListener("change", () => {
 
       accWrap.appendChild(list);
       contentHost.appendChild(accSection.wrap);
-      contentHost.appendChild(makeSelectedAccessoriesSummary(m));
+      contentHost.appendChild(makeSelectedAccessoriesSummary(m, memberIndex));
+
 }
       if (!isPlayMode) {
 
@@ -2456,6 +2596,10 @@ cb.addEventListener("change", () => {
       psyList.style.marginTop = "6px";
 
       const psySelected = new Set((m.psychicIdx || []).map(String));
+
+const freePsySet = getFreePsychicIdxSet(m, memberIndex);
+
+        
       psychicPowers.forEach((p, idx) => {
         const pts = toIntOrNull(p.points) ?? 0;
         const name = p.name ?? "(Unnamed)";
@@ -2473,6 +2617,11 @@ const lbl = document.createElement("label");
 lbl.htmlFor = id;
 lbl.style.cursor = "pointer";
 lbl.textContent = ` ${name} (${pts} pts)`;
+
+        if (psySelected.has(String(idx)) && freePsySet.has(Number(idx))) {
+  lbl.appendChild(makeFreeBadge());
+}
+
 
 // ✅ apply warband/leader trait rules (AFTER lbl exists)
 const rules = getTraitRules();
@@ -2542,6 +2691,8 @@ psyList.appendChild(line);
       mutList.style.marginTop = "6px";
 
       const mutSelected = new Set((m.mutationIdx || []).map(String));
+        const freeMutSet = getFreeMutationIdxSet(m, memberIndex);
+
       mutations.forEach((mu, idx) => {
         const pts = toIntOrNull(mu.points) ?? 0;
         const name = mu.name ?? "(Unnamed)";
@@ -2569,6 +2720,11 @@ psyList.appendChild(line);
         lbl.style.cursor = "pointer";
         lbl.textContent = ` ${name} (${pts} pts)`;
 
+        if (mutSelected.has(String(idx)) && freeMutSet.has(Number(idx))) {
+  lbl.appendChild(makeFreeBadge());
+}
+
+
         line.appendChild(cb);
         line.appendChild(lbl);
         mutList.appendChild(line);
@@ -2579,6 +2735,10 @@ psyList.appendChild(line);
       // Summary box (unchanged from your original)
       const selectedPsy = (m.psychicIdx || []).map(i => psychicPowers[Number(i)]).filter(Boolean);
       const selectedMut = (m.mutationIdx || []).map(i => mutations[Number(i)]).filter(Boolean);
+
+        const freePsySet = getFreePsychicIdxSet(m, memberIndex);
+const freeMutSet = getFreeMutationIdxSet(m, memberIndex);
+
 
       const pmSummary = document.createElement("div");
       pmSummary.style.marginTop = "10px";
@@ -2593,38 +2753,58 @@ psyList.appendChild(line);
       pmHead.textContent = "Selected Powers / Mutations";
       pmSummary.appendChild(pmHead);
 
-      const addGroup = (groupTitle, arr) => {
-        const t = document.createElement("div");
-        t.style.marginTop = "8px";
-        t.style.fontWeight = "800";
-        t.textContent = groupTitle;
-        pmSummary.appendChild(t);
+const addGroup = (groupTitle, entries) => {
+  const t = document.createElement("div");
+  t.style.marginTop = "8px";
+  t.style.fontWeight = "800";
+  t.textContent = groupTitle;
+  pmSummary.appendChild(t);
 
-        if (!arr.length) {
-          const none = document.createElement("div");
-          none.style.marginTop = "4px";
-          none.style.color = "#666";
-          none.textContent = "—";
-          pmSummary.appendChild(none);
-          return;
-        }
+  if (!entries.length) {
+    const none = document.createElement("div");
+    none.style.marginTop = "4px";
+    none.style.color = "#666";
+    none.textContent = "—";
+    pmSummary.appendChild(none);
+    return;
+  }
 
-        arr.forEach(obj => {
-          const line = document.createElement("div");
-          line.style.marginTop = "6px";
-          line.style.whiteSpace = "pre-wrap";
+  entries.forEach(({ obj, isFree }) => {
+    const line = document.createElement("div");
+    line.style.marginTop = "6px";
+    line.style.whiteSpace = "pre-wrap";
 
-          const nm = obj.name ?? "(Unnamed)";
-          const pts = toIntOrNull(obj.points) ?? 0;
-          const extra = getTextField(obj, ["power_type", "type"]) || getTextField(obj, ["range"]) || "";
-          const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
-          line.textContent = `${nm} (${pts} pts)${extra ? " — " + extra : ""}${eff ? " — " + eff : ""}`.trim();
-          pmSummary.appendChild(line);
-        });
-      };
+    const nm = obj.name ?? "(Unnamed)";
+    const pts = toIntOrNull(obj.points) ?? 0;
+    const extra = getTextField(obj, ["power_type", "type"]) || getTextField(obj, ["range"]) || "";
+    const eff = getTextField(obj, ["effect_text", "effect", "rule_text"]);
 
-      addGroup("Psychic Powers", selectedPsy);
-      addGroup("Mutations", selectedMut);
+    line.textContent =
+      `${nm} (${pts} pts)` +
+      (isFree ? " (FREE)" : "") +
+      (extra ? " — " + extra : "") +
+      (eff ? " — " + eff : "");
+
+    pmSummary.appendChild(line);
+  });
+};
+
+        const psyEntries = selectedPsyIdx
+  .map(idx => ({ obj: psychicPowers[idx], isFree: freePsySet.has(idx) }))
+  .filter(x => x.obj);
+
+const mutEntries = selectedMutIdx
+  .map(idx => ({ obj: mutations[idx], isFree: freeMutSet.has(idx) }))
+  .filter(x => x.obj);
+
+addGroup("Psychic Powers", psyEntries);
+addGroup("Mutations", mutEntries);
+
+
+
+const selectedPsyIdx = (m.psychicIdx || []).map(Number).filter(Number.isFinite);
+const selectedMutIdx = (m.mutationIdx || []).map(Number).filter(Number.isFinite);
+
 
       contentHost.appendChild(psiSection.wrap);
       contentHost.appendChild(pmSummary);
