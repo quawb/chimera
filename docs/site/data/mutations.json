@@ -9,7 +9,8 @@
     "name": "Clawed Limbs",
     "type": "Passive",
     "effect_text": "Unarmed attacks lose the −2 Fight penalty.",
-    "points": 1
+    "points": 1,
+    "f_bonus": 2
   },
   {
     "name": "Chitin Armor",
@@ -46,7 +47,8 @@
     "name": "Psychic Scars",
     "type": "Passive",
     "effect_text": "Gain +1 Willpower modifier. Start game with 1 Horror token.",
-    "points": 2
+    "points": 2,
+    "wp_bonus": 1
   },
   {
     "name": "Monstrous",
