@@ -49,7 +49,7 @@
     "max_actions": 0,
     "effect_text": "Willpower Rolls +1",
     "points": 2,
-    "wp_bonus" 1
+    "wp_bonus": 1
   },
   {
     "name": "Stealth Suit",
