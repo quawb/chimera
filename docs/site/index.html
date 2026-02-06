@@ -1040,6 +1040,102 @@ function memberPsiMutPoints(m, memberIndex = -1) {
   return sum;
 }
 
+// ---------------- Capacity should ignore FREE items ----------------
+
+function accessoryCountsForCapacity(m, memberIndex = -1) {
+  const rules = getTraitRules();
+  let remainingFree1 = Math.max(0, toIntOrNull(rules.free_accessory_cost_1) ?? 0);
+
+  let paid = 0;
+  let free = 0;
+
+  for (const idx of (m.accessoryIdx || [])) {
+    const a = accessories[Number(idx)];
+    if (!a) continue;
+
+    // Named freebies (if you use them)
+    if (memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) {
+      free++;
+      continue;
+    }
+
+    const pts = toIntOrNull(a?.points) ?? 0;
+
+    // Cyborgs-style: first N accessories with cost 1 are free
+    if (pts === 1 && remainingFree1 > 0) {
+      remainingFree1--;
+      free++;
+      continue;
+    }
+
+    paid++;
+  }
+
+  return { paid, free, total: (m.accessoryIdx || []).length };
+}
+
+function psychicCountsForCapacity(m, memberIndex = -1) {
+  const rules = getTraitRules();
+
+  // Count named-free psychics first
+  let namedFree = 0;
+  let cost1NonFree = 0;
+  let paid = 0;
+
+  for (const idx of (m.psychicIdx || [])) {
+    const p = psychicPowers[Number(idx)];
+    if (!p) continue;
+
+    if (memberIndex >= 0 && psychicIsFreeByTrait(p, memberIndex)) {
+      namedFree++;
+      continue;
+    }
+
+    const pts = toIntOrNull(p?.points) ?? 0;
+    if (pts === 1) cost1NonFree++;
+    paid++; // tentatively paid; leader free-cost1 will reduce this below
+  }
+
+  // Leader: some 1-pt psychics are free (and thus don't use slots)
+  if (memberIndex >= 0 && isLeader(memberIndex)) {
+    const freeN = Math.max(0, toIntOrNull(rules.leader_free_psychic_powers_cost_1) ?? 0);
+    const freeCost1 = Math.min(freeN, cost1NonFree);
+    paid = Math.max(0, paid - freeCost1);
+  }
+
+  return { paid, free: (namedFree + ((memberIndex >= 0 && isLeader(memberIndex)) ? Math.min(Math.max(0, toIntOrNull(rules.leader_free_psychic_powers_cost_1) ?? 0), cost1NonFree) : 0)), total: (m.psychicIdx || []).length };
+}
+
+function mutationCountsForCapacity(m, memberIndex = -1) {
+  let paid = 0;
+  let free = 0;
+
+  for (const idx of (m.mutationIdx || [])) {
+    const mu = mutations[Number(idx)];
+    if (!mu) continue;
+
+    if (memberIndex >= 0 && mutationIsFreeByTrait(mu, memberIndex)) {
+      free++;
+      continue;
+    }
+
+    paid++;
+  }
+
+  return { paid, free, total: (m.mutationIdx || []).length };
+}
+
+function paidAccessorySlotsUsed(m, memberIndex = -1) {
+  return accessoryCountsForCapacity(m, memberIndex).paid;
+}
+
+function paidPsiMutSlotsUsed(m, memberIndex = -1) {
+  const psiPaid = psychicCountsForCapacity(m, memberIndex).paid;
+  const mutPaid = mutationCountsForCapacity(m, memberIndex).paid;
+  return psiPaid + mutPaid;
+}
+  
+
 function sumBonusesFromList(idxArr, lookup, fieldName) {
   let sum = 0;
   for (const idx of (idxArr || [])) {
@@ -2158,8 +2254,12 @@ derived.appendChild(
 
       derived.appendChild(statLine("Saving Throw Target", String(savingThrowTarget(m))));
       derived.appendChild(statLine("Wounds (Max)", String(woundsTotal(m))));
-      derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m, memberIndex)}`));
-      derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m, memberIndex)}`));
+derived.appendChild(
+  statLine("Accessory Slots", `${paidAccessorySlotsUsed(m, memberIndex)}/${equipmentCapacity(m, memberIndex)}`)
+);
+derived.appendChild(
+  statLine("Psi/Mut Slots", `${paidPsiMutSlotsUsed(m, memberIndex)}/${psychicMutationCapacity(m, memberIndex)}`)
+);
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
       derived.appendChild(statLine("Shoot Mod", String(totalShootMod(m))));
       derived.appendChild(statLine("Fight Mod", String(totalFightMod(m))));
@@ -2268,7 +2368,8 @@ if (!isPlayMode) {
       const accWrap = accSection.body;
 
       const accCap = equipmentCapacity(m, memberIndex);
-      const accUsed = (m.accessoryIdx || []).length;
+      const accUsed = paidAccessorySlotsUsed(m, memberIndex);
+
 
       const capLine = document.createElement("div");
       capLine.style.marginTop = "6px";
@@ -2336,7 +2437,7 @@ cb.addEventListener("change", () => {
       const psiWrap = psiSection.body;
 
       const pmCap = psychicMutationCapacity(m, memberIndex);
-      const pmUsed = (m.psychicIdx || []).length + (m.mutationIdx || []).length;
+      const pmUsed = paidPsiMutSlotsUsed(m, memberIndex);
 
       const pmLine = document.createElement("div");
       pmLine.style.marginTop = "6px";
