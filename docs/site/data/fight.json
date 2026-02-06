@@ -5,6 +5,7 @@
     "effect_text": "-2 to hit Fight roll",
     "damage": 1,
     "ap": 0,
+    "f_bonus": -2,
     "points": 0
   },
   {
