@@ -1929,9 +1929,9 @@ derived.appendChild(
       derived.appendChild(statLine("Accessory Slots", `${(m.accessoryIdx || []).length}/${equipmentCapacity(m)}`));
       derived.appendChild(statLine("Psi/Mut Slots", `${((m.psychicIdx || []).length + (m.mutationIdx || []).length)}/${psychicMutationCapacity(m)}`));
       derived.appendChild(statLine("Defense Mod", String(defenseMod(m.defense ?? 1))));
-      derived.appendChild(statLine("Shoot Mod", `${shootMod(m.fight ?? 1)} + ${shootBonus(m)} = ${totalShootMod(m)}`));
-      derived.appendChild(statLine("Fight Mod", `${fightMod(m.fight ?? 1)} + ${fightBonus(m)} = ${totalFightMod(m)}`));
-      derived.appendChild(statLine("Willpower Mod", `${willpowerMod(m.fight ?? 1)} + ${willpowerBonus(m)} = ${totalWillpowerMod(m)}`));
+      derived.appendChild(statLine("Shoot Mod", String(totalShootMod(m))));
+      derived.appendChild(statLine("Fight Mod", String(totalFightMod(m))));
+      derived.appendChild(statLine("Willpower Mod", String(totalWillMod(m))));
       derived.appendChild(statLine("Stat Points", String(statPointsCost(m))));
       derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(m) + memberAccessoryPoints(m) + memberPsiMutPoints(m))));
       derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(m))));
