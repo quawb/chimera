@@ -2,18 +2,21 @@
   {
     "name": "Cyborgs",
     "effect_text": "All members of the Warband can purchase 1 additional piece of equipment costing 1 point for free",
-    "rules": {
-    "free_accessory_cost_1": 1
-  }
+    "rules": { "free_accessory_cost_1": 1 }
   },
   {
     "name": "Undead",
     "effect_text": "When a model's hit points are reduced to 0 for the first time, bring the model back to 1 Wounds"
   },
   {
-    "name": "Horrible Chorus",
-    "effect_text": "All models in this warband gain Horrible Scream for free. Cannot purchase equipment. Nonleaders cannot purchase other Psychic Powers. Each model may use Horrible Scream once per round.",
-    "free_horribleChorus_by_name_all": ["Horrible Chorus"]
+  "name": "Horrible Chorus",
+  "effect_text": "All models in this warband gain Horrible Scream for free. Cannot purchase equipment. Nonleaders cannot purchase other Psychic Powers. Each model may use Horrible Scream once per round.",
+  "rules": {
+    "free_psychic_by_name_all": ["Horrible Scream"],
+    "forbid_accessories_all": true,
+    "forbid_psychic_nonleader": true,
+    "allow_psychic_nonleader_by_name": ["Horrible Scream"]
+    }
   },
   {
     "name": "Blood Thirsty",
