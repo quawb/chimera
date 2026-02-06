@@ -40,16 +40,16 @@
     "type": "Passive",
     "max_actions": 0,
     "effect_text": "Fight roll +1",
-    "f_bonus": 1,
-    "points": 2
+    "points": 2,
+    "f_bonus": 1
   },
   {
     "name": "Psychic Focus",
     "type": "Passive",
     "max_actions": 0,
     "effect_text": "Willpower Rolls +1",
-    "wp_bonus" 1,
-    "points": 2
+    "points": 2,
+    "wp_bonus" 1
   },
   {
     "name": "Stealth Suit",
@@ -63,8 +63,8 @@
     "type": "Passive",
     "max_actions": 0,
     "effect_text": "Shoot rolls + 1",
-    "s_bonus": 1,
-    "points": 2
+    "points": 2,
+    "s_bonus": 1
   },
   {
     "name": "Reinforced Weapon",
