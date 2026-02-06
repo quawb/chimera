@@ -666,6 +666,8 @@ function armorClass(m) {
 
   // Remember which collapsibles are open per member index
   const openPanelsByMember = new Map(); // memberIndex -> { accessories: true/false, psi: true/false }
+  // Remember which outer (phone compact) cards are open per member
+  const openOuterByMember = new Map(); // memberIndex -> true/false
 
   function memberWeaponPoints(m) {
     let sum = 0;
@@ -1560,27 +1562,31 @@ right.appendChild(randomBtn);
       header.appendChild(title);
       header.appendChild(right);
       
-      // In phone-compact view, wrap the whole model UI in a collapsible
+// In phone-compact view, wrap the whole model UI in a collapsible
 let outer = card;
 let contentHost = card;
 
 if (collapseModelsOnPhone) {
-  // Title shown when collapsed (keep it short)
   const nm = (m.name && String(m.name).trim()) ? ` — ${m.name.trim()}` : "";
   const titleText = `${m.role}${nm} (${memberTotalPoints(m)} pts)`;
 
-  // Open Leader by default, others closed
-  const col = makeCollapsible(titleText, memberIndex === 0);
+  // ✅ persist open/closed state across renderWarband() calls
+  const remembered = openOuterByMember.get(memberIndex);
+  const initiallyOpen = (remembered === undefined) ? (memberIndex === 0) : !!remembered;
 
-  // Make the collapsible body feel like the old card (padding, etc.)
+  const col = makeCollapsible(titleText, initiallyOpen, (isOpen) => {
+    openOuterByMember.set(memberIndex, !!isOpen);
+  });
+
   col.body.style.padding = "12px";
   col.body.style.background = "#fff";
 
-  // Put original card content into collapsible body instead of the grid
   outer = col.wrap;
   contentHost = col.body;
 }
+
 contentHost.appendChild(header);
+
 
 
       // Tier select helper (shows Tier + mod)
