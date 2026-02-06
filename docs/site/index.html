@@ -693,14 +693,16 @@ function getTraitRules() {
 
 function enforceTraitEffects() {
   const rules = getTraitRules();
-  const freePsychicNames = rules.free_psychic_by_name_all || [];
-  const allowNonleader = rules.allow_psychic_nonleader_by_name || [];
 
-  // Auto-add free psychic powers to everyone (if present in data)
-  if (Array.isArray(freePsychicNames) && freePsychicNames.length) {
+  // --- Auto-add free psychic powers to all models ---
+  const freePsychicNames = Array.isArray(rules.free_psychic_by_name_all)
+    ? rules.free_psychic_by_name_all
+    : [];
+
+  if (freePsychicNames.length) {
     for (let i = 0; i < warband.members.length; i++) {
       const m = warband.members[i];
-      m.psychicIdx = Array.isArray(m.psychicIdx) ? m.psychicIdx : [];
+      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
 
       for (const nm of freePsychicNames) {
         const pi = findPsychicIndexByName(nm);
@@ -710,21 +712,28 @@ function enforceTraitEffects() {
     }
   }
 
-  // Horrible Chorus restriction: nonleaders cannot purchase other psychic powers
+  // --- If nonleaders are restricted, keep only allowed names on nonleaders ---
   if (rules.forbid_psychic_nonleader) {
+    const allowNames = Array.isArray(rules.allow_psychic_nonleader_by_name)
+      ? rules.allow_psychic_nonleader_by_name.map(normName)
+      : [];
+
+    const allowIdx = new Set(
+      allowNames
+        .map(findPsychicIndexByName)
+        .filter(v => v != null)
+        .map(Number)
+    );
+
     for (let i = 0; i < warband.members.length; i++) {
       if (isLeader(i)) continue;
       const m = warband.members[i];
-      const keep = new Set(
-        (allowNonleader || [])
-          .map(findPsychicIndexByName)
-          .filter(v => v != null)
-      );
-      m.psychicIdx = (m.psychicIdx || []).filter(idx => keep.has(Number(idx)));
+      if (!Array.isArray(m.psychicIdx)) m.psychicIdx = [];
+      m.psychicIdx = m.psychicIdx.map(Number).filter(idx => allowIdx.has(idx));
     }
   }
 
-  // Cannot purchase equipment: wipe accessories if rule says so
+  // --- If accessories are forbidden, wipe them ---
   if (rules.forbid_accessories_all) {
     for (let i = 0; i < warband.members.length; i++) {
       warband.members[i].accessoryIdx = [];
@@ -955,17 +964,32 @@ function psychicMutationCapacity(m, memberIndex = -1) {
   }
 
 function memberAccessoryPoints(m, memberIndex = -1) {
+  const rules = getTraitRules();
+
+  // per model, up to N accessories that cost 1 are free
+  let remainingFree1 = Math.max(0, toIntOrNull(rules.free_accessory_cost_1) ?? 0);
+
   let sum = 0;
   for (const idx of (m.accessoryIdx || [])) {
     const a = accessories[Number(idx)];
     if (!a) continue;
 
+    // keep named-free support if you use it
     if (memberIndex >= 0 && accessoryIsFreeByTrait(a, memberIndex)) continue;
 
-    sum += (toIntOrNull(a?.points) ?? 0);
+    const pts = toIntOrNull(a?.points) ?? 0;
+
+    if (pts === 1 && remainingFree1 > 0) {
+      remainingFree1--;
+      continue;
+    }
+
+    sum += pts;
   }
+
   return sum;
 }
+
 
 
 function memberPsiMutPoints(m, memberIndex = -1) {
@@ -2351,20 +2375,42 @@ lbl.textContent = ` ${name} (${pts} pts)`;
 
 // ✅ apply warband/leader trait rules (AFTER lbl exists)
 const rules = getTraitRules();
-const forbidNonLeaderPsychic = !!rules.forbid_psychic_nonleader && !isLeader(memberIndex);
+const isNonLeader = !isLeader(memberIndex);
 
-if (forbidNonLeaderPsychic) {
-  // if it was already selected, forcibly remove it
-  if (cb.checked) {
-    cb.checked = false;
-    const s = new Set((m.psychicIdx || []).map(String));
-    s.delete(String(idx));
-    m.psychicIdx = [...s].map(Number);
+const allowNames = Array.isArray(rules.allow_psychic_nonleader_by_name)
+  ? rules.allow_psychic_nonleader_by_name.map(normName)
+  : [];
+
+const allowSet = new Set(
+  allowNames
+    .map(findPsychicIndexByName)
+    .filter(v => v != null)
+    .map(Number)
+);
+
+// If forbidden, disable ONLY the ones NOT allowed
+if (rules.forbid_psychic_nonleader && isNonLeader) {
+  const allowed = allowSet.has(Number(idx));
+
+  if (!allowed) {
+    // force uncheck + disable non-allowed powers
+    if (cb.checked) {
+      cb.checked = false;
+      const s = new Set((m.psychicIdx || []).map(String));
+      s.delete(String(idx));
+      m.psychicIdx = [...s].map(Number);
+    }
+
+    cb.disabled = true;
+    lbl.style.opacity = "0.55";
+    lbl.title = "This warband trait forbids nonleaders from purchasing this psychic power.";
+  } else {
+    cb.disabled = false;
+    lbl.style.opacity = "1";
+    lbl.title = "";
   }
-  cb.disabled = true;
-  lbl.style.opacity = "0.55";
-  lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
 }
+
 
 cb.addEventListener("change", () => {
   const rulesNow = getTraitRules();
