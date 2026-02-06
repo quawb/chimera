@@ -2461,16 +2461,49 @@ cb.addEventListener("change", () => {
   renderWarband();
 });
 
-// ✅ all warband/leader trait rules (safe)
-if (typeof getTraitRules === "function" && typeof isLeader === "function") {
-  const rules = getTraitRules();
-  if (rules?.forbid_psychic_nonleader && !isLeader(memberIndex)) {
+       const cb = document.createElement("input");
+cb.type = "checkbox";
+cb.id = id;
+cb.checked = psySelected.has(String(idx));
+
+const lbl = document.createElement("label");
+lbl.htmlFor = id;
+lbl.style.cursor = "pointer";
+lbl.textContent = ` ${name} (${pts} pts)`;
+
+// ✅ apply warband/leader trait rules (AFTER lbl exists)
+const rules = getTraitRules();
+const forbidNonLeaderPsychic = !!rules.forbid_psychic_nonleader && !isLeader(memberIndex);
+
+if (forbidNonLeaderPsychic) {
+  // if it was already selected, forcibly remove it
+  if (cb.checked) {
     cb.checked = false;
-    cb.disabled = true;
-    lbl.style.opacity = "0.55";
-    lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
+    const s = new Set((m.psychicIdx || []).map(String));
+    s.delete(String(idx));
+    m.psychicIdx = [...s].map(Number);
   }
+
+  cb.disabled = true;
+  lbl.style.opacity = "0.55";
+  lbl.title = "This warband trait forbids nonleaders from purchasing psychic powers.";
 }
+
+cb.addEventListener("change", () => {
+  // block changes if forbidden (extra safety)
+  const rulesNow = getTraitRules();
+  if (!!rulesNow.forbid_psychic_nonleader && !isLeader(memberIndex)) return;
+
+  const s = new Set((m.psychicIdx || []).map(String));
+  if (cb.checked) s.add(String(idx));
+  else s.delete(String(idx));
+  m.psychicIdx = [...s].map(Number);
+  renderWarband();
+});
+
+line.appendChild(cb);
+line.appendChild(lbl);
+ 
 
 
         line.appendChild(cb);
