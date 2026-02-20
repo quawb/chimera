@@ -30,7 +30,7 @@
   },
   {
     "name": "Distortion",
-    "effect_text": "This leader does not inflict damage. Instead they inflict Distortion (see The Good Doctor scenario). This leader is not a part of a warband get 5 extra Distortion points per opposing player. When they hit their Distortion threshold (3), reduce them to 20 points immediately."
+    "effect_text": "This leader does not inflict damage. Instead they inflict Distortion (see The Good Doctor scenario). This leader is not a part of a warband, and they get 5 extra Distortion points per opposing player. When they hit their Distortion threshold (3), reduce them to 20 points immediately."
   },
   {
     "name": "Priority Target",
