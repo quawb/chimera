@@ -290,11 +290,12 @@
   <div class="card">
     <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
       <div></div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button id="exportBtn" type="button">Export Warband</button>
-        <button id="importBtn" type="button">Import Warband</button>
-        <button id="randomWarbandBtn" type="button">🎲 Random Warband</button>
-      </div>
+     <div style="display:flex; gap:10px; flex-wrap:wrap;">
+  <button id="exportBtn" type="button">Export Warband</button>
+  <button id="importBtn" type="button">Import Warband</button>
+  <button id="randomWarbandBtn" type="button">🎲 Random Warband</button>
+  <button id="newRoundBtn" type="button">New Round</button>
+</div>
     </div>
 
     <div class="row" style="margin-top:10px;">
@@ -420,6 +421,7 @@
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
     randomWarbandBtn: document.getElementById("randomWarbandBtn"),
+    newRoundBtn: document.getElementById("newRoundBtn"),
     ioArea: document.getElementById("ioArea"),
     ioTitle: document.getElementById("ioTitle"),
     ioText: document.getElementById("ioText"),
@@ -499,10 +501,12 @@
       fight: 1,
       rangedIdx: "",
       meleeIdx: "",
-      abilityIdx: [],
-      woundsCurrent: null,
-      horror: 0,
-      hidden: false
+     abilityIdx: [],
+    woundsCurrent: null,
+    horror: 0,
+    hidden: false,
+    exhausted: false,
+    abilityUsed: false
     };
   }
 
@@ -674,6 +678,8 @@
     member.horror = clamp(Number(member.horror), 0, HORROR_MAX);
 
     if (typeof member.hidden !== "boolean") member.hidden = false;
+    if (typeof member.exhausted !== "boolean") member.exhausted = false;
+    if (typeof member.abilityUsed !== "boolean") member.abilityUsed = false;
   }
 
   function clearMemberLoadout(member) {
@@ -1004,7 +1010,9 @@
       abilityIdx: Array.isArray(input?.abilityIdx) ? input.abilityIdx.map(Number).filter(Number.isFinite) : [],
       woundsCurrent: toIntOrNull(input?.woundsCurrent),
       horror: toIntOrNull(input?.horror) ?? 0,
-      hidden: typeof input?.hidden === "boolean" ? input.hidden : false
+      hidden: typeof input?.hidden === "boolean" ? input.hidden : false,
+      exhausted: typeof input?.exhausted === "boolean" ? input.exhausted : false,
+      abilityUsed: typeof input?.abilityUsed === "boolean" ? input.abilityUsed : false
     };
     ensurePlayState(member);
     return member;
@@ -1294,8 +1302,47 @@
       }
 
       if (isPlayMode) {
-        contentHost.appendChild(makeStatsHeadline(member));
-      }
+  contentHost.appendChild(makeStatsHeadline(member));
+
+  const roundBox = document.createElement("div");
+  roundBox.style.marginTop = "10px";
+  roundBox.style.padding = "8px 10px";
+  roundBox.style.border = "1px solid #eee";
+  roundBox.style.borderRadius = "10px";
+  roundBox.style.background = "#fafafa";
+  roundBox.style.display = "flex";
+  roundBox.style.gap = "14px";
+  roundBox.style.flexWrap = "wrap";
+
+  function makeRoundCheck(labelText, key) {
+    const label = document.createElement("label");
+    label.style.display = "flex";
+    label.style.alignItems = "center";
+    label.style.gap = "6px";
+    label.style.cursor = "pointer";
+    label.style.fontWeight = "700";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!member[key];
+    cb.addEventListener("change", () => {
+      member[key] = cb.checked;
+      renderWarband();
+    });
+
+    const text = document.createElement("span");
+    text.textContent = labelText;
+
+    label.appendChild(cb);
+    label.appendChild(text);
+    return label;
+  }
+
+  roundBox.appendChild(makeRoundCheck("Exhausted", "exhausted"));
+  roundBox.appendChild(makeRoundCheck("Ability Used", "abilityUsed"));
+
+  contentHost.appendChild(roundBox);
+}
 
       const maxW = woundsTotal(member);
 
@@ -1487,6 +1534,14 @@
     els.exportBtn.addEventListener("click", exportWarband);
     els.importBtn.addEventListener("click", importWarbandUI);
     els.randomWarbandBtn.addEventListener("click", randomizeWarband);
+
+els.newRoundBtn.addEventListener("click", () => {
+  warband.members.forEach((member) => {
+    member.exhausted = false;
+    member.abilityUsed = false;
+  });
+  renderWarband();
+});
     els.closeIoBtn.addEventListener("click", () => setIoVisible(false));
     els.loadBtn.addEventListener("click", loadPastedWarband);
 
