@@ -934,9 +934,13 @@
     const ranged = getSelectedRangedWeapon(member);
     const melee = getSelectedMeleeWeapon(member);
     const abilityText = (member.abilityIdx || [])
-      .map((i) => abilities[Number(i)]?.name)
+      .map((i) => {
+        const ability = abilities[Number(i)];
+        if (!ability) return null;
+        return `${ability.name}${ability.effect ? ` — ${ability.effect}` : ""}`;
+      })
       .filter(Boolean)
-      .join(", ") || "—";
+      .join("\n") || "—";
 
     addKV("Move / Mods", `Move ${moveValue(member)} • D${fmtSigned(effectiveDefenseMod(member))} S${fmtSigned(effectiveShootMod(member))} F${fmtSigned(effectiveFightMod(member))}`);
     addKV("Weapons", `${makeWeaponLine("R", ranged)}\n${makeWeaponLine("M", melee)}`, true);
@@ -1092,8 +1096,7 @@
     }
 
     const abilityOrder = shuffle(abilities.map((_, idx) => idx));
-    const abilityCount = randInt(0, ABILITY_LIMIT);
-    member.abilityIdx = abilityOrder.slice(0, abilityCount);
+    member.abilityIdx = abilityOrder.slice(0, Math.min(ABILITY_LIMIT, abilityOrder.length));
 
     const upgrades = ["move", "defense", "shoot", "fight"];
     let safety = 40;
