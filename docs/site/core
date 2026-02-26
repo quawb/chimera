@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chimera Rules</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f8f8;
+    color: #222;
+  }
+  header {
+    background: #222;
+    color: #f8f8f8;
+    padding: 1rem;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0;
+  }
+  main {
+    max-width: 1000px;
+    margin: auto;
+    padding: 1rem;
+  }
+  section {
+    margin-bottom: 2rem;
+  }
+  h2 {
+    background: #444;
+    color: #fff;
+    padding: 0.5rem;
+    cursor: pointer;
+    margin: 0;
+  }
+  .content {
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border: 1px solid #ccc;
+    display: none;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 0.4rem 0.8rem;
+    text-align: left;
+  }
+  th {
+    background: #eee;
+  }
+  .effect {
+    font-style: italic;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Chimera – Rules & Stats</h1>
+  <p>3–5 Models per player, 15 points each, 2 free Abilities</p>
+</header>
+
+<main>
+
+<section>
+  <h2 onclick="toggleSection(this)">Points & Model Count</h2>
+  <div class="content">
+    <p>Each model costs <strong>15 points</strong> and comes with <strong>2 free abilities</strong>.</p>
+    <p>Players select <strong>3–5 models</strong> (45–75 points total).</p>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Wounds & Defense</h2>
+  <div class="content">
+    <p>Each model has <strong>4 + Defense Tier</strong> wounds.</p>
+    <p>Defense Tier ranges from 1 to 3 (see Stats table).</p>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Dice System</h2>
+  <div class="content">
+    <p>All rolls use <strong>d6</strong>.</p>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Round Sequence</h2>
+  <div class="content">
+    <ol>
+      <li><strong>Initiative:</strong> Each player rolls 1d6. Highest chooses order.</li>
+      <li><strong>Activation:</strong> Players alternate activating unexhausted models. Place an exhaust token after activation.</li>
+      <li><strong>Maintenance:</strong> When all models are exhausted, remove exhaust tokens and start next round.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Activation Sequence</h2>
+  <div class="content">
+    <ol>
+      <li><strong>Move Phase:</strong> Move up to model’s maximum Move.</li>
+      <li><strong>Attack Phase:</strong> Use ranged or melee weapon. Special actions replace attack if required.</li>
+      <li><strong>Exhaust Phase:</strong> Place an exhaust token; model cannot act again this round.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Attacking & Saving</h2>
+  <div class="content">
+    <ol>
+      <li>Roll 1d6 per attack for Shoot or Fight.</li>
+      <li><strong>Criticals:</strong> 6 unmodified = critical hit; 1 unmodified = automatic miss.</li>
+      <li>Add model’s Shoot or Fight modifier to roll.</li>
+      <li>Defender rolls 1d6 + modifier per attack:
+        <ul>
+          <li>Modified roll beats attack → attack fails.</li>
+          <li>Attack succeeds → subtract weapon damage from Wounds.</li>
+        </ul>
+      </li>
+      <li><strong>Critical Saving:</strong> Unmodified 6 = automatic success; 1 = fail. Defender cannot save against unmodified 6 attack.</li>
+      <li><strong>Ties:</strong> Modified defend = attack → attacker wins; modified attack 6 defended with natural 6 → defender saves.</li>
+      <li>Cannot shoot into or out of combat.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Abilities</h2>
+  <div class="content">
+    <p>Each model may purchase <strong>2 abilities for free</strong>, but can only use one per round.</p>
+    <p>Declare an ability active at the start of model’s activation or when triggered.</p>
+    <table id="abilities-table">
+      <thead>
+        <tr><th>Name</th><th>Effect</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Special Actions</h2>
+  <div class="content">
+    <ul>
+      <li><strong>Disengage:</strong> Spend 10" of Move to move 5" away from close-combat attackers. Requires Tier 2 Move.</li>
+      <li><strong>Stand Up:</strong> Spend 5" of Move to stand when Down.</li>
+      <li><strong>Recover:</strong> Skip Attack Phase to reduce Horror tokens by 1.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Conditions</h2>
+  <div class="content">
+    <ul>
+      <li><strong>Horror:</strong> -1 to rolls per token. Max 3 tokens. Only 1 per phase.</li>
+      <li><strong>Down:</strong> Model is down, cannot act until Standing Up. -1 to Defense Rolls.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Cover</h2>
+  <div class="content">
+    <p>Partially concealed models or models >15" from attacker gain +1 to Defense rolls.</p>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Stats</h2>
+  <div class="content">
+    <table id="stats-table">
+      <thead>
+        <tr><th>Stat</th><th>Tier 1</th><th>Tier 2</th><th>Tier 3</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Melee Weapons</h2>
+  <div class="content">
+    <table id="melee-table">
+      <thead>
+        <tr><th>Name</th><th>Attacks</th><th>Damage</th><th>Effect</th><th>Points</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 onclick="toggleSection(this)">Ranged Weapons</h2>
+  <div class="content">
+    <table id="ranged-table">
+      <thead>
+        <tr><th>Name</th><th>Attacks</th><th>Damage</th><th>Effect</th><th>Points</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+const data = {
+  "stats": [
+    { "stat": "Move", "tiers": [ { "tier": 1, "value": "5\"", "points": 0 }, { "tier": 2, "value": "10\"", "points": 2 }, { "tier": 3, "value": "15\"", "points": 4 } ] },
+    { "stat": "Defense", "tiers": [ { "tier": 1, "value": -2, "points": 0 }, { "tier": 2, "value": -1, "points": 4 }, { "tier": 3, "value": 0, "points": 7 } ] },
+    { "stat": "Shoot", "tiers": [ { "tier": 1, "value": -2, "points": 0 }, { "tier": 2, "value": -1, "points": 4 }, { "tier": 3, "value": 0, "points": 7 } ] },
+    { "stat": "Fight", "tiers": [ { "tier": 1, "value": -2, "points": 0 }, { "tier": 2, "value": -1, "points": 4 }, { "tier": 3, "value": 0, "points": 7 } ] }
+  ],
+  "melee_weapons": [
+    { "name": "Unarmed", "attacks": 1, "damage": 1, "effect": "", "points": 1 },
+    { "name": "Spiked Bat", "attacks": 1, "damage": 2, "effect": "Down", "points": 2 },
+    { "name": "Pocket Knife", "attacks": 2, "damage": 1, "effect": "", "points": 2 },
+    { "name": "Sledgehammer", "attacks": 1, "damage": 3, "effect": "Horror", "points": 3 },
+    { "name": "Brass Knuckles", "attacks": 3, "damage": 1, "effect": "", "points": 3 },
+    { "name": "Axe", "attacks": 2, "damage": 2, "effect": "Down", "points": 4 },
+    { "name": "Katana", "attacks": 4, "damage": 1, "effect": "", "points": 5 },
+    { "name": "Chainsaw", "attacks": 1, "damage": 4, "effect": "Down + Horror", "points": 5 },
+    { "name": "Poisoned Dagger", "attacks": 2, "damage": 1, "effect": "Adds Horror", "points": 3 }
+  ],
+  "ranged_weapons": [
+    { "name": "Blow Dart", "attacks": 1, "damage": 1, "effect": "", "points": 2 },
+    { "name": "Slingshot", "attacks": 2, "damage": 1, "effect": "", "points": 3 },
+    { "name": "Pistol", "attacks": 3, "damage": 1, "effect": "", "points": 4 },
+    { "name": "Shotgun", "attacks": 1, "damage": 3, "effect": "Horror", "points": 5 },
+    { "name": "Bow", "attacks": 1, "damage": 2, "effect": "Down", "points": 3 },
+    { "name": "Sniper", "attacks": 1, "damage": 4, "effect": "Down + Horror", "points": 5 },
+    { "name": "Rifle", "attacks": 4, "damage": 1, "effect": "", "points": 7 },
+    { "name": "Auto Crossbow", "attacks": 2, "damage": 2, "effect": "Down", "points": 5 },
+    { "name": "Lightning Gun", "attacks": 1, "damage": 1, "effect": "Chains to models 5” away, adds Horror", "points": 4 }
+  ],
+  "abilities": [
+    { "name": "Berserker", "effect": "Free 5” move at end of Move phase. If ending in base-to-base with enemy, +1 to fight and 1+ successful damage causes one Horror on defender for this Phase" },
+    { "name": "Relentless", "effect": "Free 5” move or disengage action after Attack Phase." },
+    { "name": "Reckless", "effect": "Reroll failed attacks, gain one Horror after the phase ends" },
+    { "name": "Undead", "effect": "Whenever this model reaches 0 wounds, leave it on the board down, next round the model gains 1 wound and 1 horror, it can no longer recover or disengage for the rest of the game." },
+    { "name": "Masochist", "effect": "Reroll failed Defense roll. If reroll fails, gain 1 Horror." },
+    { "name": "Rupture", "effect": "Critical Hits will cause 1 total Horror on Defender" },
+    { "name": "Neural Chain", "effect": "Use your attack phase to immediately activate (even if exhausted) a friendly model within 5”. At the end of activation that model gains 1 Horror." },
+    { "name": "Marked", "effect": "Instead of shooting, mark a target that all friendly units within 10” will get +1 Shoot against. When allies hit it, it gains 1 additional Horror (once per phase)." },
+    { "name": "Stitcher", "effect": "Heal instead of Attack Phase. Heal one model up to 5” away d3 Wounds. If the healed unit is down, stand it up. If they have horror, recover one horror. Gain one horror to perform a second heal." },
+    { "name": "Fade", "effect": "If in cover, when this unit is shot at, roll defense twice and pick the higher roll." },
+    { "name": "Phase", "effect": "Once per round, teleport up to 10” away in LoS, can be after getting targeted." },
+    { "name": "First Blood", "effect": "Once per round, when an attack action is declared against them, they can take an attack action first" },
+    { "name": "Quick Draw", "effect": "Once per round when an enemy makes a move in their LoS they can make a free shoot action against them. Give the defender the benefit of cover if they don’t already have." }
+  ]
+};
+
+// Populate tables
+function populateTable(id, items, cols) {
+  const tbody = document.querySelector(`#${id} tbody`);
+  items.forEach(item => {
+    const tr = document.createElement('tr');
+    cols.forEach(col => {
+      const td = document.createElement('td');
+      td.innerHTML = item[col] !== undefined ? item[col] : '';
+      if(col === 'effect') td.classList.add('effect');
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// Stats table requires special handling
+function populateStatsTable() {
+  const tbody = document.querySelector('#stats-table tbody');
+  data.stats.forEach(stat => {
+    const tr = document.createElement('tr');
+    const tdStat = document.createElement('td');
+    tdStat.textContent = stat.stat;
+    tr.appendChild(tdStat);
+    stat.tiers.forEach(t => {
+      const td = document.createElement('td');
+      td.textContent = `${t.value} (${t.points} pts)`;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// Populate all tables
+populateStatsTable();
+populateTable('melee-table', data.melee_weapons, ['name','attacks','damage','effect','points']);
+populateTable('ranged-table', data.ranged_weapons, ['name','attacks','damage','effect','points']);
+populateTable('abilities-table', data.abilities, ['name','effect']);
+
+// Collapsible sections
+function toggleSection(header) {
+  const content = header.nextElementSibling;
+  content.style.display = content.style.display === 'block' ? 'none' : 'block';
+}
+</script>
+
+</main>
+</body>
+</html>
