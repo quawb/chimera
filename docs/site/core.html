@@ -1,198 +1,1581 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chimera Builder</title>
-<style>
-  body { font-family: sans-serif; padding: 1rem; background: #f5f5f5; }
-  h1 { margin-bottom: 1rem; }
-  .dice { margin-bottom: 1rem; }
-  .warband { margin-top: 1rem; }
-  .model-card { border: 1px solid #333; padding: 0.5rem; margin-bottom: 0.5rem; background: #fff; }
-  label { display: block; margin-top: 0.5rem; }
-  select, input { margin-top: 0.25rem; }
-  .abilities { margin-top: 1rem; }
-  .abilities input { margin-right: 0.5rem; }
-  .stats { margin-top: 1rem; }
-  .stat { margin-bottom: 0.5rem; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chimera — Warband Builder</title>
+
+  <style>
+    .dice-result { display: inline-block; min-width: 2ch; }
+    .dice-rolling { animation: diceSpin 0.45s ease-in-out; }
+    @keyframes diceSpin {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      25%  { transform: translateY(-4px) rotate(6deg) scale(1.08); opacity: 0.9; }
+      50%  { transform: translateY(2px) rotate(-6deg) scale(0.98); opacity: 0.9; }
+      75%  { transform: translateY(-2px) rotate(3deg) scale(1.04); opacity: 1; }
+      100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 24px;
+      line-height: 1.35;
+    }
+
+    h1 { margin: 0 0 8px; }
+    .sub { color: #444; margin: 0 0 10px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    select, input, textarea, button {
+      font-size: 16px;
+      padding: 8px;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 16px;
+      max-width: none;
+    }
+
+    #warbandGrid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      align-items: start;
+      margin-top: 14px;
+    }
+
+    #warbandGrid > div { min-width: 0; overflow: hidden; }
+    #warbandGrid input, #warbandGrid select, #warbandGrid button {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .warn { color: #8a1f11; font-weight: 600; }
+    .ok { color: #0b5; font-weight: 600; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+
+    #warbandName { max-width: 280px; padding: 6px 8px; font-size: 14px; }
+    #pointCap { max-width: 96px; padding: 6px 8px; font-size: 14px; }
+
+    body.compact { margin: 16px; }
+    body.compact .row { grid-template-columns: 140px 1fr; gap: 10px; margin-bottom: 8px; }
+    body.compact select, body.compact input, body.compact button { font-size: 14px; padding: 6px 8px; }
+    body.compact #warbandGrid { gap: 10px; }
+    body.compact #warbandGrid > div { padding: 10px !important; }
+
+    body.compact .compactHeadline{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px 10px;
+      font-size: 12px;
+      line-height: 1.15;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      border-radius: 10px;
+      padding: 8px;
+      margin-top: 8px;
+    }
+
+    body.compact .compactHeadline .kv { min-width: 0; }
+    body.compact .compactHeadline .k {
+      display: block;
+      font-weight: 800;
+      font-size: 11px;
+      color: #444;
+      margin-bottom: 2px;
+    }
+    body.compact .compactHeadline .v {
+      display: block;
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    body.compact .compactHeadline .v.wrap {
+      white-space: pre-wrap;
+      overflow: visible;
+      text-overflow: unset;
+    }
+
+    .playrow{
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      margin-top: 10px;
+    }
+
+    .counter{
+      display: grid;
+      grid-template-columns: 34px 1fr 34px auto;
+      align-items: stretch;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+      min-width: 0;
+    }
+
+    .counter .val{
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 14px;
+      min-width: 0;
+      padding: 0 8px;
+    }
+
+    .counter .ctrBtn,
+    .counter .ctrExtra{
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .counter .ctrBtn{
+      font-weight: 900;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .counter .ctrExtra{
+      border-left: 1px solid #ddd;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .counter .ctrBtn:hover,
+    .counter .ctrExtra:hover{
+      background: #f3f3f3;
+    }
+
+    .segVal{
+      position: relative;
+      height: 22px;
+      min-width: 120px;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px 4px;
+      box-sizing: border-box;
+    }
+
+    .seg{
+      flex: 1 1 0;
+      height: 100%;
+      border-radius: 4px;
+      background: #e6e6e6;
+    }
+
+    .seg.f-green { background: #22c55e; }
+    .seg.f-yellow { background: #f59e0b; }
+    .seg.f-red { background: #ef4444; }
+    .seg.f-purple { background: #8b5cf6; }
+
+    .segText{
+      position:absolute;
+      inset: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      font-size: 13px;
+      color: #111;
+      text-shadow: 0 1px 0 rgba(255,255,255,.8);
+      pointer-events:none;
+    }
+
+    #modelVisibility {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    #modelVisibility .mvGrid{
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px 12px;
+    }
+
+    #modelVisibility label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      user-select:none;
+      font-size: 13px;
+      color:#333;
+    }
+
+    @media (max-width: 640px) {
+      body { margin: 12px; }
+      .row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      #warbandName,
+      #pointCap {
+        max-width: none;
+        width: 100%;
+      }
+      #warbandGrid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+      .playrow{ grid-template-columns: 1fr; align-items: stretch; }
+      .smallBtn { width: 100%; }
+    }
+  </style>
 </head>
 <body>
+  <h1>Chimera Builder</h1>
 
-<h1>Chimera Builder</h1>
+  <div class="sub"><a href="./rules.html">Rules</a></div>
+  <div class="sub"><a href="./sandbox.html">Sandbox</a></div>
 
-<div class="dice">
-  <button id="rollDice">Roll d6</button>
-  <span id="diceResult">Result: -</span>
-</div>
+  <div class="card" style="margin-top:12px;">
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div style="font-weight:900;">Dice</div>
 
-<div class="warband">
-  <label>Warband Name: <input type="text" id="warbandName" /></label>
+      <button id="rollD6Btn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Roll d6
+      </button>
 
-  <div id="models">
-    <!-- Model cards -->
+      <div style="display:flex; gap:8px; align-items:baseline;">
+        <div style="color:#666;">Result</div>
+        <div id="d6Result" class="dice-result" style="font-size:22px; font-weight:900;">—</div>
+      </div>
+
+      <button id="clearRollsBtn" type="button"
+        style="padding:8px 12px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;">
+        Clear
+      </button>
+    </div>
+
+    <div id="d6History" style="margin-top:10px; color:#444; font-size:14px;"></div>
   </div>
 
-  <div class="abilities">
-    <h3>Abilities (Select up to 2)</h3>
-    <div id="abilitiesList"></div>
+  <div class="row">
+    <label for="pointCap"><strong>Point Cap</strong></label>
+    <input id="pointCap" type="number" value="75" min="0" step="1" />
   </div>
 
-  <button id="exportBtn">Export Warband</button>
-  <button id="importBtn">Import Warband</button>
-  <input type="file" id="importFile" style="display:none" />
-</div>
+  <div class="row" style="margin-top:10px;">
+    <label><strong>Display</strong></label>
+    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+      <input id="compactToggle" type="checkbox" />
+      Compact mode
+    </label>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="exportBtn" type="button">Export Warband</button>
+        <button id="importBtn" type="button">Import Warband</button>
+        <button id="randomWarbandBtn" type="button">🎲 Random Warband</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <label for="warbandName"><strong>Warband Name</strong></label>
+      <input id="warbandName" type="text" placeholder="e.g., The Quawb Cult" style="width:100%;" />
+    </div>
+
+    <div id="modelVisibility">
+      <div style="font-weight:900;">Show / Hide Model Cards</div>
+      <div class="mvGrid" id="modelVisibilityGrid"></div>
+    </div>
+
+    <div id="warbandGrid"></div>
+
+    <div style="margin-top:14px;">
+      <div style="font-size:14px; color:#444;">Warband Total</div>
+      <div style="font-size:28px; font-weight:900;" id="warbandTotal">0</div>
+      <div id="warbandCapStatus" style="margin-top:6px;"></div>
+    </div>
+
+    <div id="ioArea" style="display:none; margin-top:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <strong id="ioTitle">Export / Import</strong>
+        <button id="closeIoBtn" type="button">Close</button>
+      </div>
+      <textarea id="ioText" rows="10" style="width:100%; margin-top:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; padding:10px;"></textarea>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button id="copyBtn" type="button">Copy</button>
+        <button id="loadBtn" type="button">Load Pasted JSON</button>
+      </div>
+      <div id="ioMsg" style="margin-top:8px; color:#444;"></div>
+    </div>
+  </div>
 
 <script>
-const statsData = {
-  "stats": [
-    {"stat":"Move","tiers":[{"tier":1,"value":"5\"","points":0},{"tier":2,"value":"10\"","points":2},{"tier":3,"value":"15\"","points":4}]},
-    {"stat":"Defense","tiers":[{"tier":1,"value":-2,"points":0},{"tier":2,"value":-1,"points":4},{"tier":3,"value":0,"points":7}]},
-    {"stat":"Shoot","tiers":[{"tier":1,"value":-2,"points":0},{"tier":2,"value":-1,"points":4},{"tier":3,"value":0,"points":7}]},
-    {"stat":"Fight","tiers":[{"tier":1,"value":-2,"points":0},{"tier":2,"value":-1,"points":4},{"tier":3,"value":0,"points":7}]}
-  ],
-  "melee_weapons":[
-    {"name":"Unarmed","attacks":1,"damage":1,"effect":"","points":1},
-    {"name":"Spiked Bat","attacks":1,"damage":2,"effect":"Down","points":2},
-    {"name":"Pocket Knife","attacks":2,"damage":1,"effect":"","points":2},
-    {"name":"Sledgehammer","attacks":1,"damage":3,"effect":"Horror","points":3},
-    {"name":"Brass Knuckles","attacks":3,"damage":1,"effect":"","points":3},
-    {"name":"Axe","attacks":2,"damage":2,"effect":"Down","points":4},
-    {"name":"Katana","attacks":4,"damage":1,"effect":"","points":5},
-    {"name":"Chainsaw","attacks":1,"damage":4,"effect":"Down + Horror","points":5},
-    {"name":"Poisoned Dagger","attacks":2,"damage":1,"effect":"Adds Horror","points":3}
-  ],
-  "ranged_weapons":[
-    {"name":"Blow Dart","attacks":1,"damage":1,"effect":"","points":2},
-    {"name":"Slingshot","attacks":2,"damage":1,"effect":"","points":3},
-    {"name":"Pistol","attacks":3,"damage":1,"effect":"","points":4},
-    {"name":"Shotgun","attacks":1,"damage":3,"effect":"Horror","points":5},
-    {"name":"Bow","attacks":1,"damage":2,"effect":"Down","points":3},
-    {"name":"Sniper","attacks":1,"damage":4,"effect":"Down + Horror","points":5},
-    {"name":"Rifle","attacks":4,"damage":1,"effect":"","points":7},
-    {"name":"Auto Crossbow","attacks":2,"damage":2,"effect":"Down","points":5},
-    {"name":"Lightning Gun","attacks":1,"damage":1,"effect":"Chains to models 5” away, adds Horror","points":4}
-  ],
-  "abilities":[
-    {"name":"Berserker","effect":"Free 5” move at end of Move phase. If ending in base-to-base with enemy, +1 to fight and 1+ successful damage causes one Horror on defender for this Phase"},
-    {"name":"Relentless","effect":"Free 5” move or disengage action after Attack Phase."},
-    {"name":"Reckless","effect":"Reroll failed attacks, gain one Horror after the phase ends"},
-    {"name":"Undead","effect":"Whenever this model reaches 0 wounds, leave it on the board down, next round the model gains 1 wound and 1 horror, it can no longer recover or disengage for the rest of the game."},
-    {"name":"Masochist","effect":"Reroll failed Defense roll. If reroll fails, gain 1 Horror."},
-    {"name":"Rupture","effect":"Critical Hits will cause 1 total Horror on Defender"},
-    {"name":"Neural Chain","effect":"Use your attack phase to immediately activate (even if exhausted) a friendly model within 5”. At the end of activation that model gains 1 Horror."},
-    {"name":"Marked","effect":"Instead of shooting, mark a target that all friendly units within 10” will get +1 Shoot against. When allies hit it, it gains 1 additional Horror (once per phase)."},
-    {"name":"Stitcher","effect":"Heal instead of Attack Phase. Heal one model up to 5” away d3 Wounds. If the healed unit is down, stand it up. If they have horror, recover one horror. Gain one horror to perform a second heal."},
-    {"name":"Fade","effect":"If in cover, when this unit is shot at, roll defense twice and pick the higher roll."},
-    {"name":"Phase","effect":"Once per round, teleport up to 10” away in LoS, can be after getting targeted."},
-    {"name":"First Blood","effect":"Once per round, when an attack action is declared against them, they can take an attack action first"},
-    {"name":"Quick Draw","effect":"Once per round when an enemy makes a move in their LoS they can make a free shoot action against them. Give the defender the benefit of cover if they don’t already have."}
-  ]
-};
+  const DATA = {
+    stats: [
+      {
+        stat: "Move",
+        tiers: [
+          { tier: 1, value: '5"', points: 0 },
+          { tier: 2, value: '10"', points: 2 },
+          { tier: 3, value: '15"', points: 4 }
+        ]
+      },
+      {
+        stat: "Defense",
+        tiers: [
+          { tier: 1, value: -2, points: 0 },
+          { tier: 2, value: -1, points: 4 },
+          { tier: 3, value: 0, points: 7 }
+        ]
+      },
+      {
+        stat: "Shoot",
+        tiers: [
+          { tier: 1, value: -2, points: 0 },
+          { tier: 2, value: -1, points: 4 },
+          { tier: 3, value: 0, points: 7 }
+        ]
+      },
+      {
+        stat: "Fight",
+        tiers: [
+          { tier: 1, value: -2, points: 0 },
+          { tier: 2, value: -1, points: 4 },
+          { tier: 3, value: 0, points: 7 }
+        ]
+      }
+    ],
+    melee_weapons: [
+      { name: "Unarmed", attacks: 1, damage: 1, effect: "", points: 1 },
+      { name: "Spiked Bat", attacks: 1, damage: 2, effect: "Down", points: 2 },
+      { name: "Pocket Knife", attacks: 2, damage: 1, effect: "", points: 2 },
+      { name: "Sledgehammer", attacks: 1, damage: 3, effect: "Horror", points: 3 },
+      { name: "Brass Knuckles", attacks: 3, damage: 1, effect: "", points: 3 },
+      { name: "Axe", attacks: 2, damage: 2, effect: "Down", points: 4 },
+      { name: "Katana", attacks: 4, damage: 1, effect: "", points: 5 },
+      { name: "Chainsaw", attacks: 1, damage: 4, effect: "Down + Horror", points: 5 },
+      { name: "Poisoned Dagger", attacks: 2, damage: 1, effect: "Adds Horror", points: 3 }
+    ],
+    ranged_weapons: [
+      { name: "Blow Dart", attacks: 1, damage: 1, effect: "", points: 2 },
+      { name: "Slingshot", attacks: 2, damage: 1, effect: "", points: 3 },
+      { name: "Pistol", attacks: 3, damage: 1, effect: "", points: 4 },
+      { name: "Shotgun", attacks: 1, damage: 3, effect: "Horror", points: 5 },
+      { name: "Bow", attacks: 1, damage: 2, effect: "Down", points: 3 },
+      { name: "Sniper", attacks: 1, damage: 4, effect: "Down + Horror", points: 5 },
+      { name: "Rifle", attacks: 4, damage: 1, effect: "", points: 7 },
+      { name: "Auto Crossbow", attacks: 2, damage: 2, effect: "Down", points: 5 },
+      { name: "Lightning Gun", attacks: 1, damage: 1, effect: 'Chains to models 5" away, adds Horror', points: 4 }
+    ],
+    abilities: [
+      { name: "Berserker", effect: 'Free 5" move at end of Move phase. If ending in base-to-base with enemy, +1 to fight and 1+ successful damage causes one Horror on defender for this Phase' },
+      { name: "Relentless", effect: 'Free 5" move or disengage action after Attack Phase.' },
+      { name: "Reckless", effect: 'Reroll failed attacks, gain one Horror after the phase ends' },
+      { name: "Undead", effect: 'Whenever this model reaches 0 wounds, leave it on the board down, next round the model gains 1 wound and 1 horror, it can no longer recover or disengage for the rest of the game.' },
+      { name: "Masochist", effect: 'Reroll failed Defense roll. If reroll fails, gain 1 Horror.' },
+      { name: "Rupture", effect: 'Critical Hits will cause 1 total Horror on Defender' },
+      { name: "Neural Chain", effect: 'Use your attack phase to immediately activate (even if exhausted) a friendly model within 5". At the end of activation that model gains 1 Horror.' },
+      { name: "Marked", effect: 'Instead of shooting, mark a target that all friendly units within 10" will get +1 Shoot against. When allies hit it, it gains 1 additional Horror (once per phase).' },
+      { name: "Stitcher", effect: 'Heal instead of Attack Phase. Heal one model up to 5" away d3 Wounds. If the healed unit is down, stand it up. If they have horror, recover one horror. Gain one horror to perform a second heal.' },
+      { name: "Fade", effect: 'If in cover, when this unit is shot at, roll defense twice and pick the higher roll.' },
+      { name: "Phase", effect: 'Once per round, teleport up to 10" away in LoS, can be after getting targeted.' },
+      { name: "First Blood", effect: 'Once per round, when an attack action is declared against them, they can take an attack action first' },
+      { name: "Quick Draw", effect: 'Once per round when an enemy makes a move in their LoS they can make a free shoot action against them. Give the defender the benefit of cover if they do not already have.' }
+    ]
+  };
 
-// Initialize 5 model cards
-const modelsDiv = document.getElementById('models');
-const modelCards = [];
-for (let i=1;i<=5;i++){
-  const div = document.createElement('div');
-  div.className='model-card';
-  div.innerHTML = `<strong>Model ${i}</strong>`;
-  statsData.stats.forEach(stat=>{
-    const statDiv = document.createElement('div');
-    statDiv.className='stat';
-    statDiv.innerHTML=`${stat.stat}: 
-      <select data-stat="${stat.stat}">
-        ${stat.tiers.map(t=>`<option value="${t.value}">${t.value} (${t.points} pts)</option>`).join('')}
-      </select>`;
-    div.appendChild(statDiv);
-  });
-  // Calculate wounds based on Defense tier
-  const woundsDiv = document.createElement('div');
-  woundsDiv.className='stat';
-  woundsDiv.innerHTML='Wounds: <span class="wounds">0</span>';
-  div.appendChild(woundsDiv);
-  modelsDiv.appendChild(div);
-  modelCards.push(div);
-}
+  const els = {
+    rollD6Btn: document.getElementById("rollD6Btn"),
+    clearRollsBtn: document.getElementById("clearRollsBtn"),
+    d6Result: document.getElementById("d6Result"),
+    d6History: document.getElementById("d6History"),
 
-// Update wounds dynamically
-modelCards.forEach(card=>{
-  const defenseSelect = card.querySelector('select[data-stat="Defense"]');
-  const woundsSpan = card.querySelector('.wounds');
-  defenseSelect.addEventListener('change', ()=>{
-    const tier = statsData.stats.find(s=>s.stat==="Defense").tiers.find(t=>t.value==defenseSelect.value);
-    woundsSpan.textContent=4 + parseInt(tier.tier);
-  });
-  // Set initial wounds
-  woundsSpan.textContent=4 + parseInt(statsData.stats.find(s=>s.stat==="Defense").tiers[0].tier);
-});
+    compactToggle: document.getElementById("compactToggle"),
+    warbandName: document.getElementById("warbandName"),
+    pointCap: document.getElementById("pointCap"),
+    warbandGrid: document.getElementById("warbandGrid"),
+    warbandTotal: document.getElementById("warbandTotal"),
+    warbandCapStatus: document.getElementById("warbandCapStatus"),
 
-// Initialize Abilities select (max 2)
-const abilitiesDiv = document.getElementById('abilitiesList');
-statsData.abilities.forEach((ab,i)=>{
-  const div = document.createElement('div');
-  div.innerHTML = `<input type="checkbox" id="ab${i}" data-index="${i}" /> <strong>${ab.name}</strong>: ${ab.effect}`;
-  abilitiesDiv.appendChild(div);
-});
-abilitiesDiv.addEventListener('change', (e)=>{
-  const checked = abilitiesDiv.querySelectorAll('input:checked');
-  if(checked.length>2) e.target.checked=false;
-});
+    exportBtn: document.getElementById("exportBtn"),
+    importBtn: document.getElementById("importBtn"),
+    randomWarbandBtn: document.getElementById("randomWarbandBtn"),
+    ioArea: document.getElementById("ioArea"),
+    ioTitle: document.getElementById("ioTitle"),
+    ioText: document.getElementById("ioText"),
+    copyBtn: document.getElementById("copyBtn"),
+    loadBtn: document.getElementById("loadBtn"),
+    closeIoBtn: document.getElementById("closeIoBtn"),
+    ioMsg: document.getElementById("ioMsg"),
 
-// Dice roller
-document.getElementById('rollDice').addEventListener('click', ()=>{
-  document.getElementById('diceResult').textContent = 'Result: '+(Math.floor(Math.random()*6)+1);
-});
+    modelVisibility: document.getElementById("modelVisibility"),
+    modelVisibilityGrid: document.getElementById("modelVisibilityGrid")
+  };
 
-// Export / Import
-document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const STORAGE_KEY = "chimera_warband_v5";
+  const ABILITY_LIMIT = 2;
+  const HORROR_MAX = 3;
+
+  const diceState = { history: [] };
+  let d6FlickerTimer = null;
+  let d6FinalTimer = null;
+  let d6RollToken = 0;
+
+  const uiPrefs = { compact: false };
+  const openPanelsByMember = new Map();
+  const openOuterByMember = new Map();
+
+  const rangedWeapons = sortByPointsAndName(DATA.ranged_weapons);
+  const meleeWeapons = sortByPointsAndName(DATA.melee_weapons);
+  const abilities = DATA.abilities.slice();
+  const STAT_TABLE = Object.fromEntries(
+    DATA.stats.map((s) => [String(s.stat || "").toLowerCase(), s])
+  );
+
   const warband = {
-    name: document.getElementById('warbandName').value,
-    models: modelCards.map(card=>{
-      const m = {};
-      statsData.stats.forEach(stat=>{
-        m[stat.stat] = card.querySelector(`select[data-stat="${stat.stat}"]`).value;
-      });
-      return m;
-    }),
-    abilities: Array.from(abilitiesDiv.querySelectorAll('input:checked')).map(c=>statsData.abilities[c.dataset.index].name)
+    version: 5,
+    name: "Unnamed Warband",
+    pointCap: 75,
+    members: Array.from({ length: 5 }, (_, i) => makeDefaultMember(i + 1))
   };
-  const blob = new Blob([JSON.stringify(warband,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download='warband.json'; a.click();
-});
 
-document.getElementById('importBtn').addEventListener('click', ()=>{
-  document.getElementById('importFile').click();
-});
-document.getElementById('importFile').addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    const data = JSON.parse(reader.result);
-    document.getElementById('warbandName').value=data.name||'';
-    data.models.forEach((m,i)=>{
-      const card=modelCards[i];
-      if(!card) return;
-      statsData.stats.forEach(stat=>{
-        const sel=card.querySelector(`select[data-stat="${stat.stat}"]`);
-        if(sel && m[stat.stat]) sel.value=m[stat.stat];
-      });
+  const SILLY_FIRST = [
+    "Bob", "Smokey", "Gummy", "Fizzy", "Cranky", "Spicy", "Wobble", "Soggy", "Porkchop", "Mister", "Doctor",
+    "Grub", "Biscuit", "Doodle", "Noodle", "Pickle", "Beans", "Honk", "Goober", "Zappy", "Moldy", "Captain"
+  ];
+  const SILLY_LAST = [
+    "the Blob", "the Bear", "the Unwise", "the Damp", "the Loud", "the Unforgiven", "the Greasy", "the Gentle",
+    "the Infinite", "the Suspicious", "the Mildly Haunted", "the Crunchy", "the Misplaced", "the Wretched",
+    "of Westchester", "of the Sewer", "from Accounting", "the Knife-Collector", "the Rust King", "the Moon-Licker"
+  ];
+  const SILLY_ROLE = [
+    "Warden", "Janitor", "Oracle", "Squire", "Bouncer", "Archivist", "Fence", "Cook", "Scout", "Prophet", "Clerk"
+  ];
+  const WARBAND_PREFIX = [
+    "The", "The Honorable", "The Questionable", "The Blessed", "The Cursed", "The Extremely Normal"
+  ];
+  const WARBAND_ADJ = [
+    "Quawb", "Sewer", "Gutter", "Moon", "Rust", "Mold", "Neon", "Bone", "Goo", "Ferret", "Goblin", "Liminal"
+  ];
+  const WARBAND_NOUN = [
+    "Cult", "Union", "Cabal", "Choir", "Committee", "Collective", "Crew", "Squad", "Coven", "Congregation", "Society"
+  ];
+
+  function sortByPointsAndName(arr) {
+    return arr.slice().sort((a, b) => {
+      const p = (toIntOrNull(a?.points) ?? 0) - (toIntOrNull(b?.points) ?? 0);
+      if (p) return p;
+      return String(a?.name ?? "").localeCompare(String(b?.name ?? ""));
     });
-    // Set abilities
-    abilitiesDiv.querySelectorAll('input').forEach(inp=>inp.checked=false);
-    if(data.abilities){
-      data.abilities.forEach(name=>{
-        const idx = statsData.abilities.findIndex(a=>a.name===name);
-        if(idx>=0) abilitiesDiv.querySelector(`#ab${idx}`).checked=true;
-      });
-    }
-  };
-  reader.readAsText(file);
-});
-</script>
+  }
 
+  function makeDefaultMember(num) {
+    return {
+      role: `Model ${num}`,
+      name: "",
+      move: 1,
+      defense: 1,
+      shoot: 1,
+      fight: 1,
+      rangedIdx: "",
+      meleeIdx: "",
+      abilityIdx: [],
+      woundsCurrent: null,
+      horror: 0,
+      hidden: false
+    };
+  }
+
+  function toIntOrNull(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function rollDie(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function getTextField(obj, keys) {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") return String(v);
+    }
+    return "";
+  }
+
+  function itemPoints(obj) {
+    return toIntOrNull(obj?.points) ?? 0;
+  }
+
+  function randomWarbandName() {
+    return `${pick(WARBAND_PREFIX)} ${pick(WARBAND_ADJ)} ${pick(WARBAND_NOUN)}`;
+  }
+
+  function randomModelName() {
+    const style = randInt(1, 3);
+    if (style === 1) return `${pick(SILLY_FIRST)} ${pick(SILLY_LAST)}`;
+    if (style === 2) return `${pick(SILLY_FIRST)} ${pick(SILLY_ROLE)}`;
+    return `${pick(SILLY_FIRST)} ${pick(SILLY_FIRST).toLowerCase()} ${pick(SILLY_LAST)}`;
+  }
+
+  function getStatTierEntry(statKey, tier) {
+    const table = STAT_TABLE[String(statKey).toLowerCase()];
+    if (!table) return null;
+    return table.tiers.find((t) => Number(t.tier) === Number(tier)) ?? table.tiers[0] ?? null;
+  }
+
+  function moveValue(member) {
+    return String(getStatTierEntry("move", member.move)?.value ?? '5"');
+  }
+
+  function movePoints(member) {
+    return itemPoints(getStatTierEntry("move", member.move));
+  }
+
+  function defenseMod(member) {
+    return Number(getStatTierEntry("defense", member.defense)?.value ?? -2);
+  }
+
+  function shootMod(member) {
+    return Number(getStatTierEntry("shoot", member.shoot)?.value ?? -2);
+  }
+
+  function fightMod(member) {
+    return Number(getStatTierEntry("fight", member.fight)?.value ?? -2);
+  }
+
+  function defensePoints(member) {
+    return itemPoints(getStatTierEntry("defense", member.defense));
+  }
+
+  function shootPoints(member) {
+    return itemPoints(getStatTierEntry("shoot", member.shoot));
+  }
+
+  function fightPoints(member) {
+    return itemPoints(getStatTierEntry("fight", member.fight));
+  }
+
+  function statPointsCost(member) {
+    return movePoints(member) + defensePoints(member) + shootPoints(member) + fightPoints(member);
+  }
+
+  function getSelectedRangedWeapon(member) {
+    return member.rangedIdx === "" ? null : rangedWeapons[Number(member.rangedIdx)] ?? null;
+  }
+
+  function getSelectedMeleeWeapon(member) {
+    return member.meleeIdx === "" ? null : meleeWeapons[Number(member.meleeIdx)] ?? null;
+  }
+
+  function memberWeaponPoints(member) {
+    return itemPoints(getSelectedRangedWeapon(member)) + itemPoints(getSelectedMeleeWeapon(member));
+  }
+
+  function memberAbilityPoints() {
+    return 0;
+  }
+
+  function memberTotalPoints(member) {
+    return statPointsCost(member) + memberWeaponPoints(member) + memberAbilityPoints(member);
+  }
+
+  function warbandTotalPoints() {
+    return warband.members.reduce((sum, member) => sum + memberTotalPoints(member), 0);
+  }
+
+  function woundsTotal(member) {
+    return 4 + clamp(Number(member.defense) || 1, 1, 3);
+  }
+
+  function horrorPenalty(member) {
+    return clamp(toIntOrNull(member?.horror) ?? 0, 0, HORROR_MAX);
+  }
+
+  function effectiveDefenseMod(member) {
+    return defenseMod(member) - horrorPenalty(member);
+  }
+
+  function effectiveShootMod(member) {
+    return shootMod(member) - horrorPenalty(member);
+  }
+
+  function effectiveFightMod(member) {
+    return fightMod(member) - horrorPenalty(member);
+  }
+
+  function ensurePlayState(member) {
+    member.move = clamp(toIntOrNull(member.move) ?? 1, 1, 3);
+    member.defense = clamp(toIntOrNull(member.defense) ?? 1, 1, 3);
+    member.shoot = clamp(toIntOrNull(member.shoot) ?? 1, 1, 3);
+    member.fight = clamp(toIntOrNull(member.fight) ?? 1, 1, 3);
+
+    if (!Array.isArray(member.abilityIdx)) member.abilityIdx = [];
+    member.abilityIdx = member.abilityIdx.map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT);
+
+    const maxW = woundsTotal(member);
+    if (!Number.isFinite(Number(member.woundsCurrent))) member.woundsCurrent = maxW;
+    member.woundsCurrent = clamp(Number(member.woundsCurrent), 0, maxW);
+
+    if (!Number.isFinite(Number(member.horror))) member.horror = 0;
+    member.horror = clamp(Number(member.horror), 0, HORROR_MAX);
+
+    if (typeof member.hidden !== "boolean") member.hidden = false;
+  }
+
+  function clearMemberLoadout(member) {
+    member.rangedIdx = "";
+    member.meleeIdx = "";
+    member.abilityIdx = [];
+  }
+
+  function applyCompactMode(on) {
+    uiPrefs.compact = !!on;
+    document.body.classList.toggle("compact", uiPrefs.compact);
+    try { localStorage.setItem("chimera_compact", uiPrefs.compact ? "1" : "0"); } catch {}
+    renderWarband();
+  }
+
+  function loadCompactPref() {
+    try {
+      const v = localStorage.getItem("chimera_compact");
+      if (v === "1") uiPrefs.compact = true;
+    } catch {}
+  }
+
+  function renderDice() {
+    els.d6History.textContent = diceState.history.length
+      ? "History: " + diceState.history.join(", ")
+      : "History: —";
+  }
+
+  function makeCollapsible(titleText, initiallyOpen = false, onToggle = null) {
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "12px";
+    wrap.style.border = "1px solid #eee";
+    wrap.style.borderRadius = "10px";
+    wrap.style.overflow = "hidden";
+
+    const header = document.createElement("button");
+    header.type = "button";
+    header.style.width = "100%";
+    header.style.textAlign = "left";
+    header.style.padding = "10px 12px";
+    header.style.border = "0";
+    header.style.background = "#f7f7f7";
+    header.style.cursor = "pointer";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.gap = "10px";
+    header.style.fontWeight = "800";
+
+    const title = document.createElement("span");
+    title.textContent = titleText;
+
+    const chevron = document.createElement("span");
+    chevron.textContent = initiallyOpen ? "▾" : "▸";
+    chevron.style.opacity = "0.8";
+
+    header.appendChild(title);
+    header.appendChild(chevron);
+
+    const body = document.createElement("div");
+    body.style.padding = "10px 12px";
+    body.style.display = initiallyOpen ? "block" : "none";
+    body.style.background = "#fff";
+
+    function setOpen(open) {
+      body.style.display = open ? "block" : "none";
+      chevron.textContent = open ? "▾" : "▸";
+      if (typeof onToggle === "function") onToggle(open);
+    }
+
+    header.addEventListener("click", () => {
+      setOpen(body.style.display === "none");
+    });
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+
+    return { wrap, body, setOpen };
+  }
+
+  function makeCounter(labelText, getText, onMinus, onPlus, extraBtnText, onExtra, opts = null) {
+    const row = document.createElement("div");
+    row.className = "playrow";
+
+    const label = document.createElement("div");
+    label.style.fontWeight = "900";
+    label.style.color = "#333";
+    label.textContent = labelText;
+
+    const counter = document.createElement("div");
+    counter.className = "counter";
+
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.className = "ctrBtn";
+    minus.textContent = "−";
+    minus.addEventListener("click", onMinus);
+
+    const val = document.createElement("div");
+    val.className = "val";
+
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "ctrBtn";
+    plus.textContent = "+";
+    plus.addEventListener("click", onPlus);
+
+    counter.appendChild(minus);
+    counter.appendChild(val);
+    counter.appendChild(plus);
+
+    if (extraBtnText && typeof onExtra === "function") {
+      const extra = document.createElement("button");
+      extra.type = "button";
+      extra.className = "ctrExtra";
+      extra.textContent = extraBtnText;
+      extra.addEventListener("click", onExtra);
+      counter.appendChild(extra);
+    }
+
+    row.appendChild(label);
+    row.appendChild(counter);
+
+    function renderVal() {
+      if (opts && opts.type === "segments") {
+        const total = Math.max(0, Number(opts.totalFn?.() ?? 0));
+        const filled = Math.max(0, Math.min(total, Number(opts.filledFn?.() ?? 0)));
+        const fillClass =
+          typeof opts.fillClassFn === "function"
+            ? String(opts.fillClassFn(filled, total) || "")
+            : String(opts.fillClass || "");
+
+        val.innerHTML = "";
+
+        const segWrap = document.createElement("div");
+        segWrap.className = "segVal";
+
+        for (let i = 1; i <= total; i++) {
+          const seg = document.createElement("div");
+          seg.className = "seg" + (i <= filled ? (fillClass ? ` ${fillClass}` : "") : "");
+          segWrap.appendChild(seg);
+        }
+
+        if (opts.showText) {
+          const txt = document.createElement("div");
+          txt.className = "segText";
+          txt.textContent = opts.textFn ? String(opts.textFn(filled, total)) : `${filled}/${total}`;
+          segWrap.appendChild(txt);
+        }
+
+        val.appendChild(segWrap);
+      } else {
+        val.textContent = getText();
+      }
+    }
+
+    renderVal();
+    return { row, refresh: renderVal };
+  }
+
+  function makeWeaponLine(label, weapon) {
+    if (!weapon) return `${label}: —`;
+    const bits = [];
+    if (toIntOrNull(weapon.attacks) !== null) bits.push(`A:${weapon.attacks}`);
+    if (toIntOrNull(weapon.damage) !== null) bits.push(`D:${weapon.damage}`);
+    const effect = getTextField(weapon, ["effect", "effect_text", "rule_text"]);
+    return `${label}: ${weapon.name}${bits.length ? ` (${bits.join(" · ")})` : ""}${effect ? ` — ${effect}` : ""}`;
+  }
+
+  function makeSelectedWeaponsSummary(member) {
+    const box = document.createElement("div");
+    box.style.marginTop = "10px";
+    box.style.padding = "10px 12px";
+    box.style.border = "1px solid #eee";
+    box.style.borderRadius = "10px";
+    box.style.background = "#fafafa";
+    box.style.fontSize = "13px";
+
+    const head = document.createElement("div");
+    head.style.fontWeight = "900";
+    head.textContent = "Selected Weapons";
+    box.appendChild(head);
+
+    const ranged = document.createElement("div");
+    ranged.style.marginTop = "8px";
+    ranged.style.whiteSpace = "pre-wrap";
+    ranged.textContent = makeWeaponLine("Ranged", getSelectedRangedWeapon(member));
+    box.appendChild(ranged);
+
+    const melee = document.createElement("div");
+    melee.style.marginTop = "8px";
+    melee.style.whiteSpace = "pre-wrap";
+    melee.textContent = makeWeaponLine("Melee", getSelectedMeleeWeapon(member));
+    box.appendChild(melee);
+
+    return box;
+  }
+
+  function makeSelectedAbilitiesSummary(member) {
+    const box = document.createElement("div");
+    box.style.marginTop = "10px";
+    box.style.padding = "10px 12px";
+    box.style.border = "1px solid #eee";
+    box.style.borderRadius = "10px";
+    box.style.background = "#fafafa";
+    box.style.fontSize = "13px";
+
+    const head = document.createElement("div");
+    head.style.fontWeight = "900";
+    head.textContent = "Selected Abilities";
+    box.appendChild(head);
+
+    const chosen = (member.abilityIdx || []).map((i) => abilities[Number(i)]).filter(Boolean);
+    if (!chosen.length) {
+      const none = document.createElement("div");
+      none.style.marginTop = "8px";
+      none.style.color = "#666";
+      none.textContent = "—";
+      box.appendChild(none);
+      return box;
+    }
+
+    chosen.forEach((ability) => {
+      const row = document.createElement("div");
+      row.style.marginTop = "8px";
+      row.style.whiteSpace = "pre-wrap";
+      row.textContent = `${ability.name}${ability.effect ? ` — ${ability.effect}` : ""}`;
+      box.appendChild(row);
+    });
+
+    return box;
+  }
+
+  function makeStatsHeadline(member) {
+    ensurePlayState(member);
+    if (!document.body.classList.contains("compact")) return document.createElement("div");
+
+    const wrap = document.createElement("div");
+    wrap.className = "compactHeadline";
+
+    const addKV = (k, v, wrapValue = false) => {
+      const kv = document.createElement("div");
+      kv.className = "kv";
+
+      const kk = document.createElement("span");
+      kk.className = "k";
+      kk.textContent = k;
+
+      const vv = document.createElement("span");
+      vv.className = "v" + (wrapValue ? " wrap" : "");
+      vv.textContent = v;
+
+      kv.appendChild(kk);
+      kv.appendChild(vv);
+      wrap.appendChild(kv);
+    };
+
+    const ranged = getSelectedRangedWeapon(member);
+    const melee = getSelectedMeleeWeapon(member);
+    const abilityText = (member.abilityIdx || [])
+      .map((i) => abilities[Number(i)]?.name)
+      .filter(Boolean)
+      .join(", ") || "—";
+
+    addKV("Move / Mods", `Move ${moveValue(member)} • D${fmtSigned(effectiveDefenseMod(member))} S${fmtSigned(effectiveShootMod(member))} F${fmtSigned(effectiveFightMod(member))}`);
+    addKV("Weapons", `${makeWeaponLine("R", ranged)}\n${makeWeaponLine("M", melee)}`, true);
+    addKV("Abilities", abilityText, true);
+
+    return wrap;
+  }
+
+  function renderModelVisibilityControls() {
+    els.modelVisibilityGrid.innerHTML = "";
+
+    warband.members.forEach((member, i) => {
+      ensurePlayState(member);
+      const id = `show_m_${i}`;
+      const label = document.createElement("label");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = id;
+      cb.checked = !member.hidden;
+      cb.addEventListener("change", () => {
+        member.hidden = !cb.checked;
+        renderWarband();
+      });
+
+      const name = member.name && String(member.name).trim() ? ` — ${member.name}` : "";
+      const text = document.createElement("span");
+      text.textContent = `${member.role}${name}`;
+
+      label.appendChild(cb);
+      label.appendChild(text);
+      els.modelVisibilityGrid.appendChild(label);
+    });
+  }
+
+  function setIoVisible(vis, title) {
+    els.ioArea.style.display = vis ? "block" : "none";
+    if (title) els.ioTitle.textContent = title;
+    els.ioMsg.textContent = "";
+  }
+
+  function saveWarbandToStorage() {
+    try {
+      warband.members.forEach(ensurePlayState);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(warband));
+    } catch {}
+  }
+
+  function normalizeImportedMember(input, fallbackIndex) {
+    const base = makeDefaultMember(fallbackIndex + 1);
+    const member = {
+      ...base,
+      role: base.role,
+      name: String(input?.name ?? base.name),
+      move: toIntOrNull(input?.move) ?? toIntOrNull(input?.will) ?? base.move,
+      defense: toIntOrNull(input?.defense) ?? base.defense,
+      shoot: toIntOrNull(input?.shoot) ?? base.shoot,
+      fight: toIntOrNull(input?.fight) ?? base.fight,
+      rangedIdx: input?.rangedIdx === "" || input?.rangedIdx == null ? "" : String(input.rangedIdx),
+      meleeIdx: input?.meleeIdx === "" || input?.meleeIdx == null ? "" : String(input.meleeIdx),
+      abilityIdx: Array.isArray(input?.abilityIdx) ? input.abilityIdx.map(Number).filter(Number.isFinite) : [],
+      woundsCurrent: toIntOrNull(input?.woundsCurrent),
+      horror: toIntOrNull(input?.horror) ?? 0,
+      hidden: typeof input?.hidden === "boolean" ? input.hidden : false
+    };
+    ensurePlayState(member);
+    return member;
+  }
+
+  function loadWarbandFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.members)) return false;
+
+      warband.version = 5;
+      warband.name = String(parsed.name ?? warband.name);
+      warband.pointCap = toIntOrNull(parsed.pointCap) ?? warband.pointCap;
+      warband.members = Array.from({ length: 5 }, (_, i) => normalizeImportedMember(parsed.members[i], i));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function exportWarband() {
+    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+    warband.members.forEach(ensurePlayState);
+    setIoVisible(true, "Export Warband");
+    els.ioText.value = JSON.stringify(warband, null, 2);
+    els.ioMsg.textContent = "Copy this JSON to save/share the warband.";
+  }
+
+  function importWarbandUI() {
+    setIoVisible(true, "Import Warband");
+    els.ioText.value = "";
+    els.ioMsg.textContent = 'Paste a previously exported warband JSON, then click “Load Pasted JSON”.';
+  }
+
+  function loadPastedWarband() {
+    try {
+      const parsed = JSON.parse(els.ioText.value);
+      if (!parsed || typeof parsed !== "object") throw new Error("Not an object");
+      if (!Array.isArray(parsed.members)) throw new Error("Missing members[]");
+
+      warband.version = 5;
+      warband.name = String(parsed.name ?? warband.name);
+      warband.pointCap = toIntOrNull(parsed.pointCap) ?? warband.pointCap;
+      warband.members = Array.from({ length: 5 }, (_, i) => normalizeImportedMember(parsed.members[i], i));
+
+      els.warbandName.value = warband.name;
+      els.pointCap.value = String(warband.pointCap);
+
+      renderWarband();
+      els.ioMsg.textContent = "Loaded warband successfully.";
+    } catch (e) {
+      els.ioMsg.textContent = `Import failed: ${String(e.message || e)}`;
+    }
+  }
+
+  function fmtSigned(n) {
+    const v = Number(n) || 0;
+    return v >= 0 ? `+${v}` : String(v);
+  }
+
+  function randomizeMemberLoadout(member, budget) {
+    member.move = 1;
+    member.defense = 1;
+    member.shoot = 1;
+    member.fight = 1;
+    member.rangedIdx = "";
+    member.meleeIdx = "";
+    member.abilityIdx = [];
+
+    if (!String(member.name || "").trim()) member.name = randomModelName();
+    ensurePlayState(member);
+
+    const remaining = () => budget - memberTotalPoints(member);
+
+    const rangedChoices = rangedWeapons
+      .map((weapon, idx) => ({ idx, weapon }))
+      .filter((x) => itemPoints(x.weapon) <= remaining());
+    if (rangedChoices.length) {
+      member.rangedIdx = String(pick(rangedChoices).idx);
+    }
+
+    const meleeChoices = meleeWeapons
+      .map((weapon, idx) => ({ idx, weapon }))
+      .filter((x) => itemPoints(x.weapon) <= remaining());
+    if (meleeChoices.length) {
+      member.meleeIdx = String(pick(meleeChoices).idx);
+    }
+
+    const abilityOrder = shuffle(abilities.map((_, idx) => idx));
+    const abilityCount = randInt(0, ABILITY_LIMIT);
+    member.abilityIdx = abilityOrder.slice(0, abilityCount);
+
+    const upgrades = ["move", "defense", "shoot", "fight"];
+    let safety = 40;
+    while (safety-- > 0) {
+      const valid = shuffle(upgrades).filter((key) => {
+        const current = Number(member[key]) || 1;
+        if (current >= 3) return false;
+        const next = current + 1;
+        const nowCost = itemPoints(getStatTierEntry(key, current));
+        const nextCost = itemPoints(getStatTierEntry(key, next));
+        return nextCost - nowCost <= remaining();
+      });
+      if (!valid.length) break;
+      const key = pick(valid);
+      member[key] = (Number(member[key]) || 1) + 1;
+      ensurePlayState(member);
+    }
+
+    ensurePlayState(member);
+  }
+
+  function randomizeWarband() {
+    warband.name = randomWarbandName();
+    els.warbandName.value = warband.name;
+
+    const cap = toIntOrNull(els.pointCap.value) ?? warband.pointCap ?? 75;
+    warband.pointCap = cap;
+    const slice = Math.floor(cap / warband.members.length);
+
+    warband.members.forEach((member) => {
+      member.name = randomModelName();
+      randomizeMemberLoadout(member, slice);
+    });
+
+    renderWarband();
+  }
+
+  function renderWarband() {
+    warband.pointCap = toIntOrNull(els.pointCap.value) ?? 0;
+    renderModelVisibilityControls();
+    els.warbandGrid.innerHTML = "";
+
+    const collapseModelsOnPhone =
+      document.body.classList.contains("compact") &&
+      window.matchMedia("(max-width: 480px)").matches;
+
+    warband.members.forEach((member, memberIndex) => {
+      ensurePlayState(member);
+      if (member.hidden) return;
+
+      const card = document.createElement("div");
+      card.style.border = "1px solid #ddd";
+      card.style.borderRadius = "10px";
+      card.style.padding = "14px";
+
+      let outer = card;
+      let contentHost = card;
+
+      if (collapseModelsOnPhone) {
+        const nm = member.name && String(member.name).trim() ? ` — ${member.name.trim()}` : "";
+        const titleText = `${member.role}${nm} (${memberTotalPoints(member)} pts)`;
+        const remembered = openOuterByMember.get(memberIndex);
+        const initiallyOpen = remembered === undefined ? memberIndex === 0 : !!remembered;
+        const col = makeCollapsible(titleText, initiallyOpen, (isOpen) => {
+          openOuterByMember.set(memberIndex, !!isOpen);
+        });
+        col.body.style.padding = "12px";
+        outer = col.wrap;
+        contentHost = col.body;
+      }
+
+      const header = document.createElement("div");
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.alignItems = "baseline";
+      header.style.gap = "10px";
+
+      const title = document.createElement("div");
+      title.style.display = "flex";
+      title.style.flexDirection = "column";
+      title.style.gap = "6px";
+
+      const roleLine = document.createElement("div");
+      roleLine.style.fontWeight = "900";
+      roleLine.style.fontSize = "16px";
+      roleLine.textContent = member.role;
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = `${member.role} name`;
+      nameInput.value = member.name ?? "";
+      nameInput.style.width = "100%";
+      nameInput.addEventListener("input", () => {
+        member.name = nameInput.value;
+        renderModelVisibilityControls();
+      });
+
+      title.appendChild(roleLine);
+      title.appendChild(nameInput);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "10px";
+      right.style.flexWrap = "wrap";
+
+      const pts = document.createElement("div");
+      pts.style.fontWeight = "800";
+      pts.textContent = `${memberTotalPoints(member)} pts`;
+
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.textContent = "Clear Loadout";
+      clearBtn.style.padding = "6px 10px";
+      clearBtn.style.borderRadius = "10px";
+      clearBtn.style.border = "1px solid #ddd";
+      clearBtn.style.background = "#fff";
+      clearBtn.style.cursor = "pointer";
+      clearBtn.addEventListener("click", () => {
+        clearMemberLoadout(member);
+        renderWarband();
+      });
+
+      const randomBtn = document.createElement("button");
+      randomBtn.type = "button";
+      randomBtn.textContent = "🎲 Random Loadout";
+      randomBtn.style.padding = "6px 10px";
+      randomBtn.style.borderRadius = "10px";
+      randomBtn.style.border = "1px solid #ddd";
+      randomBtn.style.background = "#fff";
+      randomBtn.style.cursor = "pointer";
+      randomBtn.addEventListener("click", () => {
+        const cap = toIntOrNull(els.pointCap.value) ?? warband.pointCap ?? 75;
+        const slice = Math.floor(cap / warband.members.length);
+        randomizeMemberLoadout(member, slice);
+        renderWarband();
+      });
+
+      right.appendChild(pts);
+      right.appendChild(clearBtn);
+      right.appendChild(randomBtn);
+
+      header.appendChild(title);
+      header.appendChild(right);
+      contentHost.appendChild(header);
+
+      const isPlayMode = document.body.classList.contains("compact");
+
+      function tierSelect(label, key) {
+        const wrap = document.createElement("div");
+        wrap.style.display = "flex";
+        wrap.style.flexDirection = "column";
+        wrap.style.gap = "8px";
+        wrap.style.alignItems = "stretch";
+
+        const lbl = document.createElement("div");
+        lbl.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
+
+        const select = document.createElement("select");
+        select.style.width = "100%";
+
+        const statKey = String(key).toLowerCase();
+        const table = STAT_TABLE[statKey];
+        select.innerHTML = table.tiers.map((tier) => {
+          if (statKey === "move") {
+            return `<option value="${tier.tier}">T${tier.tier} (${escapeHtml(String(tier.value))}, ${tier.points} pts)</option>`;
+          }
+          return `<option value="${tier.tier}">T${tier.tier} (${escapeHtml(String(tier.value))}, ${tier.points} pts)</option>`;
+        }).join("");
+
+        select.value = String(member[key] ?? 1);
+        select.addEventListener("change", () => {
+          member[key] = Number(select.value);
+          ensurePlayState(member);
+          renderWarband();
+        });
+
+        wrap.appendChild(lbl);
+        wrap.appendChild(select);
+        return wrap;
+      }
+
+      if (!isPlayMode) {
+        const statsBlock = document.createElement("div");
+        statsBlock.style.marginTop = "10px";
+        statsBlock.style.display = "grid";
+        statsBlock.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
+        statsBlock.style.gap = "10px";
+
+        statsBlock.appendChild(tierSelect("Move", "move"));
+        statsBlock.appendChild(tierSelect("Defense", "defense"));
+        statsBlock.appendChild(tierSelect("Shoot", "shoot"));
+        statsBlock.appendChild(tierSelect("Fight", "fight"));
+        contentHost.appendChild(statsBlock);
+      }
+
+      if (isPlayMode) {
+        contentHost.appendChild(makeStatsHeadline(member));
+      }
+
+      const maxW = woundsTotal(member);
+
+      const woundsCtl = makeCounter(
+        "Wounds",
+        () => `${member.woundsCurrent}/${maxW}`,
+        () => { member.woundsCurrent = clamp(member.woundsCurrent - 1, 0, maxW); renderWarband(); },
+        () => { member.woundsCurrent = clamp(member.woundsCurrent + 1, 0, maxW); renderWarband(); },
+        "Full",
+        () => { member.woundsCurrent = maxW; renderWarband(); },
+        {
+          type: "segments",
+          totalFn: () => maxW,
+          filledFn: () => member.woundsCurrent,
+          showText: true,
+          textFn: (filled, total) => `${filled}/${total}`,
+          fillClassFn: (filled, total) => {
+            if (filled <= 1) return "f-red";
+            const half = Math.ceil(total / 2);
+            if (filled <= half) return "f-yellow";
+            return "f-green";
+          }
+        }
+      );
+
+      const horrorCtl = makeCounter(
+        "Horror",
+        () => `${member.horror}/${HORROR_MAX}`,
+        () => { member.horror = clamp(member.horror - 1, 0, HORROR_MAX); renderWarband(); },
+        () => { member.horror = clamp(member.horror + 1, 0, HORROR_MAX); renderWarband(); },
+        "Clear",
+        () => { member.horror = 0; renderWarband(); },
+        {
+          type: "segments",
+          totalFn: () => HORROR_MAX,
+          filledFn: () => member.horror,
+          showText: true,
+          textFn: (filled, total) => `${filled}/${total}`,
+          fillClass: "f-purple"
+        }
+      );
+
+      contentHost.appendChild(woundsCtl.row);
+      contentHost.appendChild(horrorCtl.row);
+
+      const statsSection = makeCollapsible("Stats", false);
+      const derived = statsSection.body;
+      derived.style.padding = "10px 12px";
+      derived.style.background = "#fafafa";
+
+      const statLine = (label, value) => {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.gap = "12px";
+        row.style.marginTop = "6px";
+        row.innerHTML = `<span style="color:#444;">${escapeHtml(label)}</span><span style="font-weight:800;">${escapeHtml(value)}</span>`;
+        return row;
+      };
+
+      derived.appendChild(statLine("Move", moveValue(member)));
+      derived.appendChild(statLine("Wounds (Max)", String(woundsTotal(member))));
+      derived.appendChild(statLine("Abilities", `${member.abilityIdx.length}/${ABILITY_LIMIT} free`));
+      derived.appendChild(statLine("Defense Mod", String(effectiveDefenseMod(member))));
+      derived.appendChild(statLine("Shoot Mod", String(effectiveShootMod(member))));
+      derived.appendChild(statLine("Fight Mod", String(effectiveFightMod(member))));
+      derived.appendChild(statLine("Stat Points", String(statPointsCost(member))));
+      derived.appendChild(statLine("Gear Points", String(memberWeaponPoints(member))));
+      derived.appendChild(statLine("Model Total Points", String(memberTotalPoints(member))));
+      contentHost.appendChild(statsSection.wrap);
+
+      if (!isPlayMode) {
+        const rangedRow = document.createElement("div");
+        rangedRow.style.marginTop = "12px";
+        rangedRow.innerHTML = "<strong>Ranged Weapon</strong>";
+
+        const rangedSel = document.createElement("select");
+        rangedSel.style.width = "100%";
+        rangedSel.style.marginTop = "6px";
+        rangedSel.innerHTML =
+          `<option value="">— None —</option>` +
+          rangedWeapons.map((weapon, idx) =>
+            `<option value="${idx}">${escapeHtml(weapon.name)} (${itemPoints(weapon)} pts)</option>`
+          ).join("");
+        rangedSel.value = member.rangedIdx === "" ? "" : String(member.rangedIdx);
+        rangedSel.addEventListener("change", () => {
+          member.rangedIdx = rangedSel.value === "" ? "" : rangedSel.value;
+          renderWarband();
+        });
+        rangedRow.appendChild(rangedSel);
+        contentHost.appendChild(rangedRow);
+
+        const meleeRow = document.createElement("div");
+        meleeRow.style.marginTop = "12px";
+        meleeRow.innerHTML = "<strong>Melee Weapon</strong>";
+
+        const meleeSel = document.createElement("select");
+        meleeSel.style.width = "100%";
+        meleeSel.style.marginTop = "6px";
+        meleeSel.innerHTML =
+          `<option value="">— None —</option>` +
+          meleeWeapons.map((weapon, idx) =>
+            `<option value="${idx}">${escapeHtml(weapon.name)} (${itemPoints(weapon)} pts)</option>`
+          ).join("");
+        meleeSel.value = member.meleeIdx === "" ? "" : String(member.meleeIdx);
+        meleeSel.addEventListener("change", () => {
+          member.meleeIdx = meleeSel.value === "" ? "" : meleeSel.value;
+          renderWarband();
+        });
+        meleeRow.appendChild(meleeSel);
+        contentHost.appendChild(meleeRow);
+        contentHost.appendChild(makeSelectedWeaponsSummary(member));
+
+        const openState = openPanelsByMember.get(memberIndex) || { abilities: false };
+        const abilitySection = makeCollapsible("Edit Abilities", openState.abilities, (isOpen) => {
+          const s = openPanelsByMember.get(memberIndex) || { abilities: false };
+          s.abilities = isOpen;
+          openPanelsByMember.set(memberIndex, s);
+        });
+
+        const abilityWrap = abilitySection.body;
+
+        const countLine = document.createElement("div");
+        countLine.style.marginTop = "6px";
+        countLine.innerHTML = `<span style="color:#444;">Select up to ${ABILITY_LIMIT} free: ${member.abilityIdx.length}/${ABILITY_LIMIT}</span>`;
+        abilityWrap.appendChild(countLine);
+
+        const selected = new Set((member.abilityIdx || []).map(String));
+        const list = document.createElement("div");
+        list.style.marginTop = "8px";
+
+        abilities.forEach((ability, idx) => {
+          const id = `m${memberIndex}_ability${idx}`;
+          const line = document.createElement("div");
+          line.style.marginBottom = "8px";
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.id = id;
+          cb.checked = selected.has(String(idx));
+          cb.disabled = !cb.checked && selected.size >= ABILITY_LIMIT;
+          cb.addEventListener("change", () => {
+            const set = new Set((member.abilityIdx || []).map(String));
+            if (cb.checked) {
+              if (set.size >= ABILITY_LIMIT) {
+                cb.checked = false;
+                return;
+              }
+              set.add(String(idx));
+            } else {
+              set.delete(String(idx));
+            }
+            member.abilityIdx = [...set].map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT);
+            renderWarband();
+          });
+
+          const label = document.createElement("label");
+          label.htmlFor = id;
+          label.style.cursor = "pointer";
+          label.style.whiteSpace = "pre-wrap";
+          label.textContent = ` ${ability.name}${ability.effect ? ` — ${ability.effect}` : ""}`;
+
+          line.appendChild(cb);
+          line.appendChild(label);
+          list.appendChild(line);
+        });
+
+        abilityWrap.appendChild(list);
+        contentHost.appendChild(abilitySection.wrap);
+        contentHost.appendChild(makeSelectedAbilitiesSummary(member));
+      }
+
+      els.warbandGrid.appendChild(outer);
+    });
+
+    const total = warbandTotalPoints();
+    els.warbandTotal.textContent = String(total);
+    const cap = warband.pointCap;
+    if (total > cap) {
+      els.warbandCapStatus.innerHTML = `<span class="warn">Over cap by ${total - cap}</span>`;
+    } else {
+      els.warbandCapStatus.innerHTML = `<span class="ok">Within cap (${cap - total} left)</span>`;
+    }
+
+    saveWarbandToStorage();
+  }
+
+  function bindEvents() {
+    els.exportBtn.addEventListener("click", exportWarband);
+    els.importBtn.addEventListener("click", importWarbandUI);
+    els.randomWarbandBtn.addEventListener("click", randomizeWarband);
+    els.closeIoBtn.addEventListener("click", () => setIoVisible(false));
+    els.loadBtn.addEventListener("click", loadPastedWarband);
+
+    els.copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(els.ioText.value);
+        els.ioMsg.textContent = "Copied to clipboard.";
+      } catch {
+        els.ioMsg.textContent = "Could not copy automatically — select all and copy manually.";
+      }
+    });
+
+    els.warbandName.addEventListener("input", () => {
+      warband.name = els.warbandName.value;
+      saveWarbandToStorage();
+    });
+
+    els.pointCap.addEventListener("input", () => {
+      renderWarband();
+    });
+
+    loadCompactPref();
+    els.compactToggle.checked = uiPrefs.compact;
+    applyCompactMode(uiPrefs.compact);
+    els.compactToggle.addEventListener("change", () => applyCompactMode(els.compactToggle.checked));
+
+    const doRoll = () => {
+      const token = ++d6RollToken;
+
+      if (d6FlickerTimer) { clearInterval(d6FlickerTimer); d6FlickerTimer = null; }
+      if (d6FinalTimer) { clearTimeout(d6FinalTimer); d6FinalTimer = null; }
+
+      els.rollD6Btn.disabled = true;
+      els.d6Result.classList.remove("dice-rolling");
+      void els.d6Result.offsetWidth;
+      els.d6Result.classList.add("dice-rolling");
+
+      const start = Date.now();
+
+      d6FlickerTimer = setInterval(() => {
+        if (token !== d6RollToken) return;
+        els.d6Result.textContent = String(rollDie(6));
+        if (Date.now() - start > 350) {
+          clearInterval(d6FlickerTimer);
+          d6FlickerTimer = null;
+        }
+      }, 45);
+
+      d6FinalTimer = setTimeout(() => {
+        if (token !== d6RollToken) return;
+        if (d6FlickerTimer) { clearInterval(d6FlickerTimer); d6FlickerTimer = null; }
+
+        const result = rollDie(6);
+        els.d6Result.textContent = String(result);
+        diceState.history.unshift(result);
+        diceState.history = diceState.history.slice(0, 10);
+        renderDice();
+
+        els.rollD6Btn.disabled = false;
+        d6FinalTimer = null;
+      }, 380);
+    };
+
+    els.rollD6Btn.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      doRoll();
+    });
+
+    els.clearRollsBtn.addEventListener("click", () => {
+      diceState.history = [];
+      els.d6Result.textContent = "—";
+      renderDice();
+    });
+
+    window.addEventListener("resize", () => {
+      renderWarband();
+    });
+  }
+
+  function init() {
+    loadWarbandFromStorage();
+    warband.members.forEach(ensurePlayState);
+
+    els.warbandName.value = warband.name;
+    els.pointCap.value = String(warband.pointCap);
+
+    bindEvents();
+    renderDice();
+    renderWarband();
+  }
+
+  init();
+</script>
 </body>
 </html>
