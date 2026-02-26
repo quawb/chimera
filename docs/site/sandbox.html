@@ -3,80 +3,1614 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Micro Skirmish Playtester</title>
+  <title>Chimera Sandbox</title>
   <style>
-    body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
-    #ui { padding: 12px; border-right: 1px solid #ddd; overflow: auto; }
-    #log { font-size: 12px; white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; padding: 8px; height: 260px; overflow: auto; }
-    button { width: 100%; margin: 6px 0; padding: 10px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .small { font-size: 12px; color: #555; }
-    textarea { width: 100%; height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-    canvas { display: block; width: 100%; height: 100%; }
-    hr { border: none; border-top: 1px solid #eee; margin: 12px 0; }
+    :root {
+      --bg: #ffffff;
+      --panel: #fafafa;
+      --line: #dddddd;
+      --text: #111111;
+      --muted: #555555;
+      --blue: #2563eb;
+      --red: #dc2626;
+      --cover: #d6d6d6;
+      --wall: #7a7a7a;
+      --select: #111111;
+      --ok: #0b8f58;
+      --warn: #9a3412;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+    }
+
+    #ui {
+      border-right: 1px solid var(--line);
+      padding: 14px;
+      overflow: auto;
+      background: #fff;
+    }
+
+    h1, h2, h3, h4 { margin: 0; }
+    h1 { font-size: 22px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--panel);
+      margin-top: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 96px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: #f3f3f3; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .blue { color: var(--blue); }
+    .red { color: var(--red); }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+
+    #status {
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    #selected {
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    #log {
+      height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    #boardWrap {
+      position: relative;
+      overflow: auto;
+      background: #f7f7f7;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+    }
+
+    canvas {
+      display: block;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .small { font-size: 12px; color: var(--muted); }
+    .spacer { height: 8px; }
+
+    @media (max-width: 980px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+      }
+      #ui {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+    }
   </style>
 </head>
-
 <body>
   <div id="ui">
-    <h3>Micro Skirmish</h3>
-    <div class="small">
-      Click a unit to select. Click an action, then click the board to use it.
-      For Shoot/Fight, click an enemy tile.
+    <h1>Chimera Sandbox</h1>
+    <div class="sub">Standalone d6 playtest board. Red is AI. Blue is player-controlled.</div>
+    <div class="sub">This version auto-deploys both teams for quick testing. 1 tile = 5 inches.</div>
+
+    <div class="card">
+      <h3>Loadouts</h3>
+      <div class="small">Paste a builder export here if you want to load Blue and/or Red manually.</div>
+      <div class="spacer"></div>
+      <textarea id="jsonInput" placeholder='Paste builder warband JSON here'></textarea>
+      <div class="spacer"></div>
+      <div class="row2">
+        <button id="loadBlueSavedBtn">Load Blue from Builder Save</button>
+        <button id="loadBluePasteBtn">Load Blue from Pasted JSON</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="row2">
+        <button id="loadRedPasteBtn">Load Red from Pasted JSON</button>
+        <button id="randomRedBtn">Random Red</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="row2">
+        <button id="randomBothBtn">Random Both</button>
+        <button id="newMapBtn">New Map</button>
+      </div>
+      <div class="spacer"></div>
+      <button id="resetBtn">Reset / New Game</button>
     </div>
 
-    <div id="status" class="small" style="margin-top:8px;"></div>
-
-    <div class="row">
-      <button id="btnMove">Move</button>
-      <button id="btnCharge">Charge (click enemy)</button>
+    <div class="card">
+      <h3>Round & Turn</h3>
+      <div id="status"></div>
+      <div class="spacer"></div>
+      <div id="orderChoice" style="display:none;">
+        <div class="small">You won initiative. Choose who activates first:</div>
+        <div class="spacer"></div>
+        <div class="row2">
+          <button id="blueFirstBtn">Blue First</button>
+          <button id="redFirstBtn">Red First</button>
+        </div>
+      </div>
     </div>
 
-    <div class="row">
-      <button id="btnShoot">Shoot</button>
-      <button id="btnFight">Fight</button>
+    <div class="card">
+      <h3>Blue Team Controls</h3>
+      <div class="small">Select a blue model on the board, then activate it.</div>
+      <div class="spacer"></div>
+      <div class="row2">
+        <button id="beginBtn">Begin Activation</button>
+        <button id="endBtn">End Activation</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="row3">
+        <button id="moveBtn">Move</button>
+        <button id="disengageBtn">Disengage</button>
+        <button id="doneMoveBtn">Done Moving</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="row3">
+        <button id="standBtn">Stand Up</button>
+        <button id="recoverBtn">Recover</button>
+        <button id="attackBtn">Attack</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="row2">
+        <button id="abilityBtn">Mark Ability Used</button>
+        <button id="nextRoundBtn">Force Next Round</button>
+      </div>
     </div>
 
-    <div class="row">
-      <button id="btnDisengage">Disengage</button>
-      <button id="btnRecover">Recover</button>
+    <div class="card">
+      <h3>Selected Model</h3>
+      <div id="selected">—</div>
     </div>
 
-    <div class="row">
-      <button id="btnAim">Aim</button>
-      <button id="btnEndAct">End Activation</button>
+    <div class="card">
+      <h3>Log</h3>
+      <div id="log"></div>
     </div>
-
-    <div class="row">
-      <button id="btnNextRound">Next Round (force)</button>
-      <button id="btnNewMap">New Random Map</button>
-    </div>
-
-    <hr />
-
-    <h4>Warband Import (optional)</h4>
-    <div class="small">Paste JSON array of models (see example in code), then load.</div>
-    <textarea id="wbJson" placeholder='[{"name":"A1","team":"Blue","tx":2,"ty":3,"tiers":{"def":2,"wp":2,"shoot":2,"fight":2}}]'></textarea>
-
-    <div class="row">
-      <button id="btnLoadBlue">Load Blue</button>
-      <button id="btnLoadRed">Load Red</button>
-    </div>
-
-    <button id="btnRandomWarbands">Random Warbands</button>
-
-    <hr />
-
-    <h4>Selected</h4>
-    <div id="sel"></div>
-
-    <h4>Log</h4>
-    <div id="log"></div>
   </div>
 
-  <canvas id="c"></canvas>
+  <div id="boardWrap">
+    <canvas id="board" width="980" height="700"></canvas>
+  </div>
 
-  <!-- IMPORTANT: this must be served over http:// (not file://) if your JS fetches JSON -->
-  <script type="module" src="./src/main.js"></script>
+  <script>
+    const DATA = {
+      stats: [
+        { stat: "Move", tiers: [ { tier: 1, value: '5"', points: 0 }, { tier: 2, value: '10"', points: 2 }, { tier: 3, value: '15"', points: 4 } ] },
+        { stat: "Defense", tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
+        { stat: "Shoot", tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
+        { stat: "Fight", tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] }
+      ],
+      melee_weapons: [
+        { name: "Unarmed", attacks: 1, damage: 1, effect: "", points: 1 },
+        { name: "Spiked Bat", attacks: 1, damage: 2, effect: "Down", points: 2 },
+        { name: "Pocket Knife", attacks: 2, damage: 1, effect: "", points: 2 },
+        { name: "Sledgehammer", attacks: 1, damage: 3, effect: "Horror", points: 3 },
+        { name: "Brass Knuckles", attacks: 3, damage: 1, effect: "", points: 3 },
+        { name: "Axe", attacks: 2, damage: 2, effect: "Down", points: 4 },
+        { name: "Katana", attacks: 4, damage: 1, effect: "", points: 5 },
+        { name: "Chainsaw", attacks: 1, damage: 4, effect: "Down + Horror", points: 5 },
+        { name: "Poisoned Dagger", attacks: 2, damage: 1, effect: "Adds Horror", points: 3 }
+      ],
+      ranged_weapons: [
+        { name: "Blow Dart", attacks: 1, damage: 1, effect: "", points: 2 },
+        { name: "Slingshot", attacks: 2, damage: 1, effect: "", points: 3 },
+        { name: "Pistol", attacks: 3, damage: 1, effect: "", points: 4 },
+        { name: "Shotgun", attacks: 1, damage: 3, effect: "Horror", points: 5 },
+        { name: "Bow", attacks: 1, damage: 2, effect: "Down", points: 3 },
+        { name: "Sniper", attacks: 1, damage: 4, effect: "Down + Horror", points: 5 },
+        { name: "Rifle", attacks: 4, damage: 1, effect: "", points: 7 },
+        { name: "Auto Crossbow", attacks: 2, damage: 2, effect: "Down", points: 5 },
+        { name: "Lightning Gun", attacks: 1, damage: 1, effect: 'Chains to models 5" away, adds Horror', points: 4 }
+      ],
+      abilities: [
+        { name: "Berserker", effect: 'Free 5" move at end of Move phase. If ending in base-to-base with enemy, +1 to fight and 1+ successful damage causes one Horror on defender for this Phase' },
+        { name: "Relentless", effect: 'Free 5" move or disengage action after Attack Phase.' },
+        { name: "Reckless", effect: 'Reroll failed attacks, gain one Horror after the phase ends' },
+        { name: "Undead", effect: 'The first time this model would be reduced to 0 wounds, after the attack resolves, restore 2 wounds instead. For the rest of the game, this model cannot Recover, Disengage, or Stand Up.' },
+        { name: "Masochist", effect: 'Reroll failed Defense roll. If reroll fails, gain 1 Horror.' },
+        { name: "Rupture", effect: 'Critical Hits will cause 1 total Horror on Defender' },
+        { name: "Neural Chain", effect: 'Use your attack phase to immediately activate (even if exhausted) a friendly model within 5". At the end of activation that model gains 1 Horror.' },
+        { name: "Marked", effect: 'Instead of shooting, mark a target that all friendly units within 10" will get +1 Shoot against. When allies hit it, it gains 1 Horror (once per phase).' },
+        { name: "Stitcher", effect: 'Heal instead of Attack Phase. Heal one model up to 5" away d3 Wounds. If the healed unit is down, stand it up. If they have horror, recover one horror. Gain one horror to perform a second heal.' },
+        { name: "Fade", effect: 'If in cover, when this unit is shot at, roll defense twice and pick the higher roll.' },
+        { name: "Phase", effect: 'Once per round, teleport up to 10" away in LoS, can be after getting targeted.' },
+        { name: "First Blood", effect: 'Once per round, when an attack action is declared against them, they can take an attack action first' },
+        { name: "Quick Draw", effect: 'Once per round when an enemy makes a move in their LoS they can make a free shoot action against them. Give the defender the benefit of cover if they do not already have.' }
+      ]
+    };
+
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+
+    const ui = {
+      jsonInput: document.getElementById('jsonInput'),
+      loadBlueSavedBtn: document.getElementById('loadBlueSavedBtn'),
+      loadBluePasteBtn: document.getElementById('loadBluePasteBtn'),
+      loadRedPasteBtn: document.getElementById('loadRedPasteBtn'),
+      randomRedBtn: document.getElementById('randomRedBtn'),
+      randomBothBtn: document.getElementById('randomBothBtn'),
+      newMapBtn: document.getElementById('newMapBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      beginBtn: document.getElementById('beginBtn'),
+      endBtn: document.getElementById('endBtn'),
+      moveBtn: document.getElementById('moveBtn'),
+      disengageBtn: document.getElementById('disengageBtn'),
+      doneMoveBtn: document.getElementById('doneMoveBtn'),
+      standBtn: document.getElementById('standBtn'),
+      recoverBtn: document.getElementById('recoverBtn'),
+      attackBtn: document.getElementById('attackBtn'),
+      abilityBtn: document.getElementById('abilityBtn'),
+      nextRoundBtn: document.getElementById('nextRoundBtn'),
+      status: document.getElementById('status'),
+      selected: document.getElementById('selected'),
+      log: document.getElementById('log'),
+      orderChoice: document.getElementById('orderChoice'),
+      blueFirstBtn: document.getElementById('blueFirstBtn'),
+      redFirstBtn: document.getElementById('redFirstBtn')
+    };
+
+    const STORAGE_KEY = 'chimera_warband_v5';
+    const GRID_W = 14;
+    const GRID_H = 10;
+    const TILE = 70;
+    const TEAM_BLUE = 'Blue';
+    const TEAM_RED = 'Red';
+    const TILE_EMPTY = 0;
+    const TILE_COVER = 1;
+    const TILE_WALL = 2;
+    const HORROR_MAX = 3;
+    const ABILITY_LIMIT = 2;
+
+    const STAT_TABLE = Object.fromEntries(DATA.stats.map(s => [String(s.stat).toLowerCase(), s]));
+    const rangedWeapons = DATA.ranged_weapons.slice();
+    const meleeWeapons = DATA.melee_weapons.slice();
+    const abilities = DATA.abilities.slice();
+
+    let nextId = 1;
+    let logCount = 0;
+    let aiTimer = null;
+
+    const state = {
+      board: [],
+      round: 1,
+      blueRoll: null,
+      redRoll: null,
+      activeTeam: null,
+      awaitingOrderChoice: false,
+      selectedId: null,
+      activeId: null,
+      phase: 'idle', // idle | move | attack
+      pendingAction: null, // move | disengage | attack
+      moveRemaining: 0,
+      movedThisActivation: false,
+      usedRecoverThisActivation: false,
+      phaseSerial: 1,
+      teams: {
+        Blue: { name: 'Blue Warband', models: [] },
+        Red: { name: 'Red Warband', models: [] }
+      }
+    };
+
+    function toIntOrNull(v) {
+      if (v === null || v === undefined) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function rollD6() {
+      return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function itemPoints(obj) {
+      return toIntOrNull(obj?.points) ?? 0;
+    }
+
+    function getStatTierEntry(statKey, tier) {
+      const table = STAT_TABLE[String(statKey).toLowerCase()];
+      if (!table) return null;
+      return table.tiers.find(t => Number(t.tier) === Number(tier)) ?? table.tiers[0] ?? null;
+    }
+
+    function moveTiles(model) {
+      return clamp(Number(model.moveTier) || 1, 1, 3);
+    }
+
+    function defenseMod(model) {
+      return Number(getStatTierEntry('defense', model.defenseTier)?.value ?? -2);
+    }
+
+    function shootMod(model) {
+      return Number(getStatTierEntry('shoot', model.shootTier)?.value ?? -2);
+    }
+
+    function fightMod(model) {
+      return Number(getStatTierEntry('fight', model.fightTier)?.value ?? -2);
+    }
+
+    function woundsMax(model) {
+      return 4 + clamp(Number(model.defenseTier) || 1, 1, 3);
+    }
+
+    function horrorPenalty(model) {
+      return clamp(Number(model.horror) || 0, 0, HORROR_MAX);
+    }
+
+    function statPointsCost(memberLike) {
+      const movePts = itemPoints(getStatTierEntry('move', memberLike.moveTier));
+      const defensePts = itemPoints(getStatTierEntry('defense', memberLike.defenseTier));
+      const shootPts = itemPoints(getStatTierEntry('shoot', memberLike.shootTier));
+      const fightPts = itemPoints(getStatTierEntry('fight', memberLike.fightTier));
+      return movePts + defensePts + shootPts + fightPts;
+    }
+
+    function getRanged(model) {
+      return model.rangedIdx === '' || model.rangedIdx == null ? null : (rangedWeapons[Number(model.rangedIdx)] ?? null);
+    }
+
+    function getMelee(model) {
+      return model.meleeIdx === '' || model.meleeIdx == null ? null : (meleeWeapons[Number(model.meleeIdx)] ?? null);
+    }
+
+    function getAbilities(model) {
+      return (model.abilityIdx || []).map(i => abilities[Number(i)]).filter(Boolean);
+    }
+
+    function createModel(team, payload, index) {
+      const m = {
+        id: `m${nextId++}`,
+        team,
+        role: payload?.role || `Model ${index + 1}`,
+        name: String(payload?.name || `${team} ${index + 1}`),
+        moveTier: clamp(toIntOrNull(payload?.move ?? payload?.moveTier) ?? 1, 1, 3),
+        defenseTier: clamp(toIntOrNull(payload?.defense ?? payload?.defenseTier) ?? 1, 1, 3),
+        shootTier: clamp(toIntOrNull(payload?.shoot ?? payload?.shootTier) ?? 1, 1, 3),
+        fightTier: clamp(toIntOrNull(payload?.fight ?? payload?.fightTier) ?? 1, 1, 3),
+        rangedIdx: payload?.rangedIdx === '' || payload?.rangedIdx == null ? '' : String(payload.rangedIdx),
+        meleeIdx: payload?.meleeIdx === '' || payload?.meleeIdx == null ? '' : String(payload.meleeIdx),
+        abilityIdx: Array.isArray(payload?.abilityIdx) ? payload.abilityIdx.map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT) : [],
+        wounds: 0,
+        horror: clamp(toIntOrNull(payload?.horror) ?? 0, 0, HORROR_MAX),
+        down: false,
+        removed: false,
+        exhausted: false,
+        abilityUsed: false,
+        tx: 0,
+        ty: 0,
+        phaseTag: 0
+      };
+
+      const importedWounds = toIntOrNull(payload?.woundsCurrent);
+      const maxW = woundsMax(m);
+      if (importedWounds === null) {
+        m.wounds = maxW;
+        m.down = false;
+      } else {
+        m.wounds = clamp(importedWounds, 0, maxW);
+        m.down = m.wounds <= 0;
+      }
+      return m;
+    }
+
+    const SILLY_FIRST = [
+      'Bob', 'Smokey', 'Gummy', 'Fizzy', 'Cranky', 'Spicy', 'Wobble', 'Soggy', 'Porkchop', 'Mister', 'Doctor',
+      'Grub', 'Biscuit', 'Doodle', 'Noodle', 'Pickle', 'Beans', 'Honk', 'Goober', 'Zappy', 'Moldy', 'Captain'
+    ];
+    const SILLY_LAST = [
+      'the Blob', 'the Bear', 'the Unwise', 'the Damp', 'the Loud', 'the Unforgiven', 'the Greasy', 'the Gentle',
+      'the Infinite', 'the Suspicious', 'the Mildly Haunted', 'the Crunchy', 'the Misplaced', 'the Wretched',
+      'of Westchester', 'of the Sewer', 'from Accounting', 'the Knife-Collector', 'the Rust King', 'the Moon-Licker'
+    ];
+    const WARBAND_PREFIX = ['The', 'The Honorable', 'The Questionable', 'The Blessed', 'The Cursed', 'The Extremely Normal'];
+    const WARBAND_ADJ = ['Quawb', 'Sewer', 'Gutter', 'Moon', 'Rust', 'Mold', 'Neon', 'Bone', 'Goo', 'Ferret', 'Goblin', 'Liminal'];
+    const WARBAND_NOUN = ['Cult', 'Union', 'Cabal', 'Choir', 'Committee', 'Collective', 'Crew', 'Squad', 'Coven', 'Congregation', 'Society'];
+
+    function randomWarbandName() {
+      return `${pick(WARBAND_PREFIX)} ${pick(WARBAND_ADJ)} ${pick(WARBAND_NOUN)}`;
+    }
+
+    function randomModelName() {
+      return `${pick(SILLY_FIRST)} ${pick(SILLY_LAST)}`;
+    }
+
+    function randomizeMemberLoadout(member, budget = 15) {
+      member.moveTier = 1;
+      member.defenseTier = 1;
+      member.shootTier = 1;
+      member.fightTier = 1;
+      member.rangedIdx = '';
+      member.meleeIdx = '';
+      member.abilityIdx = [];
+      member.name = randomModelName();
+
+      const remaining = () => budget - (statPointsCost(member) + itemPoints(getRanged(member)) + itemPoints(getMelee(member)));
+
+      const rangedChoices = rangedWeapons.map((w, i) => ({ w, i })).filter(x => itemPoints(x.w) <= remaining());
+      if (rangedChoices.length) member.rangedIdx = String(pick(rangedChoices).i);
+
+      const meleeChoices = meleeWeapons.map((w, i) => ({ w, i })).filter(x => itemPoints(x.w) <= remaining());
+      if (meleeChoices.length) member.meleeIdx = String(pick(meleeChoices).i);
+
+      member.abilityIdx = shuffle(abilities.map((_, i) => i)).slice(0, ABILITY_LIMIT);
+
+      const upgrades = ['moveTier', 'defenseTier', 'shootTier', 'fightTier'];
+      let safety = 40;
+      while (safety-- > 0) {
+        const valid = shuffle(upgrades).filter(key => {
+          const cur = Number(member[key]) || 1;
+          if (cur >= 3) return false;
+          const nowPts = itemPoints(getStatTierEntry(key.replace('Tier', ''), cur));
+          const nextPts = itemPoints(getStatTierEntry(key.replace('Tier', ''), cur + 1));
+          return (nextPts - nowPts) <= remaining();
+        });
+        if (!valid.length) break;
+        const key = pick(valid);
+        member[key] = (Number(member[key]) || 1) + 1;
+      }
+
+      member.wounds = woundsMax(member);
+      member.horror = 0;
+      member.down = false;
+      member.removed = false;
+      member.exhausted = false;
+      member.abilityUsed = false;
+    }
+
+    function makeRandomTeam(team) {
+      const models = Array.from({ length: 5 }, (_, i) => createModel(team, {}, i));
+      models.forEach(m => randomizeMemberLoadout(m, 15));
+      state.teams[team].name = randomWarbandName();
+      state.teams[team].models = models;
+    }
+
+    function parseWarbandJson(raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.members)) {
+        throw new Error('Expected a builder warband object with members[].');
+      }
+      return parsed;
+    }
+
+    function loadTeamFromBuilderObject(team, wb) {
+      const visibleMembers = wb.members.filter(Boolean).filter(m => !m.hidden).slice(0, 5);
+      if (!visibleMembers.length) throw new Error('No visible members found in warband.');
+      const models = visibleMembers.map((m, i) => createModel(team, m, i));
+      state.teams[team].name = String(wb.name || `${team} Warband`);
+      state.teams[team].models = models;
+      logLine(`${team} loaded: ${state.teams[team].name} (${models.length} models).`);
+    }
+
+    function getAllModels() {
+      return [...state.teams.Blue.models, ...state.teams.Red.models];
+    }
+
+    function getLivingModels(team = null) {
+      return getAllModels().filter(m => !m.removed && (!team || m.team === team));
+    }
+
+    function getModel(id) {
+      return getAllModels().find(m => m.id === id) || null;
+    }
+
+    function getSelected() {
+      return getModel(state.selectedId);
+    }
+
+    function getActive() {
+      return getModel(state.activeId);
+    }
+
+    function hasUnexhausted(team) {
+      return getLivingModels(team).some(m => !m.exhausted);
+    }
+
+    function firstUnexhausted(team) {
+      return getLivingModels(team).find(m => !m.exhausted) || null;
+    }
+
+    function enemyTeam(team) {
+      return team === TEAM_BLUE ? TEAM_RED : TEAM_BLUE;
+    }
+
+    function isWithinGrid(x, y) {
+      return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
+    }
+
+    function chebDist(ax, ay, bx, by) {
+      return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+    }
+
+    function isOccupied(x, y, ignoreId = null) {
+      return getLivingModels().some(m => m.id !== ignoreId && m.tx === x && m.ty === y);
+    }
+
+    function isAdjacent(a, b) {
+      return chebDist(a.tx, a.ty, b.tx, b.ty) === 1;
+    }
+
+    function inCombat(model) {
+      if (!model || model.removed) return false;
+      return getLivingModels(enemyTeam(model.team)).some(e => isAdjacent(model, e));
+    }
+
+    function adjacentEnemies(model) {
+      return getLivingModels(enemyTeam(model.team)).filter(e => isAdjacent(model, e));
+    }
+
+    function tileAt(x, y) {
+      return state.board[y]?.[x] ?? TILE_EMPTY;
+    }
+
+    function bresenham(x0, y0, x1, y1) {
+      const pts = [];
+      let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+      let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+      let err = dx + dy;
+      let x = x0, y = y0;
+      while (true) {
+        pts.push([x, y]);
+        if (x === x1 && y === y1) break;
+        const e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x += sx; }
+        if (e2 <= dx) { err += dx; y += sy; }
+      }
+      return pts;
+    }
+
+    function lineOfSight(ax, ay, bx, by) {
+      const pts = bresenham(ax, ay, bx, by);
+      let passesCover = false;
+      for (let i = 1; i < pts.length - 1; i++) {
+        const [x, y] = pts[i];
+        const t = tileAt(x, y);
+        if (t === TILE_WALL) return { ok: false, passesCover: false };
+        if (t === TILE_COVER) passesCover = true;
+      }
+      return { ok: true, passesCover };
+    }
+
+    function targetHasPartialConcealment(defender, attacker) {
+      if (tileAt(defender.tx, defender.ty) === TILE_COVER) return true;
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          if (ox === 0 && oy === 0) continue;
+          const nx = defender.tx + ox;
+          const ny = defender.ty + oy;
+          if (!isWithinGrid(nx, ny)) continue;
+          if (tileAt(nx, ny) === TILE_COVER || tileAt(nx, ny) === TILE_WALL) return true;
+        }
+      }
+      const los = lineOfSight(attacker.tx, attacker.ty, defender.tx, defender.ty);
+      return los.passesCover;
+    }
+
+    function coverBonus(defender, attacker, mode) {
+      if (mode !== 'ranged') return 0;
+      const longRange = chebDist(attacker.tx, attacker.ty, defender.tx, defender.ty) > 3;
+      const partial = targetHasPartialConcealment(defender, attacker);
+      return (longRange || partial) ? 1 : 0;
+    }
+
+    function canStandOn(x, y, ignoreId = null) {
+      if (!isWithinGrid(x, y)) return false;
+      if (tileAt(x, y) === TILE_WALL) return false;
+      if (isOccupied(x, y, ignoreId)) return false;
+      return true;
+    }
+
+    function newRandomMap() {
+      state.board = Array.from({ length: GRID_H }, () => Array.from({ length: GRID_W }, () => TILE_EMPTY));
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 2; x < GRID_W - 2; x++) {
+          const r = Math.random();
+          if (r < 0.07) state.board[y][x] = TILE_WALL;
+          else if (r < 0.18) state.board[y][x] = TILE_COVER;
+        }
+      }
+      logLine('New map generated.');
+    }
+
+    function deployTeam(team) {
+      const models = state.teams[team].models;
+      const rows = shuffle(Array.from({ length: GRID_H }, (_, i) => i));
+      const laneCols = team === TEAM_BLUE ? [0, 1] : [GRID_W - 2, GRID_W - 1];
+      let idx = 0;
+      for (const model of models) {
+        if (model.removed) continue;
+        let placed = false;
+        for (let pass = 0; pass < 20 && !placed; pass++) {
+          for (const y of rows) {
+            for (const x of laneCols) {
+              if (!canStandOn(x, y, model.id)) continue;
+              model.tx = x;
+              model.ty = y;
+              placed = true;
+              break;
+            }
+            if (placed) break;
+          }
+        }
+        if (!placed) {
+          model.tx = laneCols[idx % laneCols.length];
+          model.ty = idx % GRID_H;
+        }
+        idx++;
+      }
+    }
+
+    function fullResetState() {
+      clearTimeout(aiTimer);
+      aiTimer = null;
+      logCount = 0;
+      ui.log.textContent = '';
+
+      if (!state.teams.Blue.models.length) makeRandomTeam(TEAM_BLUE);
+      if (!state.teams.Red.models.length) makeRandomTeam(TEAM_RED);
+
+      getAllModels().forEach(m => {
+        m.wounds = woundsMax(m);
+        m.horror = 0;
+        m.down = false;
+        m.removed = false;
+        m.exhausted = false;
+        m.abilityUsed = false;
+        m.phaseTag = 0;
+      });
+
+      state.round = 1;
+      state.blueRoll = null;
+      state.redRoll = null;
+      state.activeTeam = null;
+      state.awaitingOrderChoice = false;
+      state.selectedId = null;
+      state.activeId = null;
+      state.phase = 'idle';
+      state.pendingAction = null;
+      state.moveRemaining = 0;
+      state.movedThisActivation = false;
+      state.usedRecoverThisActivation = false;
+      state.phaseSerial = 1;
+
+      deployTeam(TEAM_BLUE);
+      deployTeam(TEAM_RED);
+      rollInitiativeForRound();
+      renderAll();
+    }
+
+    function logLine(msg) {
+      logCount += 1;
+      ui.log.textContent += `${String(logCount).padStart(3, '0')}. ${msg}\n`;
+      ui.log.scrollTop = ui.log.scrollHeight;
+    }
+
+    function rollInitiativeForRound() {
+      let blue = 0;
+      let red = 0;
+      while (blue === red) {
+        blue = rollD6();
+        red = rollD6();
+        if (blue === red) logLine(`Round ${state.round}: Initiative tie (${blue}-${red}), reroll.`);
+      }
+      state.blueRoll = blue;
+      state.redRoll = red;
+      state.activeId = null;
+      state.phase = 'idle';
+      state.pendingAction = null;
+      state.moveRemaining = 0;
+      state.movedThisActivation = false;
+      state.usedRecoverThisActivation = false;
+      state.awaitingOrderChoice = false;
+
+      if (blue > red) {
+        state.awaitingOrderChoice = true;
+        state.activeTeam = null;
+        logLine(`Round ${state.round}: Blue wins initiative (${blue} vs ${red}) and may choose activation order.`);
+      } else {
+        state.activeTeam = TEAM_RED;
+        logLine(`Round ${state.round}: Red wins initiative (${red} vs ${blue}) and chooses to go first.`);
+        queueRedAI();
+      }
+    }
+
+    function chooseFirstTeam(team) {
+      state.awaitingOrderChoice = false;
+      state.activeTeam = team;
+      logLine(`Round ${state.round}: ${team} activates first.`);
+      if (team === TEAM_RED) queueRedAI();
+      renderAll();
+    }
+
+    function nextRound() {
+      state.round += 1;
+      state.phaseSerial += 1;
+      getLivingModels().forEach(m => {
+        m.exhausted = false;
+        m.abilityUsed = false;
+        m.phaseTag = 0;
+      });
+      logLine(`--- New Round: ${state.round} ---`);
+      rollInitiativeForRound();
+      renderAll();
+    }
+
+    function advanceTurnAfterActivation(endedTeam) {
+      const other = enemyTeam(endedTeam);
+      const otherReady = hasUnexhausted(other);
+      const sameReady = hasUnexhausted(endedTeam);
+
+      state.activeId = null;
+      state.phase = 'idle';
+      state.pendingAction = null;
+      state.moveRemaining = 0;
+      state.movedThisActivation = false;
+      state.usedRecoverThisActivation = false;
+
+      if (getLivingModels(TEAM_BLUE).length === 0 || getLivingModels(TEAM_RED).length === 0) {
+        const winner = getLivingModels(TEAM_BLUE).length > 0 ? TEAM_BLUE : TEAM_RED;
+        logLine(`*** ${winner} wins. ***`);
+        state.activeTeam = null;
+        renderAll();
+        return;
+      }
+
+      if (otherReady) {
+        state.activeTeam = other;
+      } else if (sameReady) {
+        state.activeTeam = endedTeam;
+      } else {
+        nextRound();
+        return;
+      }
+
+      renderAll();
+      if (state.activeTeam === TEAM_RED) queueRedAI();
+    }
+
+    function beginActivation(model) {
+      if (!model || model.removed) return false;
+      if (state.awaitingOrderChoice) {
+        logLine('Choose first team before activating.');
+        return false;
+      }
+      if (state.activeTeam !== model.team) {
+        logLine(`It is ${state.activeTeam || 'no one'}'s turn.`);
+        return false;
+      }
+      if (state.activeId) {
+        logLine('Finish the current activation first.');
+        return false;
+      }
+      if (model.exhausted) {
+        logLine(`${model.name} is exhausted.`);
+        return false;
+      }
+      state.activeId = model.id;
+      state.phase = 'move';
+      state.pendingAction = null;
+      state.moveRemaining = moveTiles(model);
+      state.movedThisActivation = false;
+      state.usedRecoverThisActivation = false;
+      logLine(`${model.team} activates ${model.name} (${state.moveRemaining * 5}\" move).`);
+      renderAll();
+      return true;
+    }
+
+    function endActivation(reason = '') {
+      const active = getActive();
+      if (!active) return;
+      active.exhausted = true;
+      logLine(`${active.name} is exhausted${reason ? ` (${reason})` : ''}.`);
+      advanceTurnAfterActivation(active.team);
+    }
+
+    function markAbilityUsed() {
+      const active = getActive();
+      if (!active) {
+        logLine('No active model.');
+        return;
+      }
+      if (active.abilityUsed) {
+        logLine(`${active.name} already used an ability this round.`);
+        return;
+      }
+      active.abilityUsed = true;
+      const names = getAbilities(active).map(a => a.name).join(', ') || 'No listed abilities';
+      logLine(`${active.name} marks an ability as used. Tracked only (not auto-resolved). ${names}.`);
+      renderAll();
+    }
+
+    function standUpActive() {
+      const active = getActive();
+      if (!active) { logLine('No active model.'); return; }
+      if (state.phase !== 'move') { logLine('Stand Up must happen during the Move phase.'); return; }
+      if (!active.down) { logLine(`${active.name} is not Down.`); return; }
+      if (state.moveRemaining < 1) { logLine(`${active.name} does not have 5\" left to stand up.`); return; }
+      active.down = false;
+      active.wounds = Math.max(active.wounds, 1);
+      state.moveRemaining -= 1;
+      state.movedThisActivation = true;
+      logLine(`${active.name} stands up, goes to 1 Wound, and spends 5\" of Move.`);
+      renderAll();
+    }
+
+    function recoverActive() {
+      const active = getActive();
+      if (!active) { logLine('No active model.'); return; }
+      if (state.phase !== 'move') { logLine('Recover must be chosen instead of moving.'); return; }
+      if (state.movedThisActivation) { logLine('Recover cannot be used after moving this activation.'); return; }
+      active.horror = Math.max(0, active.horror - 1);
+      state.usedRecoverThisActivation = true;
+      logLine(`${active.name} uses Recover, skips movement, and reduces Horror to ${active.horror}.`);
+      endActivation('Recover');
+    }
+
+    function setPendingAction(action) {
+      const active = getActive();
+      if (!active || active.team !== TEAM_BLUE) {
+        logLine('Blue must have an active model first.');
+        return;
+      }
+      if (state.phase === 'move' && (action === 'move' || action === 'disengage')) {
+        state.pendingAction = action;
+        logLine(action === 'move' ? 'Click a tile to move.' : 'Click a tile to disengage to.');
+        renderAll();
+        return;
+      }
+      if (state.phase === 'attack' && action === 'attack') {
+        if (active.down) {
+          logLine(`${active.name} is Down and cannot attack.`);
+          return;
+        }
+        state.pendingAction = 'attack';
+        logLine('Click an enemy model to attack.');
+        renderAll();
+        return;
+      }
+      logLine('That action is not available right now.');
+    }
+
+    function doneMoving() {
+      const active = getActive();
+      if (!active) { logLine('No active model.'); return; }
+      if (state.phase !== 'move') { logLine('You are already past the Move phase.'); return; }
+      state.phase = 'attack';
+      state.pendingAction = null;
+      logLine(`${active.name} ends the Move phase.`);
+      renderAll();
+    }
+
+    function resolveMoveTo(x, y) {
+      const active = getActive();
+      if (!active) return;
+      if (state.phase !== 'move' || state.pendingAction !== 'move') return;
+      if (active.down) {
+        logLine(`${active.name} is Down and cannot move until it stands.`);
+        return;
+      }
+      const dist = chebDist(active.tx, active.ty, x, y);
+      if (dist < 1) { logLine('Pick a different tile.'); return; }
+      if (dist > state.moveRemaining) {
+        logLine(`Too far. ${active.name} has ${state.moveRemaining * 5}\" left.`);
+        return;
+      }
+      if (!canStandOn(x, y, active.id)) {
+        logLine('That tile is blocked.');
+        return;
+      }
+      active.tx = x;
+      active.ty = y;
+      state.moveRemaining -= dist;
+      state.movedThisActivation = true;
+      state.pendingAction = null;
+      logLine(`${active.name} moves ${dist * 5}\".`);
+      renderAll();
+    }
+
+    function resolveDisengageTo(x, y) {
+      const active = getActive();
+      if (!active) return;
+      if (state.phase !== 'move' || state.pendingAction !== 'disengage') return;
+      if (!inCombat(active)) {
+        logLine(`${active.name} is not in combat.`);
+        return;
+      }
+      if (moveTiles(active) < 2) {
+        logLine('Disengage requires Move Tier 2.');
+        return;
+      }
+      if (state.moveRemaining < 2) {
+        logLine('Need 10\" of Move left to Disengage.');
+        return;
+      }
+      const dist = chebDist(active.tx, active.ty, x, y);
+      if (dist !== 1) {
+        logLine('Disengage moves exactly 5\" (1 tile).');
+        return;
+      }
+      if (!canStandOn(x, y, active.id)) {
+        logLine('That tile is blocked.');
+        return;
+      }
+      const fake = { tx: x, ty: y, team: active.team };
+      const stillEngaged = getLivingModels(enemyTeam(active.team)).some(e => chebDist(x, y, e.tx, e.ty) === 1);
+      if (stillEngaged) {
+        logLine('Disengage must end out of combat.');
+        return;
+      }
+      active.tx = x;
+      active.ty = y;
+      state.moveRemaining -= 2;
+      state.movedThisActivation = true;
+      state.pendingAction = null;
+      logLine(`${active.name} disengages 5\" and spends 10\" of Move.`);
+      renderAll();
+    }
+
+    function removeModel(model) {
+      model.removed = true;
+      logLine(`${model.name} is removed from play.`);
+      if (state.selectedId === model.id) state.selectedId = null;
+    }
+
+    function applyDamage(target, amount) {
+      if (target.removed || amount <= 0) return;
+      if (target.down && target.wounds === 0) {
+        logLine(`${target.name} was hit while Down.`);
+        removeModel(target);
+        return;
+      }
+      const before = target.wounds;
+      target.wounds = Math.max(0, target.wounds - amount);
+      logLine(`${target.name} takes ${amount} damage (${before} → ${target.wounds}).`);
+      if (target.wounds <= 0) {
+        target.wounds = 0;
+        target.down = true;
+        logLine(`${target.name} becomes Down at 0 Wounds.`);
+      }
+    }
+
+    function applyHitEffects(attacker, target, weapon) {
+      const txt = String(weapon?.effect || '').toLowerCase();
+      if (!txt) return;
+      if (txt.includes('down') && !target.removed) {
+        target.down = true;
+        logLine(`${target.name} is knocked Down by ${weapon.name}.`);
+      }
+      if ((txt.includes('horror')) && !target.removed) {
+        if (target.phaseTag !== state.phaseSerial) {
+          target.phaseTag = state.phaseSerial;
+          const before = target.horror;
+          target.horror = Math.min(HORROR_MAX, target.horror + 1);
+          if (target.horror > before) logLine(`${target.name} gains 1 Horror (${target.horror}/${HORROR_MAX}).`);
+          else logLine(`${target.name} would gain Horror, but is already at the cap.`);
+        } else {
+          logLine(`${target.name} cannot gain more than 1 Horror this phase.`);
+        }
+      }
+    }
+
+    function resolveAttack(attacker, target, fromAI = false) {
+      if (!attacker || !target || attacker.removed || target.removed) return false;
+      if (attacker.team === target.team) { logLine('Cannot attack your own model.'); return false; }
+      if (state.phase !== 'attack' && !fromAI) { logLine('You are not in the Attack phase.'); return false; }
+      if (attacker.down) { logLine(`${attacker.name} is Down and cannot attack.`); return false; }
+
+      const melee = getMelee(attacker);
+      const ranged = getRanged(attacker);
+      const engaged = inCombat(attacker);
+      const adjacent = isAdjacent(attacker, target);
+      let mode = null;
+      let weapon = null;
+
+      if (adjacent) {
+        mode = 'melee';
+        weapon = melee || { name: 'Unarmed', attacks: 1, damage: 1, effect: '' };
+      } else {
+        if (engaged || inCombat(target)) {
+          logLine('Cannot shoot into or out of combat.');
+          return false;
+        }
+        if (!ranged) {
+          logLine(`${attacker.name} has no ranged weapon.`);
+          return false;
+        }
+        const los = lineOfSight(attacker.tx, attacker.ty, target.tx, target.ty);
+        if (!los.ok) {
+          logLine(`${attacker.name} does not have line of sight.`);
+          return false;
+        }
+        mode = 'ranged';
+        weapon = ranged;
+      }
+
+      const attackCount = Math.max(1, Number(weapon.attacks) || 1);
+      const damage = Math.max(1, Number(weapon.damage) || 1);
+      const attackMod = (mode === 'ranged' ? shootMod(attacker) : fightMod(attacker)) - horrorPenalty(attacker);
+      const cover = coverBonus(target, attacker, mode);
+      const defenseBase = defenseMod(target) + (target.down ? -1 : 0) + cover;
+
+      logLine(`${attacker.name} attacks ${target.name} with ${weapon.name} (${mode}, ${attackCount}A/${damage}D).`);
+      if (cover) logLine(`${target.name} gets +${cover} Defense from cover.`);
+
+      for (let i = 1; i <= attackCount; i++) {
+        if (target.removed) break;
+        const atkRaw = rollD6();
+        if (atkRaw === 1) {
+          logLine(`  Attack ${i}: natural 1 miss.`);
+          continue;
+        }
+        if (atkRaw === 6) {
+          logLine(`  Attack ${i}: natural 6 critical hit. No defense roll.`);
+          applyDamage(target, damage);
+          applyHitEffects(attacker, target, weapon);
+          continue;
+        }
+
+        const atkTotal = atkRaw + attackMod;
+        const defRaw = rollD6();
+
+        if (defRaw === 6) {
+          logLine(`  Attack ${i}: attack ${atkRaw}${fmtSigned(attackMod)} = ${atkTotal}. Defense natural 6 auto-saves.`);
+          continue;
+        }
+
+        const defTotal = defRaw + defenseBase;
+        logLine(`  Attack ${i}: attack ${atkRaw}${fmtSigned(attackMod)} = ${atkTotal} vs defense ${defRaw}${fmtSigned(defenseBase)} = ${defTotal}.`);
+
+        if (defTotal > atkTotal) {
+          logLine('    Saved.');
+          continue;
+        }
+
+        logLine('    Hit.');
+        applyDamage(target, damage);
+        applyHitEffects(attacker, target, weapon);
+      }
+
+      if (!fromAI) {
+        state.pendingAction = null;
+        endActivation('Attack complete');
+      }
+      return true;
+    }
+
+    function fmtSigned(n) {
+      return n >= 0 ? `+${n}` : String(n);
+    }
+
+    function nearestEnemy(model) {
+      const enemies = getLivingModels(enemyTeam(model.team));
+      if (!enemies.length) return null;
+      const sorted = enemies.slice().sort((a, b) => chebDist(model.tx, model.ty, a.tx, a.ty) - chebDist(model.tx, model.ty, b.tx, b.ty));
+      return sorted[0] || null;
+    }
+
+    function canRangedAttack(attacker, target) {
+      if (!attacker || !target || attacker.removed || target.removed) return false;
+      if (!getRanged(attacker)) return false;
+      if (inCombat(attacker) || inCombat(target)) return false;
+      if (isAdjacent(attacker, target)) return false;
+      return lineOfSight(attacker.tx, attacker.ty, target.tx, target.ty).ok;
+    }
+
+    function chooseAttackTargetForAI(attacker) {
+      const enemies = getLivingModels(enemyTeam(attacker.team));
+      if (!enemies.length) return null;
+      const adj = enemies.filter(e => isAdjacent(attacker, e)).sort((a, b) => a.wounds - b.wounds);
+      if (adj.length) return adj[0];
+      const ranged = enemies.filter(e => canRangedAttack(attacker, e)).sort((a, b) => chebDist(attacker.tx, attacker.ty, a.tx, a.ty) - chebDist(attacker.tx, attacker.ty, b.tx, b.ty));
+      if (ranged.length) return ranged[0];
+      return null;
+    }
+
+    function stepToward(attacker, target) {
+      if (!target) return false;
+      const options = [];
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          if (ox === 0 && oy === 0) continue;
+          const nx = attacker.tx + ox;
+          const ny = attacker.ty + oy;
+          if (!canStandOn(nx, ny, attacker.id)) continue;
+          const score = chebDist(nx, ny, target.tx, target.ty);
+          options.push({ x: nx, y: ny, score });
+        }
+      }
+      if (!options.length) return false;
+      options.sort((a, b) => a.score - b.score);
+      attacker.tx = options[0].x;
+      attacker.ty = options[0].y;
+      return true;
+    }
+
+    function runRedAI() {
+      clearTimeout(aiTimer);
+      aiTimer = null;
+
+      if (state.awaitingOrderChoice) return;
+      if (state.activeTeam !== TEAM_RED) return;
+      if (state.activeId) return;
+
+      const aiModel = firstUnexhausted(TEAM_RED);
+      if (!aiModel) return;
+      beginActivation(aiModel);
+
+      if (aiModel.down && state.moveRemaining >= 1) {
+        aiModel.down = false;
+        aiModel.wounds = Math.max(aiModel.wounds, 1);
+        state.moveRemaining -= 1;
+        state.movedThisActivation = true;
+        logLine(`${aiModel.name} stands up.`);
+      }
+
+      if (!aiModel.down && aiModel.horror >= 2 && !chooseAttackTargetForAI(aiModel) && !inCombat(aiModel)) {
+        aiModel.horror = Math.max(0, aiModel.horror - 1);
+        logLine(`${aiModel.name} uses Recover.`);
+        endActivation('AI Recover');
+        return;
+      }
+
+      if (!aiModel.down && !inCombat(aiModel)) {
+        let safety = state.moveRemaining;
+        while (safety-- > 0) {
+          const currentTarget = chooseAttackTargetForAI(aiModel);
+          if (currentTarget) break;
+          const nearest = nearestEnemy(aiModel);
+          if (!nearest) break;
+          const moved = stepToward(aiModel, nearest);
+          if (!moved) break;
+          state.moveRemaining -= 1;
+          state.movedThisActivation = true;
+        }
+      }
+
+      state.phase = 'attack';
+      const target = chooseAttackTargetForAI(aiModel);
+      if (target) {
+        resolveAttack(aiModel, target, true);
+        endActivation('AI Attack');
+      } else {
+        logLine(`${aiModel.name} has no legal attack.`);
+        endActivation('AI done');
+      }
+    }
+
+    function queueRedAI() {
+      clearTimeout(aiTimer);
+      aiTimer = setTimeout(runRedAI, 220);
+    }
+
+    function tileFromMouse(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((ev.clientX - rect.left) / TILE);
+      const y = Math.floor((ev.clientY - rect.top) / TILE);
+      return { x, y };
+    }
+
+    function modelAt(x, y) {
+      return getLivingModels().find(m => m.tx === x && m.ty === y) || null;
+    }
+
+    canvas.addEventListener('click', (ev) => {
+      const { x, y } = tileFromMouse(ev);
+      if (!isWithinGrid(x, y)) return;
+
+      const clickedModel = modelAt(x, y);
+
+      if (clickedModel) {
+        state.selectedId = clickedModel.id;
+
+        if (state.pendingAction === 'attack') {
+          const active = getActive();
+          if (active && active.team === TEAM_BLUE && clickedModel.team !== active.team) {
+            resolveAttack(active, clickedModel, false);
+            renderAll();
+            return;
+          }
+        }
+
+        renderAll();
+        return;
+      }
+
+      if (state.pendingAction === 'move') {
+        resolveMoveTo(x, y);
+        return;
+      }
+
+      if (state.pendingAction === 'disengage') {
+        resolveDisengageTo(x, y);
+        return;
+      }
+    });
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(37,99,235,0.06)';
+      ctx.fillRect(0, 0, TILE * 2, GRID_H * TILE);
+      ctx.fillStyle = 'rgba(220,38,38,0.06)';
+      ctx.fillRect((GRID_W - 2) * TILE, 0, TILE * 2, GRID_H * TILE);
+
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const t = tileAt(x, y);
+          if (t === TILE_COVER) {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--cover');
+            ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+          } else if (t === TILE_WALL) {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall');
+            ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+          }
+        }
+      }
+
+      if (state.pendingAction && getActive() && getActive().team === TEAM_BLUE) {
+        const active = getActive();
+        ctx.fillStyle = 'rgba(34,197,94,0.12)';
+        if (state.pendingAction === 'move') {
+          for (let yy = 0; yy < GRID_H; yy++) {
+            for (let xx = 0; xx < GRID_W; xx++) {
+              const d = chebDist(active.tx, active.ty, xx, yy);
+              if (d >= 1 && d <= state.moveRemaining && canStandOn(xx, yy, active.id)) {
+                ctx.fillRect(xx * TILE, yy * TILE, TILE, TILE);
+              }
+            }
+          }
+        }
+        if (state.pendingAction === 'disengage') {
+          for (let yy = 0; yy < GRID_H; yy++) {
+            for (let xx = 0; xx < GRID_W; xx++) {
+              const d = chebDist(active.tx, active.ty, xx, yy);
+              const stillEngaged = getLivingModels(enemyTeam(active.team)).some(e => chebDist(xx, yy, e.tx, e.ty) === 1);
+              if (d === 1 && canStandOn(xx, yy, active.id) && !stillEngaged) {
+                ctx.fillRect(xx * TILE, yy * TILE, TILE, TILE);
+              }
+            }
+          }
+        }
+      }
+
+      ctx.strokeStyle = '#e8e8e8';
+      for (let x = 0; x <= GRID_W; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * TILE, 0);
+        ctx.lineTo(x * TILE, GRID_H * TILE);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= GRID_H; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * TILE);
+        ctx.lineTo(GRID_W * TILE, y * TILE);
+        ctx.stroke();
+      }
+
+      for (const m of getLivingModels()) {
+        const cx = m.tx * TILE + TILE / 2;
+        const cy = m.ty * TILE + TILE / 2;
+        const r = TILE * 0.27;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = m.team === TEAM_BLUE ? '#2563eb' : '#dc2626';
+        ctx.fill();
+
+        ctx.lineWidth = (m.id === state.activeId) ? 4 : (m.id === state.selectedId ? 3 : 1.5);
+        ctx.strokeStyle = '#111111';
+        ctx.stroke();
+
+        if (m.down) {
+          ctx.strokeStyle = '#111111';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx - 14, cy - 14);
+          ctx.lineTo(cx + 14, cy + 14);
+          ctx.moveTo(cx + 14, cy - 14);
+          ctx.lineTo(cx - 14, cy + 14);
+          ctx.stroke();
+        }
+
+        if (m.exhausted) {
+          ctx.fillStyle = 'rgba(0,0,0,0.65)';
+          ctx.fillRect(cx - 14, cy - r - 12, 28, 4);
+        }
+
+        if (m.abilityUsed) {
+          ctx.fillStyle = 'rgba(245,158,11,0.95)';
+          ctx.beginPath();
+          ctx.arc(cx + 18, cy - 18, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (m.horror > 0) {
+          ctx.fillStyle = 'rgba(139,92,246,0.95)';
+          for (let i = 0; i < m.horror; i++) {
+            ctx.beginPath();
+            ctx.arc(cx - 10 + i * 10, cy + r + 11, 3.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(m.wounds), cx, cy);
+      }
+    }
+
+    function renderStatus() {
+      const active = getActive();
+      const blueLeft = getLivingModels(TEAM_BLUE).filter(m => !m.exhausted).length;
+      const redLeft = getLivingModels(TEAM_RED).filter(m => !m.exhausted).length;
+
+      const lines = [];
+      lines.push(`Round ${state.round}`);
+      if (state.blueRoll !== null && state.redRoll !== null) lines.push(`Initiative: Blue ${state.blueRoll} / Red ${state.redRoll}`);
+      lines.push(`Active Team: ${state.activeTeam || 'Waiting'}`);
+      lines.push(`Blue Ready: ${blueLeft} | Red Ready: ${redLeft}`);
+      lines.push(`Phase: ${state.phase}`);
+      if (active) {
+        lines.push(`Active Model: ${active.name}`);
+        lines.push(`Move Remaining: ${state.moveRemaining * 5}\"`);
+      } else {
+        lines.push('Active Model: —');
+      }
+      if (state.pendingAction) lines.push(`Awaiting: ${state.pendingAction}`);
+
+      ui.status.textContent = lines.join('\n');
+      ui.orderChoice.style.display = state.awaitingOrderChoice ? 'block' : 'none';
+    }
+
+    function renderSelected() {
+      const m = getSelected();
+      if (!m) {
+        ui.selected.textContent = '—';
+        return;
+      }
+      const ranged = getRanged(m);
+      const melee = getMelee(m);
+      const abs = getAbilities(m);
+      const lines = [];
+      lines.push(`${m.team} — ${m.name}`);
+      lines.push(`${m.role}`);
+      lines.push('');
+      lines.push(`Move T${m.moveTier} (${moveTiles(m) * 5}\")`);
+      lines.push(`Defense T${m.defenseTier} (${fmtSigned(defenseMod(m))})`);
+      lines.push(`Shoot T${m.shootTier} (${fmtSigned(shootMod(m))})`);
+      lines.push(`Fight T${m.fightTier} (${fmtSigned(fightMod(m))})`);
+      lines.push(`Wounds: ${m.wounds}/${woundsMax(m)}`);
+      lines.push(`Horror: ${m.horror}/${HORROR_MAX}`);
+      lines.push(`Down: ${m.down ? 'Yes' : 'No'}`);
+      lines.push(`Exhausted: ${m.exhausted ? 'Yes' : 'No'}`);
+      lines.push(`In Combat: ${inCombat(m) ? 'Yes' : 'No'}`);
+      lines.push(`Ability Used: ${m.abilityUsed ? 'Yes' : 'No'}`);
+      lines.push('');
+      lines.push(`Ranged: ${ranged ? `${ranged.name} (${ranged.attacks}A/${ranged.damage}D${ranged.effect ? `, ${ranged.effect}` : ''})` : '—'}`);
+      lines.push(`Melee: ${melee ? `${melee.name} (${melee.attacks}A/${melee.damage}D${melee.effect ? `, ${melee.effect}` : ''})` : '—'}`);
+      lines.push('');
+      lines.push(`Abilities: ${abs.length ? abs.map(a => a.name).join(', ') : '—'}`);
+      ui.selected.textContent = lines.join('\n');
+    }
+
+    function updateButtons() {
+      const selected = getSelected();
+      const active = getActive();
+      const blueTurn = state.activeTeam === TEAM_BLUE && !state.awaitingOrderChoice;
+      const canBegin = !!selected && selected.team === TEAM_BLUE && !active && blueTurn && !selected.exhausted && !selected.removed;
+
+      ui.beginBtn.disabled = !canBegin;
+      ui.endBtn.disabled = !(active && active.team === TEAM_BLUE);
+      ui.moveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !active.down && state.moveRemaining > 0);
+      ui.disengageBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && inCombat(active) && moveTiles(active) >= 2 && state.moveRemaining >= 2);
+      ui.doneMoveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move');
+      ui.standBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && active.down && state.moveRemaining >= 1);
+      ui.recoverBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !state.movedThisActivation);
+      ui.attackBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'attack' && !active.down);
+      ui.abilityBtn.disabled = !(active && active.team === TEAM_BLUE && !active.abilityUsed);
+    }
+
+    function renderAll() {
+      drawBoard();
+      renderStatus();
+      renderSelected();
+      updateButtons();
+    }
+
+    ui.loadBlueSavedBtn.addEventListener('click', () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) throw new Error('No saved builder warband found in localStorage.');
+        const wb = parseWarbandJson(raw);
+        loadTeamFromBuilderObject(TEAM_BLUE, wb);
+        fullResetState();
+      } catch (err) {
+        logLine(`Load failed: ${String(err.message || err)}`);
+        renderAll();
+      }
+    });
+
+    ui.loadBluePasteBtn.addEventListener('click', () => {
+      try {
+        const wb = parseWarbandJson(ui.jsonInput.value.trim());
+        loadTeamFromBuilderObject(TEAM_BLUE, wb);
+        fullResetState();
+      } catch (err) {
+        logLine(`Load failed: ${String(err.message || err)}`);
+        renderAll();
+      }
+    });
+
+    ui.loadRedPasteBtn.addEventListener('click', () => {
+      try {
+        const wb = parseWarbandJson(ui.jsonInput.value.trim());
+        loadTeamFromBuilderObject(TEAM_RED, wb);
+        fullResetState();
+      } catch (err) {
+        logLine(`Load failed: ${String(err.message || err)}`);
+        renderAll();
+      }
+    });
+
+    ui.randomRedBtn.addEventListener('click', () => {
+      makeRandomTeam(TEAM_RED);
+      fullResetState();
+    });
+
+    ui.randomBothBtn.addEventListener('click', () => {
+      makeRandomTeam(TEAM_BLUE);
+      makeRandomTeam(TEAM_RED);
+      fullResetState();
+    });
+
+    ui.newMapBtn.addEventListener('click', () => {
+      newRandomMap();
+      deployTeam(TEAM_BLUE);
+      deployTeam(TEAM_RED);
+      renderAll();
+    });
+
+    ui.resetBtn.addEventListener('click', () => {
+      fullResetState();
+    });
+
+    ui.beginBtn.addEventListener('click', () => {
+      const selected = getSelected();
+      if (!selected) { logLine('Select a blue model first.'); return; }
+      beginActivation(selected);
+    });
+
+    ui.endBtn.addEventListener('click', () => {
+      const active = getActive();
+      if (!active || active.team !== TEAM_BLUE) return;
+      endActivation('Player ended activation');
+    });
+
+    ui.moveBtn.addEventListener('click', () => setPendingAction('move'));
+    ui.disengageBtn.addEventListener('click', () => setPendingAction('disengage'));
+    ui.doneMoveBtn.addEventListener('click', doneMoving);
+    ui.standBtn.addEventListener('click', standUpActive);
+    ui.recoverBtn.addEventListener('click', recoverActive);
+    ui.attackBtn.addEventListener('click', () => setPendingAction('attack'));
+    ui.abilityBtn.addEventListener('click', markAbilityUsed);
+    ui.nextRoundBtn.addEventListener('click', () => {
+      logLine('Round advanced manually.');
+      nextRound();
+    });
+    ui.blueFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_BLUE));
+    ui.redFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_RED));
+
+    function boot() {
+      newRandomMap();
+      makeRandomTeam(TEAM_BLUE);
+      makeRandomTeam(TEAM_RED);
+      fullResetState();
+      logLine('Sandbox ready.');
+      logLine('Notes: auto-deploy is enabled; abilities are tracked but not auto-resolved; weapon effects auto-handle Down/Horror keywords.');
+      renderAll();
+    }
+
+    boot();
+  </script>
 </body>
 </html>
