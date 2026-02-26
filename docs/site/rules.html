@@ -119,7 +119,7 @@
       }
 
       // Sort sections alphabetically (you can change later)
-      const sections = [...bySection.keys()].sort((a,b)=>a.localeCompare(b));
+      const sections = [...bySection.keys()];
 
       // If a hash is present, show only that section (unless #all)
       const hash = (location.hash || "").replace("#", "");
