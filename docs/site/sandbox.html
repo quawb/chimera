@@ -5,188 +5,141 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chimera Sandbox</title>
   <style>
-    :root {
-      --bg: #ffffff;
-      --panel: #fafafa;
-      --line: #dddddd;
-      --text: #111111;
-      --muted: #555555;
-      --blue: #2563eb;
-      --red: #dc2626;
-      --cover: #dddddd;
-      --wall: #7a7a7a;
-      --green: #16a34a;
-      --gold: #d97706;
+    :root{
+      --line:#dddddd;
+      --muted:#555555;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --gold:#d97706;
+      --cover:#dddddd;
+      --wall:#7a7a7a;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      min-height: 100vh;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      display:grid;
+      grid-template-columns:360px 1fr;
+      min-height:100vh;
+      color:#111;
+      background:#fff;
     }
-
-    #ui {
-      border-right: 1px solid var(--line);
-      padding: 14px;
-      overflow: auto;
-      background: #fff;
+    #ui{
+      border-right:1px solid var(--line);
+      padding:14px;
+      overflow:auto;
+      background:#fff;
     }
-
-    h1, h2, h3, h4 { margin: 0; }
-    h1 { font-size: 22px; }
-    h3 { font-size: 15px; margin-bottom: 8px; }
-
-    .sub {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 4px;
-      line-height: 1.35;
+    h1,h2,h3,h4{margin:0}
+    h1{font-size:22px}
+    h3{font-size:15px;margin-bottom:8px}
+    .sub{font-size:13px;color:var(--muted);line-height:1.35;margin-top:4px}
+    .small{font-size:12px;color:var(--muted)}
+    .card{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fafafa;
+      padding:12px;
+      margin-top:12px;
     }
-
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: var(--panel);
-      margin-top: 12px;
+    .spacer{height:8px}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    textarea{
+      width:100%;
+      min-height:96px;
+      resize:vertical;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      font-size:12px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     }
-
-    .small { font-size: 12px; color: var(--muted); }
-    .spacer { height: 8px; }
-
-    .row2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    button{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      padding:9px 10px;
+      font-size:14px;
+      cursor:pointer;
+      transition:background .12s ease,border-color .12s ease,box-shadow .12s ease,transform .05s ease;
     }
-
-    .row3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
+    button:hover{background:#f3f3f3}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    button.is-selected{
+      background:#eaeaea;
+      border-color:#111;
+      box-shadow:inset 0 2px 0 rgba(0,0,0,.08),0 0 0 2px rgba(0,0,0,.06);
     }
-
-    textarea {
-      width: 100%;
-      min-height: 96px;
-      resize: vertical;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #fff;
+    #status,#selected{
+      font-size:13px;
+      line-height:1.45;
+      white-space:pre-wrap;
     }
-
-    button {
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 10px;
-      padding: 9px 10px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, transform 0.05s ease;
+    #log{
+      height:220px;
+      overflow:auto;
+      white-space:pre-wrap;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:12px;
+      line-height:1.42;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
     }
-    button:hover { background: #f3f3f3; }
-    button:active { transform: translateY(1px); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.is-selected {
-      background: #eaeaea;
-      border-color: #111;
-      box-shadow: inset 0 2px 0 rgba(0,0,0,0.08), 0 0 0 2px rgba(0,0,0,0.06);
+    #boardWrap{
+      overflow:auto;
+      background:#f7f7f7;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      padding:12px;
     }
-
-    #status, #selected {
-      font-size: 13px;
-      line-height: 1.45;
-      white-space: pre-wrap;
+    #hudStack{
+      width:min(100%,760px);
+      display:grid;
+      gap:8px;
     }
-
-    #log {
-      height: 220px;
-      overflow: auto;
-      white-space: pre-wrap;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.42;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
+    #lastLogBar{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 12px;
+      min-height:44px;
+      font-size:13px;
+      font-weight:700;
+      line-height:1.35;
     }
-
-    #boardWrap {
-      overflow: auto;
-      background: #f7f7f7;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
+    .hudRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .hudCard{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 12px;
+      min-height:74px;
+      font-size:12px;
+      line-height:1.4;
+      white-space:pre-wrap;
     }
-
-    #hudStack {
-      width: min(100%, 760px);
-      display: grid;
-      gap: 8px;
+    canvas{
+      display:block;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      max-width:100%;
+      height:auto;
     }
-
-    #lastLogBar {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.35;
-      min-height: 44px;
+    @media (max-width:980px){
+      body{grid-template-columns:1fr;grid-template-rows:auto auto}
+      #ui{border-right:0;border-bottom:1px solid var(--line)}
     }
-
-    .hudRow {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .hudCard {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-      padding: 10px 12px;
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      min-height: 74px;
-    }
-
-    canvas {
-      display: block;
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      max-width: 100%;
-      height: auto;
-    }
-
-    @media (max-width: 980px) {
-      body {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-      }
-      #ui {
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-      }
-    }
-
-    @media (max-width: 760px) {
-      .hudRow { grid-template-columns: 1fr; }
+    @media (max-width:760px){
+      .hudRow{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -194,7 +147,7 @@
   <div id="ui">
     <h1>Chimera Sandbox</h1>
     <div class="sub">Standalone d6 playtest board. Red is AI. Blue is player-controlled.</div>
-    <div class="sub">Board is now 7x7 play area, plus 1 deployment column on each side. 1 tile = 5 inches.</div>
+    <div class="sub">Board is 7x7 play area plus 1 deployment column on each side. 1 tile = 5 inches.</div>
 
     <div class="card">
       <h3>Loadouts</h3>
@@ -236,7 +189,7 @@
 
     <div class="card">
       <h3>Blue Team Controls</h3>
-      <div class="small">Click a blue model to select it. On Blue's turn, clicking an unexhausted blue model will also activate it.</div>
+      <div class="small">Click a blue model to select it. On Blue's turn, clicking an unexhausted blue model also activates it.</div>
       <div class="spacer"></div>
       <div class="row2">
         <button id="beginBtn">Begin Activation</button>
@@ -276,8 +229,7 @@
     <div id="hudStack">
       <div id="lastLogBar">—</div>
       <div class="hudRow">
-        <div id="activeSummary" class="hudCard">Active: —
-Selected: —</div>
+        <div id="activeSummary" class="hudCard">Active: —&#10;Selected: —</div>
         <div id="hoverCard" class="hudCard">Hover a model to see quick stats.</div>
       </div>
     </div>
@@ -315,19 +267,9 @@ Selected: —</div>
         { name: 'Lightning Gun', attacks: 1, damage: 1, effect: 'Chains to models 5" away, adds Horror', points: 4 }
       ],
       abilities: [
-        { name: 'Berserker', effect: 'Free 5" move at end of Move phase. If ending in base-to-base with enemy, +1 to fight and 1+ successful damage causes one Horror on defender for this Phase' },
-        { name: 'Relentless', effect: 'Free 5" move or disengage action after Attack Phase.' },
-        { name: 'Reckless', effect: 'Reroll failed attacks, gain one Horror after the phase ends' },
-        { name: 'Undead', effect: 'The first time this model would be reduced to 0 wounds, after the attack resolves, restore 2 wounds instead. For the rest of the game, this model cannot Recover, Disengage, or Stand Up.' },
-        { name: 'Masochist', effect: 'Reroll failed Defense roll. If reroll fails, gain 1 Horror.' },
-        { name: 'Rupture', effect: 'Critical Hits will cause 1 total Horror on Defender' },
-        { name: 'Neural Chain', effect: 'Use your attack phase to immediately activate (even if exhausted) a friendly model within 5". At the end of activation that model gains 1 Horror.' },
-        { name: 'Marked', effect: 'Instead of shooting, mark a target that all friendly units within 10" will get +1 Shoot against. When allies hit it, it gains 1 Horror (once per phase).' },
-        { name: 'Stitcher', effect: 'Heal instead of Attack Phase. Heal one model up to 5" away d3 Wounds. If the healed unit is down, stand it up. If they have horror, recover one horror. Gain one horror to perform a second heal.' },
-        { name: 'Fade', effect: 'If in cover, when this unit is shot at, roll defense twice and pick the higher roll.' },
-        { name: 'Phase', effect: 'Once per round, teleport up to 10" away in LoS, can be after getting targeted.' },
-        { name: 'First Blood', effect: 'Once per round, when an attack action is declared against them, they can take an attack action first' },
-        { name: 'Quick Draw', effect: 'Once per round when an enemy makes a move in their LoS they can make a free shoot action against them. Give the defender the benefit of cover if they do not already have.' }
+        { name: 'Berserker' }, { name: 'Relentless' }, { name: 'Reckless' }, { name: 'Undead' }, { name: 'Masochist' },
+        { name: 'Rupture' }, { name: 'Neural Chain' }, { name: 'Marked' }, { name: 'Stitcher' }, { name: 'Fade' },
+        { name: 'Phase' }, { name: 'First Blood' }, { name: 'Quick Draw' }
       ]
     };
 
@@ -409,25 +351,25 @@ Selected: —</div>
       }
     };
 
-    function toIntOrNull(v) {
+    function toIntOrNull(v){
       if (v === null || v === undefined) return null;
       const n = Number(v);
       return Number.isFinite(n) ? n : null;
     }
 
-    function clamp(n, min, max) {
+    function clamp(n, min, max){
       return Math.max(min, Math.min(max, n));
     }
 
-    function rollD6() {
+    function rollD6(){
       return Math.floor(Math.random() * 6) + 1;
     }
 
-    function pick(arr) {
+    function pick(arr){
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function shuffle(arr) {
+    function shuffle(arr){
       const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -436,79 +378,83 @@ Selected: —</div>
       return a;
     }
 
-    function itemPoints(obj) {
-      return toIntOrNull(obj?.points) ?? 0;
+    function itemPoints(obj){
+      return toIntOrNull(obj && obj.points) || 0;
     }
 
-    function fmtSigned(n) {
-      return n >= 0 ? `+${n}` : String(n);
+    function fmtSigned(n){
+      return n >= 0 ? '+' + n : String(n);
     }
 
-    function getStatTierEntry(statKey, tier) {
+    function getStatTierEntry(statKey, tier){
       const table = STAT_TABLE[String(statKey).toLowerCase()];
       if (!table) return null;
-      return table.tiers.find(t => Number(t.tier) === Number(tier)) ?? table.tiers[0] ?? null;
+      return table.tiers.find(t => Number(t.tier) === Number(tier)) || table.tiers[0] || null;
     }
 
-    function moveTiles(model) {
+    function moveTiles(model){
       return clamp(Number(model.moveTier) || 1, 1, 3);
     }
 
-    function defenseMod(model) {
-      return Number(getStatTierEntry('defense', model.defenseTier)?.value ?? -2);
+    function defenseMod(model){
+      const e = getStatTierEntry('defense', model.defenseTier);
+      return Number(e ? e.value : -2);
     }
 
-    function shootMod(model) {
-      return Number(getStatTierEntry('shoot', model.shootTier)?.value ?? -2);
+    function shootMod(model){
+      const e = getStatTierEntry('shoot', model.shootTier);
+      return Number(e ? e.value : -2);
     }
 
-    function fightMod(model) {
-      return Number(getStatTierEntry('fight', model.fightTier)?.value ?? -2);
+    function fightMod(model){
+      const e = getStatTierEntry('fight', model.fightTier);
+      return Number(e ? e.value : -2);
     }
 
-    function woundsMax(model) {
+    function woundsMax(model){
       return 4 + clamp(Number(model.defenseTier) || 1, 1, 3);
     }
 
-    function horrorPenalty(model) {
+    function horrorPenalty(model){
       return clamp(Number(model.horror) || 0, 0, HORROR_MAX);
     }
 
-    function statPointsCost(memberLike) {
-      const movePts = itemPoints(getStatTierEntry('move', memberLike.moveTier));
-      const defensePts = itemPoints(getStatTierEntry('defense', memberLike.defenseTier));
-      const shootPts = itemPoints(getStatTierEntry('shoot', memberLike.shootTier));
-      const fightPts = itemPoints(getStatTierEntry('fight', memberLike.fightTier));
-      return movePts + defensePts + shootPts + fightPts;
+    function statPointsCost(memberLike){
+      return (
+        itemPoints(getStatTierEntry('move', memberLike.moveTier)) +
+        itemPoints(getStatTierEntry('defense', memberLike.defenseTier)) +
+        itemPoints(getStatTierEntry('shoot', memberLike.shootTier)) +
+        itemPoints(getStatTierEntry('fight', memberLike.fightTier))
+      );
     }
 
-    function getRanged(model) {
-      return model.rangedIdx === '' || model.rangedIdx == null ? null : (rangedWeapons[Number(model.rangedIdx)] ?? null);
+    function getRanged(model){
+      return model.rangedIdx === '' || model.rangedIdx == null ? null : (rangedWeapons[Number(model.rangedIdx)] || null);
     }
 
-    function getMelee(model) {
-      return model.meleeIdx === '' || model.meleeIdx == null ? null : (meleeWeapons[Number(model.meleeIdx)] ?? null);
+    function getMelee(model){
+      return model.meleeIdx === '' || model.meleeIdx == null ? null : (meleeWeapons[Number(model.meleeIdx)] || null);
     }
 
-    function getAbilities(model) {
+    function getAbilities(model){
       return (model.abilityIdx || []).map(i => abilities[Number(i)]).filter(Boolean);
     }
 
-    function createModel(team, payload, index) {
+    function createModel(team, payload, index){
       const m = {
-        id: `m${nextId++}`,
-        team,
-        role: payload?.role || `Model ${index + 1}`,
-        name: String(payload?.name || `${team} ${index + 1}`),
-        moveTier: clamp(toIntOrNull(payload?.move ?? payload?.moveTier) ?? 1, 1, 3),
-        defenseTier: clamp(toIntOrNull(payload?.defense ?? payload?.defenseTier) ?? 1, 1, 3),
-        shootTier: clamp(toIntOrNull(payload?.shoot ?? payload?.shootTier) ?? 1, 1, 3),
-        fightTier: clamp(toIntOrNull(payload?.fight ?? payload?.fightTier) ?? 1, 1, 3),
-        rangedIdx: payload?.rangedIdx === '' || payload?.rangedIdx == null ? '' : String(payload.rangedIdx),
-        meleeIdx: payload?.meleeIdx === '' || payload?.meleeIdx == null ? '' : String(payload.meleeIdx),
-        abilityIdx: Array.isArray(payload?.abilityIdx) ? payload.abilityIdx.map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT) : [],
+        id: 'm' + (nextId++),
+        team: team,
+        role: payload && payload.role ? payload.role : ('Model ' + (index + 1)),
+        name: String((payload && payload.name) || (team + ' ' + (index + 1))),
+        moveTier: clamp(toIntOrNull(payload && (payload.move ?? payload.moveTier)) || 1, 1, 3),
+        defenseTier: clamp(toIntOrNull(payload && (payload.defense ?? payload.defenseTier)) || 1, 1, 3),
+        shootTier: clamp(toIntOrNull(payload && (payload.shoot ?? payload.shootTier)) || 1, 1, 3),
+        fightTier: clamp(toIntOrNull(payload && (payload.fight ?? payload.fightTier)) || 1, 1, 3),
+        rangedIdx: payload && !(payload.rangedIdx === '' || payload.rangedIdx == null) ? String(payload.rangedIdx) : '',
+        meleeIdx: payload && !(payload.meleeIdx === '' || payload.meleeIdx == null) ? String(payload.meleeIdx) : '',
+        abilityIdx: Array.isArray(payload && payload.abilityIdx) ? payload.abilityIdx.map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT) : [],
         wounds: 0,
-        horror: clamp(toIntOrNull(payload?.horror) ?? 0, 0, HORROR_MAX),
+        horror: clamp(toIntOrNull(payload && payload.horror) || 0, 0, HORROR_MAX),
         down: false,
         removed: false,
         exhausted: false,
@@ -517,33 +463,28 @@ Selected: —</div>
         ty: 0,
         phaseTag: 0
       };
-
-      const importedWounds = toIntOrNull(payload?.woundsCurrent);
+      const importedWounds = toIntOrNull(payload && payload.woundsCurrent);
       const maxW = woundsMax(m);
-      if (importedWounds === null) {
-        m.wounds = maxW;
-      } else {
-        m.wounds = clamp(importedWounds, 0, maxW);
-      }
+      m.wounds = importedWounds === null ? maxW : clamp(importedWounds, 0, maxW);
       m.down = m.wounds <= 0;
       return m;
     }
 
-    const SILLY_FIRST = ['Bob', 'Smokey', 'Gummy', 'Fizzy', 'Cranky', 'Spicy', 'Wobble', 'Soggy', 'Porkchop', 'Mister', 'Doctor', 'Grub', 'Biscuit', 'Doodle', 'Noodle', 'Pickle', 'Beans', 'Honk', 'Goober', 'Zappy', 'Moldy', 'Captain'];
-    const SILLY_LAST = ['the Blob', 'the Bear', 'the Unwise', 'the Damp', 'the Loud', 'the Unforgiven', 'the Greasy', 'the Gentle', 'the Infinite', 'the Suspicious', 'the Mildly Haunted', 'the Crunchy', 'the Misplaced', 'the Wretched', 'of Westchester', 'of the Sewer', 'from Accounting', 'the Knife-Collector', 'the Rust King', 'the Moon-Licker'];
-    const WARBAND_PREFIX = ['The', 'The Honorable', 'The Questionable', 'The Blessed', 'The Cursed', 'The Extremely Normal'];
-    const WARBAND_ADJ = ['Quawb', 'Sewer', 'Gutter', 'Moon', 'Rust', 'Mold', 'Neon', 'Bone', 'Goo', 'Ferret', 'Goblin', 'Liminal'];
-    const WARBAND_NOUN = ['Cult', 'Union', 'Cabal', 'Choir', 'Committee', 'Collective', 'Crew', 'Squad', 'Coven', 'Congregation', 'Society'];
+    const SILLY_FIRST = ['Bob','Smokey','Gummy','Fizzy','Cranky','Spicy','Wobble','Soggy','Porkchop','Mister','Doctor','Grub','Biscuit','Doodle','Noodle','Pickle','Beans','Honk','Goober','Zappy','Moldy','Captain'];
+    const SILLY_LAST = ['the Blob','the Bear','the Unwise','the Damp','the Loud','the Unforgiven','the Greasy','the Gentle','the Infinite','the Suspicious','the Mildly Haunted','the Crunchy','the Misplaced','the Wretched','of Westchester','of the Sewer','from Accounting','the Knife-Collector','the Rust King','the Moon-Licker'];
+    const WARBAND_PREFIX = ['The','The Honorable','The Questionable','The Blessed','The Cursed','The Extremely Normal'];
+    const WARBAND_ADJ = ['Quawb','Sewer','Gutter','Moon','Rust','Mold','Neon','Bone','Goo','Ferret','Goblin','Liminal'];
+    const WARBAND_NOUN = ['Cult','Union','Cabal','Choir','Committee','Collective','Crew','Squad','Coven','Congregation','Society'];
 
-    function randomWarbandName() {
-      return `${pick(WARBAND_PREFIX)} ${pick(WARBAND_ADJ)} ${pick(WARBAND_NOUN)}`;
+    function randomWarbandName(){
+      return pick(WARBAND_PREFIX) + ' ' + pick(WARBAND_ADJ) + ' ' + pick(WARBAND_NOUN);
     }
 
-    function randomModelName() {
-      return `${pick(SILLY_FIRST)} ${pick(SILLY_LAST)}`;
+    function randomModelName(){
+      return pick(SILLY_FIRST) + ' ' + pick(SILLY_LAST);
     }
 
-    function randomizeMemberLoadout(member, budget = 15) {
+    function randomizeMemberLoadout(member, budget){
       member.moveTier = 1;
       member.defenseTier = 1;
       member.shootTier = 1;
@@ -555,19 +496,19 @@ Selected: —</div>
 
       const remaining = () => budget - (statPointsCost(member) + itemPoints(getRanged(member)) + itemPoints(getMelee(member)));
 
-      const rangedChoices = rangedWeapons.map((w, i) => ({ w, i })).filter(x => itemPoints(x.w) <= remaining());
+      const rangedChoices = rangedWeapons.map((w,i) => ({w,i})).filter(x => itemPoints(x.w) <= remaining());
       if (rangedChoices.length) member.rangedIdx = String(pick(rangedChoices).i);
 
-      const meleeChoices = meleeWeapons.map((w, i) => ({ w, i })).filter(x => itemPoints(x.w) <= remaining());
+      const meleeChoices = meleeWeapons.map((w,i) => ({w,i})).filter(x => itemPoints(x.w) <= remaining());
       if (meleeChoices.length) member.meleeIdx = String(pick(meleeChoices).i);
 
-      member.abilityIdx = shuffle(abilities.map((_, i) => i)).slice(0, ABILITY_LIMIT);
+      member.abilityIdx = shuffle(abilities.map((_,i) => i)).slice(0, ABILITY_LIMIT);
 
-      const upgrades = ['moveTier', 'defenseTier', 'shootTier', 'fightTier'];
+      const upgrades = ['moveTier','defenseTier','shootTier','fightTier'];
       let safety = 40;
       while (safety-- > 0) {
         const valid = shuffle(upgrades).filter(key => {
-          const statKey = key.replace('Tier', '');
+          const statKey = key.replace('Tier','');
           const cur = Number(member[key]) || 1;
           if (cur >= 3) return false;
           const nowPts = itemPoints(getStatTierEntry(statKey, cur));
@@ -587,14 +528,14 @@ Selected: —</div>
       member.abilityUsed = false;
     }
 
-    function makeRandomTeam(team) {
-      const models = Array.from({ length: 5 }, (_, i) => createModel(team, {}, i));
+    function makeRandomTeam(team){
+      const models = Array.from({length:5}, (_,i) => createModel(team, {}, i));
       models.forEach(m => randomizeMemberLoadout(m, 15));
       state.teams[team].name = randomWarbandName();
       state.teams[team].models = models;
     }
 
-    function parseWarbandJson(raw) {
+    function parseWarbandJson(raw){
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.members)) {
         throw new Error('Expected a builder warband object with members[].');
@@ -602,91 +543,87 @@ Selected: —</div>
       return parsed;
     }
 
-    function loadTeamFromBuilderObject(team, wb) {
+    function loadTeamFromBuilderObject(team, wb){
       const visibleMembers = wb.members.filter(Boolean).filter(m => !m.hidden).slice(0, 5);
       if (!visibleMembers.length) throw new Error('No visible members found in warband.');
-      const models = visibleMembers.map((m, i) => createModel(team, m, i));
-      state.teams[team].name = String(wb.name || `${team} Warband`);
+      const models = visibleMembers.map((m,i) => createModel(team, m, i));
+      state.teams[team].name = String(wb.name || (team + ' Warband'));
       state.teams[team].models = models;
-      logLine(`${team} loaded: ${state.teams[team].name} (${models.length} models).`);
+      logLine(team + ' loaded: ' + state.teams[team].name + ' (' + models.length + ' models).');
     }
 
-    function getAllModels() {
-      return [...state.teams.Blue.models, ...state.teams.Red.models];
+    function getAllModels(){
+      return state.teams.Blue.models.concat(state.teams.Red.models);
     }
 
-    function getLivingModels(team = null) {
+    function getLivingModels(team){
       return getAllModels().filter(m => !m.removed && (!team || m.team === team));
     }
 
-    function getModel(id) {
+    function getModel(id){
       return getAllModels().find(m => m.id === id) || null;
     }
 
-    function getSelected() {
+    function getSelected(){
       return getModel(state.selectedId);
     }
 
-    function getActive() {
+    function getActive(){
       return getModel(state.activeId);
     }
 
-    function hasUnexhausted(team) {
+    function hasUnexhausted(team){
       return getLivingModels(team).some(m => !m.exhausted);
     }
 
-    function firstUnexhausted(team) {
+    function firstUnexhausted(team){
       return getLivingModels(team).find(m => !m.exhausted) || null;
     }
 
-    function enemyTeam(team) {
+    function enemyTeam(team){
       return team === TEAM_BLUE ? TEAM_RED : TEAM_BLUE;
     }
 
-    function isWithinGrid(x, y) {
+    function isWithinGrid(x,y){
       return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
     }
 
-    function chebDist(ax, ay, bx, by) {
+    function chebDist(ax, ay, bx, by){
       return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
     }
 
-    function tileAt(x, y) {
-      return state.board[y]?.[x] ?? TILE_EMPTY;
+    function tileAt(x,y){
+      return (state.board[y] && state.board[y][x]) || TILE_EMPTY;
     }
 
-    function isOccupied(x, y, ignoreId = null) {
+    function isOccupied(x,y,ignoreId){
       return getLivingModels().some(m => m.id !== ignoreId && m.tx === x && m.ty === y);
     }
 
-    function isAdjacent(a, b) {
+    function isAdjacent(a,b){
       return chebDist(a.tx, a.ty, b.tx, b.ty) === 1;
     }
 
-    function inCombat(model) {
+    function inCombat(model){
       if (!model || model.removed) return false;
       return getLivingModels(enemyTeam(model.team)).some(e => isAdjacent(model, e));
     }
 
-    function adjacentEnemies(model) {
-      return getLivingModels(enemyTeam(model.team)).filter(e => isAdjacent(model, e));
-    }
-
-    function canStandOn(x, y, ignoreId = null) {
-      if (!isWithinGrid(x, y)) return false;
-      if (tileAt(x, y) === TILE_WALL) return false;
-      if (isOccupied(x, y, ignoreId)) return false;
+    function canStandOn(x,y,ignoreId){
+      if (!isWithinGrid(x,y)) return false;
+      if (tileAt(x,y) === TILE_WALL) return false;
+      if (isOccupied(x,y,ignoreId)) return false;
       return true;
     }
 
-    function bresenham(x0, y0, x1, y1) {
+    function bresenham(x0,y0,x1,y1){
       const pts = [];
       let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
       let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
       let err = dx + dy;
       let x = x0, y = y0;
       while (true) {
-        pts.push([x, y]);
+        pts.push([x,y]);
         if (x === x1 && y === y1) break;
         const e2 = 2 * err;
         if (e2 >= dy) { err += dy; x += sx; }
@@ -695,19 +632,20 @@ Selected: —</div>
       return pts;
     }
 
-    function lineOfSight(ax, ay, bx, by) {
+    function lineOfSight(ax, ay, bx, by){
       const pts = bresenham(ax, ay, bx, by);
       let passesCover = false;
       for (let i = 1; i < pts.length - 1; i++) {
-        const [x, y] = pts[i];
+        const x = pts[i][0];
+        const y = pts[i][1];
         const t = tileAt(x, y);
-        if (t === TILE_WALL) return { ok: false, passesCover: false };
+        if (t === TILE_WALL) return { ok:false, passesCover:false };
         if (t === TILE_COVER) passesCover = true;
       }
-      return { ok: true, passesCover };
+      return { ok:true, passesCover:passesCover };
     }
 
-    function nearTerrain(x, y) {
+    function nearTerrain(x,y){
       for (let oy = -1; oy <= 1; oy++) {
         for (let ox = -1; ox <= 1; ox++) {
           if (ox === 0 && oy === 0) continue;
@@ -721,64 +659,43 @@ Selected: —</div>
       return false;
     }
 
-    function targetHasPartialConcealment(defender, attacker) {
+    function targetHasPartialConcealment(defender, attacker){
       if (tileAt(defender.tx, defender.ty) === TILE_COVER) return true;
       if (nearTerrain(defender.tx, defender.ty)) return true;
       const los = lineOfSight(attacker.tx, attacker.ty, defender.tx, defender.ty);
       return los.passesCover;
     }
 
-    function coverBonus(defender, attacker, mode) {
+    function coverBonus(defender, attacker, mode){
       if (mode !== 'ranged') return 0;
       const longRange = chebDist(attacker.tx, attacker.ty, defender.tx, defender.ty) > 3;
       const partial = targetHasPartialConcealment(defender, attacker);
       return (longRange || partial) ? 1 : 0;
     }
 
-    function analyzeAttack(attacker, target) {
-      if (!attacker || !target || attacker.removed || target.removed) return { ok: false, reason: 'invalid' };
-      if (attacker.team === target.team) return { ok: false, reason: 'friendly' };
+    function analyzeAttack(attacker, target){
+      if (!attacker || !target || attacker.removed || target.removed) return { ok:false, reason:'invalid' };
+      if (attacker.team === target.team) return { ok:false, reason:'friendly' };
 
-      const melee = getMelee(attacker) || { name: 'Unarmed', attacks: 1, damage: 1, effect: '' };
+      const melee = getMelee(attacker) || { name:'Unarmed', attacks:1, damage:1, effect:'' };
       const ranged = getRanged(attacker);
       const attackerInCombat = inCombat(attacker);
       const targetInCombat = inCombat(target);
       const adjacent = isAdjacent(attacker, target);
 
       if (adjacent) {
-        return {
-          ok: true,
-          mode: 'melee',
-          weapon: melee,
-          cover: 0,
-          attackerInCombat,
-          targetInCombat
-        };
+        return { ok:true, mode:'melee', weapon:melee, cover:0 };
       }
-
-      if (attackerInCombat || targetInCombat) {
-        return { ok: false, reason: 'combat-lock' };
-      }
-      if (!ranged) {
-        return { ok: false, reason: 'no-ranged' };
-      }
+      if (attackerInCombat || targetInCombat) return { ok:false, reason:'combat-lock' };
+      if (!ranged) return { ok:false, reason:'no-ranged' };
       const los = lineOfSight(attacker.tx, attacker.ty, target.tx, target.ty);
-      if (!los.ok) {
-        return { ok: false, reason: 'no-los' };
-      }
+      if (!los.ok) return { ok:false, reason:'no-los' };
       const cover = coverBonus(target, attacker, 'ranged');
-      return {
-        ok: true,
-        mode: 'ranged',
-        weapon: ranged,
-        cover,
-        attackerInCombat,
-        targetInCombat
-      };
+      return { ok:true, mode:'ranged', weapon:ranged, cover:cover };
     }
 
-    function newRandomMap() {
-      state.board = Array.from({ length: GRID_H }, () => Array.from({ length: GRID_W }, () => TILE_EMPTY));
+    function newRandomMap(){
+      state.board = Array.from({length:GRID_H}, () => Array.from({length:GRID_W}, () => TILE_EMPTY));
       for (let y = 0; y < GRID_H; y++) {
         for (let x = 1; x < GRID_W - 1; x++) {
           const r = Math.random();
@@ -789,9 +706,9 @@ Selected: —</div>
       logLine('New map generated.');
     }
 
-    function deployTeam(team) {
+    function deployTeam(team){
       const models = state.teams[team].models;
-      const rows = shuffle(Array.from({ length: GRID_H }, (_, i) => i));
+      const rows = shuffle(Array.from({length:GRID_H}, (_,i) => i));
       const col = team === TEAM_BLUE ? 0 : GRID_W - 1;
       let idx = 0;
       for (const model of models) {
@@ -812,13 +729,13 @@ Selected: —</div>
       }
     }
 
-    function clearAITimer() {
+    function clearAITimer(){
       clearTimeout(aiTimer);
       aiTimer = null;
       state.aiTargetId = null;
     }
 
-    function fullResetState() {
+    function fullResetState(){
       clearAITimer();
       logCount = 0;
       ui.log.textContent = '';
@@ -858,22 +775,22 @@ Selected: —</div>
       renderAll();
     }
 
-    function logLine(msg) {
+    function logLine(msg){
       logCount += 1;
       state.lastLogLine = msg;
-      ui.log.textContent += `${String(logCount).padStart(3, '0')}. ${msg}
-`;
+      ui.log.textContent += String(logCount).padStart(3,'0') + '. ' + msg + '
+';
       ui.log.scrollTop = ui.log.scrollHeight;
       ui.lastLogBar.textContent = msg;
     }
 
-    function rollInitiativeForRound() {
+    function rollInitiativeForRound(){
       let blue = 0;
       let red = 0;
       while (blue === red) {
         blue = rollD6();
         red = rollD6();
-        if (blue === red) logLine(`Round ${state.round}: Initiative tie (${blue}-${red}), reroll.`);
+        if (blue === red) logLine('Round ' + state.round + ': Initiative tie (' + blue + '-' + red + '), reroll.');
       }
       state.blueRoll = blue;
       state.redRoll = red;
@@ -887,23 +804,23 @@ Selected: —</div>
       if (blue > red) {
         state.awaitingOrderChoice = true;
         state.activeTeam = null;
-        logLine(`Round ${state.round}: Blue wins initiative (${blue} vs ${red}) and may choose activation order.`);
+        logLine('Round ' + state.round + ': Blue wins initiative (' + blue + ' vs ' + red + ') and may choose activation order.');
       } else {
         state.activeTeam = TEAM_RED;
-        logLine(`Round ${state.round}: Red wins initiative (${red} vs ${blue}) and goes first.`);
+        logLine('Round ' + state.round + ': Red wins initiative (' + red + ' vs ' + blue + ') and goes first.');
         queueRedAI();
       }
     }
 
-    function chooseFirstTeam(team) {
+    function chooseFirstTeam(team){
       state.awaitingOrderChoice = false;
       state.activeTeam = team;
-      logLine(`Round ${state.round}: ${team} activates first.`);
+      logLine('Round ' + state.round + ': ' + team + ' activates first.');
       renderAll();
       if (team === TEAM_RED) queueRedAI();
     }
 
-    function nextRound() {
+    function nextRound(){
       state.round += 1;
       state.phaseSerial += 1;
       getLivingModels().forEach(m => {
@@ -911,12 +828,12 @@ Selected: —</div>
         m.abilityUsed = false;
         m.phaseTag = 0;
       });
-      logLine(`--- New Round: ${state.round} ---`);
+      logLine('--- New Round: ' + state.round + ' ---');
       rollInitiativeForRound();
       renderAll();
     }
 
-    function advanceTurnAfterActivation(endedTeam) {
+    function advanceTurnAfterActivation(endedTeam){
       const other = enemyTeam(endedTeam);
       const otherReady = hasUnexhausted(other);
       const sameReady = hasUnexhausted(endedTeam);
@@ -930,7 +847,7 @@ Selected: —</div>
 
       if (getLivingModels(TEAM_BLUE).length === 0 || getLivingModels(TEAM_RED).length === 0) {
         const winner = getLivingModels(TEAM_BLUE).length > 0 ? TEAM_BLUE : TEAM_RED;
-        logLine(`*** ${winner} wins. ***`);
+        logLine('*** ' + winner + ' wins. ***');
         state.activeTeam = null;
         renderAll();
         return;
@@ -949,14 +866,14 @@ Selected: —</div>
       if (state.activeTeam === TEAM_RED) queueRedAI();
     }
 
-    function beginActivation(model) {
+    function beginActivation(model){
       if (!model || model.removed) return false;
       if (state.awaitingOrderChoice) {
         logLine('Choose first team before activating.');
         return false;
       }
       if (state.activeTeam !== model.team) {
-        logLine(`It is ${state.activeTeam || 'no one'}'s turn.`);
+        logLine('It is ' + (state.activeTeam || 'no one') + '\'s turn.');
         return false;
       }
       if (state.activeId) {
@@ -964,7 +881,7 @@ Selected: —</div>
         return false;
       }
       if (model.exhausted) {
-        logLine(`${model.name} is exhausted.`);
+        logLine(model.name + ' is exhausted.');
         return false;
       }
       state.activeId = model.id;
@@ -973,65 +890,56 @@ Selected: —</div>
       state.moveRemaining = moveTiles(model);
       state.movedThisActivation = false;
       state.aiTargetId = null;
-      logLine(`${model.team} activates ${model.name} (${state.moveRemaining * 5}" move).`);
+      logLine(model.team + ' activates ' + model.name + ' (' + (state.moveRemaining * 5) + '" move).');
       renderAll();
       return true;
     }
 
-    function endActivation(reason = '') {
+    function endActivation(reason){
       const active = getActive();
       if (!active) return;
       active.exhausted = true;
-      logLine(`${active.name} is exhausted${reason ? ` (${reason})` : ''}.`);
+      logLine(active.name + ' is exhausted' + (reason ? ' (' + reason + ')' : '') + '.');
       advanceTurnAfterActivation(active.team);
     }
 
-    function markAbilityUsed() {
+    function markAbilityUsed(){
       const active = getActive();
-      if (!active) {
-        logLine('No active model.');
-        return;
-      }
-      if (active.abilityUsed) {
-        logLine(`${active.name} already used an ability this round.`);
-        return;
-      }
+      if (!active) { logLine('No active model.'); return; }
+      if (active.abilityUsed) { logLine(active.name + ' already used an ability this round.'); return; }
       active.abilityUsed = true;
       const names = getAbilities(active).map(a => a.name).join(', ') || 'No listed abilities';
-      logLine(`${active.name} marks an ability as used. Tracked only (${names}).`);
+      logLine(active.name + ' marks an ability as used. Tracked only (' + names + ').');
       renderAll();
     }
 
-    function standUpActive() {
+    function standUpActive(){
       const active = getActive();
       if (!active) { logLine('No active model.'); return; }
       if (state.phase !== 'move') { logLine('Stand Up must happen during the Move phase.'); return; }
-      if (!active.down) { logLine(`${active.name} is not Down.`); return; }
-      if (state.moveRemaining < 1) { logLine(`${active.name} does not have 5" left to stand up.`); return; }
+      if (!active.down) { logLine(active.name + ' is not Down.'); return; }
+      if (state.moveRemaining < 1) { logLine(active.name + ' does not have 5" left to stand up.'); return; }
       active.down = false;
       active.wounds = Math.max(active.wounds, 1);
       state.moveRemaining -= 1;
       state.movedThisActivation = true;
-      logLine(`${active.name} stands up, goes to 1 Wound, and spends 5" of Move.`);
+      logLine(active.name + ' stands up, goes to 1 Wound, and spends 5" of Move.');
       renderAll();
     }
 
-    function recoverActive() {
+    function recoverActive(){
       const active = getActive();
       if (!active) { logLine('No active model.'); return; }
       if (state.phase !== 'move') { logLine('Recover must be chosen during the Move phase.'); return; }
       if (state.movedThisActivation) { logLine('Recover cannot be used after moving this activation.'); return; }
       active.horror = Math.max(0, active.horror - 1);
-      logLine(`${active.name} uses Recover and reduces Horror to ${active.horror}.`);
+      logLine(active.name + ' uses Recover and reduces Horror to ' + active.horror + '.');
       endActivation('Recover');
     }
 
-    function setPendingAction(action) {
+    function setPendingAction(action){
       const active = getActive();
-      if (!active || active.team !== TEAM_BLUE) {
-        logLine('Blue must have an active model first.');
-        return;
-      }
+      if (!active || active.team !== TEAM_BLUE) { logLine('Blue must have an active model first.'); return; }
       if (state.phase === 'move' && (action === 'move' || action === 'disengage')) {
         state.pendingAction = action;
         logLine(action === 'move' ? 'Click a tile to move.' : 'Click a tile to disengage to.');
@@ -1039,10 +947,7 @@ Selected: —</div>
         return;
       }
       if (state.phase === 'attack' && action === 'attack') {
-        if (active.down) {
-          logLine(`${active.name} is Down and cannot attack.`);
-          return;
-        }
+        if (active.down) { logLine(active.name + ' is Down and cannot attack.'); return; }
         state.pendingAction = 'attack';
         logLine('Click an enemy model to attack.');
         renderAll();
@@ -1051,146 +956,113 @@ Selected: —</div>
       logLine('That action is not available right now.');
     }
 
-    function doneMoving() {
+    function doneMoving(){
       const active = getActive();
       if (!active) { logLine('No active model.'); return; }
       if (state.phase !== 'move') { logLine('You are already past the Move phase.'); return; }
       state.phase = 'attack';
       state.pendingAction = null;
-      logLine(`${active.name} ends the Move phase.`);
+      logLine(active.name + ' ends the Move phase.');
       renderAll();
     }
 
-    function resolveMoveTo(x, y) {
+    function resolveMoveTo(x,y){
       const active = getActive();
       if (!active) return;
       if (state.phase !== 'move' || state.pendingAction !== 'move') return;
-      if (active.down) {
-        logLine(`${active.name} is Down and cannot move until it stands.`);
-        return;
-      }
+      if (active.down) { logLine(active.name + ' is Down and cannot move until it stands.'); return; }
       const dist = chebDist(active.tx, active.ty, x, y);
       if (dist < 1) { logLine('Pick a different tile.'); return; }
-      if (dist > state.moveRemaining) {
-        logLine(`Too far. ${active.name} has ${state.moveRemaining * 5}" left.`);
-        return;
-      }
-      if (!canStandOn(x, y, active.id)) {
-        logLine('That tile is blocked.');
-        return;
-      }
+      if (dist > state.moveRemaining) { logLine('Too far. ' + active.name + ' has ' + (state.moveRemaining * 5) + '" left.'); return; }
+      if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
       active.tx = x;
       active.ty = y;
       state.moveRemaining -= dist;
       state.movedThisActivation = true;
       state.pendingAction = null;
-      logLine(`${active.name} moves ${dist * 5}".`);
+      logLine(active.name + ' moves ' + (dist * 5) + '".');
       renderAll();
     }
 
-    function resolveDisengageTo(x, y) {
+    function resolveDisengageTo(x,y){
       const active = getActive();
       if (!active) return;
       if (state.phase !== 'move' || state.pendingAction !== 'disengage') return;
-      if (!inCombat(active)) {
-        logLine(`${active.name} is not in combat.`);
-        return;
-      }
-      if (moveTiles(active) < 2) {
-        logLine('Disengage requires Move Tier 2.');
-        return;
-      }
-      if (state.moveRemaining < 2) {
-        logLine('Need 10" of Move left to Disengage.');
-        return;
-      }
+      if (!inCombat(active)) { logLine(active.name + ' is not in combat.'); return; }
+      if (moveTiles(active) < 2) { logLine('Disengage requires Move Tier 2.'); return; }
+      if (state.moveRemaining < 2) { logLine('Need 10" of Move left to Disengage.'); return; }
       const dist = chebDist(active.tx, active.ty, x, y);
-      if (dist !== 1) {
-        logLine('Disengage moves exactly 5" (1 tile).');
-        return;
-      }
-      if (!canStandOn(x, y, active.id)) {
-        logLine('That tile is blocked.');
-        return;
-      }
+      if (dist !== 1) { logLine('Disengage moves exactly 5" (1 tile).'); return; }
+      if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
       const stillEngaged = getLivingModels(enemyTeam(active.team)).some(e => chebDist(x, y, e.tx, e.ty) === 1);
-      if (stillEngaged) {
-        logLine('Disengage must end out of combat.');
-        return;
-      }
+      if (stillEngaged) { logLine('Disengage must end out of combat.'); return; }
       active.tx = x;
       active.ty = y;
       state.moveRemaining -= 2;
       state.movedThisActivation = true;
       state.pendingAction = null;
-      logLine(`${active.name} disengages 5" and spends 10" of Move.`);
+      logLine(active.name + ' disengages 5" and spends 10" of Move.');
       renderAll();
     }
 
-    function removeModel(model) {
+    function removeModel(model){
       model.removed = true;
-      logLine(`${model.name} is removed from play.`);
+      logLine(model.name + ' is removed from play.');
       if (state.selectedId === model.id) state.selectedId = null;
       if (state.hoverId === model.id) state.hoverId = null;
     }
 
-    function applyDamage(target, amount) {
+    function applyDamage(target, amount){
       if (target.removed || amount <= 0) return;
       if (target.down && target.wounds === 0) {
-        logLine(`${target.name} was hit while Down.`);
+        logLine(target.name + ' was hit while Down.');
         removeModel(target);
         return;
       }
       const before = target.wounds;
       target.wounds = Math.max(0, target.wounds - amount);
-      logLine(`${target.name} takes ${amount} damage (${before} → ${target.wounds}).`);
+      logLine(target.name + ' takes ' + amount + ' damage (' + before + ' → ' + target.wounds + ').');
       if (target.wounds <= 0) {
         target.wounds = 0;
         target.down = true;
-        logLine(`${target.name} becomes Down at 0 Wounds.`);
+        logLine(target.name + ' becomes Down at 0 Wounds.');
       }
     }
 
-    function applyHitEffects(attacker, target, weapon) {
-      const txt = String(weapon?.effect || '').toLowerCase();
+    function applyHitEffects(attacker, target, weapon){
+      const txt = String((weapon && weapon.effect) || '').toLowerCase();
       if (!txt) return;
       if (txt.includes('down') && !target.removed) {
         target.down = true;
-        logLine(`${target.name} is knocked Down by ${weapon.name}.`);
+        logLine(target.name + ' is knocked Down by ' + weapon.name + '.');
       }
       if (txt.includes('horror') && !target.removed) {
         if (target.phaseTag !== state.phaseSerial) {
           target.phaseTag = state.phaseSerial;
           const before = target.horror;
           target.horror = Math.min(HORROR_MAX, target.horror + 1);
-          if (target.horror > before) logLine(`${target.name} gains 1 Horror (${target.horror}/${HORROR_MAX}).`);
-          else logLine(`${target.name} would gain Horror, but is already at the cap.`);
+          if (target.horror > before) logLine(target.name + ' gains 1 Horror (' + target.horror + '/' + HORROR_MAX + ').');
+          else logLine(target.name + ' would gain Horror, but is already at the cap.');
         } else {
-          logLine(`${target.name} cannot gain more than 1 Horror this phase.`);
+          logLine(target.name + ' cannot gain more than 1 Horror this phase.');
         }
       }
     }
 
-    function resolveAttack(attacker, target, fromAI = false) {
+    function resolveAttack(attacker, target, fromAI){
       if (!attacker || !target || attacker.removed || target.removed) return false;
       const info = analyzeAttack(attacker, target);
       if (!info.ok) {
         const reasonMap = {
-          'combat-lock': 'Cannot shoot into or out of combat.',
-          'no-ranged': `${attacker.name} has no ranged weapon.`,
-          'no-los': `${attacker.name} does not have line of sight.`
+          'combat-lock':'Cannot shoot into or out of combat.',
+          'no-ranged': attacker.name + ' has no ranged weapon.',
+          'no-los': attacker.name + ' does not have line of sight.'
         };
         logLine(reasonMap[info.reason] || 'Illegal attack.');
         return false;
       }
-      if (state.phase !== 'attack' && !fromAI) {
-        logLine('You are not in the Attack phase.');
-        return false;
-      }
-      if (attacker.down) {
-        logLine(`${attacker.name} is Down and cannot attack.`);
-        return false;
-      }
+      if (state.phase !== 'attack' && !fromAI) { logLine('You are not in the Attack phase.'); return false; }
+      if (attacker.down) { logLine(attacker.name + ' is Down and cannot attack.'); return false; }
 
       const weapon = info.weapon;
       const attackCount = Math.max(1, Number(weapon.attacks) || 1);
@@ -1198,18 +1070,19 @@ Selected: —</div>
       const attackMod = (info.mode === 'ranged' ? shootMod(attacker) : fightMod(attacker)) - horrorPenalty(attacker);
       const defenseBase = defenseMod(target) + (target.down ? -1 : 0) + info.cover;
 
-      logLine(`${attacker.name} attacks ${target.name} with ${weapon.name} (${info.mode}, ${attackCount}A/${damage}D).`);
-      if (info.cover) logLine(`${target.name} gets +${info.cover} Defense from cover.`);
+      logLine(attacker.name + ' attacks ' + target.name + ' with ' + weapon.name + ' (' + info.mode + ', ' + attackCount + 'A/' + damage + 'D).');
+      if (info.cover) logLine(target.name + ' gets +' + info.cover + ' Defense from cover.');
 
       for (let i = 1; i <= attackCount; i++) {
         if (target.removed) break;
+
         const atkRaw = rollD6();
         if (atkRaw === 1) {
-          logLine(`  Attack ${i}: natural 1 miss.`);
+          logLine('  Attack ' + i + ': natural 1 miss.');
           continue;
         }
         if (atkRaw === 6) {
-          logLine(`  Attack ${i}: natural 6 critical hit. No defense roll.`);
+          logLine('  Attack ' + i + ': natural 6 critical hit. No defense roll.');
           applyDamage(target, damage);
           applyHitEffects(attacker, target, weapon);
           continue;
@@ -1219,12 +1092,12 @@ Selected: —</div>
         const defRaw = rollD6();
 
         if (defRaw === 6) {
-          logLine(`  Attack ${i}: attack ${atkRaw}${fmtSigned(attackMod)} = ${atkTotal}. Defense natural 6 auto-saves.`);
+          logLine('  Attack ' + i + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + '. Defense natural 6 auto-saves.');
           continue;
         }
 
         const defTotal = defRaw + defenseBase;
-        logLine(`  Attack ${i}: attack ${atkRaw}${fmtSigned(attackMod)} = ${atkTotal} vs defense ${defRaw}${fmtSigned(defenseBase)} = ${defTotal}.`);
+        logLine('  Attack ' + i + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + ' vs defense ' + defRaw + fmtSigned(defenseBase) + ' = ' + defTotal + '.');
 
         if (defTotal > atkTotal) {
           logLine('    Saved.');
@@ -1243,18 +1116,18 @@ Selected: —</div>
       return true;
     }
 
-    function nearestEnemy(model) {
+    function nearestEnemy(model){
       const enemies = getLivingModels(enemyTeam(model.team));
       if (!enemies.length) return null;
-      return enemies.slice().sort((a, b) => chebDist(model.tx, model.ty, a.tx, a.ty) - chebDist(model.tx, model.ty, b.tx, b.ty))[0] || null;
+      return enemies.slice().sort((a,b) => chebDist(model.tx, model.ty, a.tx, a.ty) - chebDist(model.tx, model.ty, b.tx, b.ty))[0] || null;
     }
 
-    function chooseAttackTargetForAI(attacker) {
+    function chooseAttackTargetForAI(attacker){
       const enemies = getLivingModels(enemyTeam(attacker.team));
       if (!enemies.length) return null;
-      const legal = enemies.map(e => ({ e, info: analyzeAttack(attacker, e) })).filter(x => x.info.ok);
+      const legal = enemies.map(e => ({e:e, info:analyzeAttack(attacker, e)})).filter(x => x.info.ok);
       if (!legal.length) return null;
-      legal.sort((a, b) => {
+      legal.sort((a,b) => {
         if (a.info.mode !== b.info.mode) return a.info.mode === 'melee' ? -1 : 1;
         const aw = a.e.down ? 0 : a.e.wounds;
         const bw = b.e.down ? 0 : b.e.wounds;
@@ -1264,13 +1137,13 @@ Selected: —</div>
       return legal[0].e;
     }
 
-    function scoreTileForAI(x, y, model, target) {
+    function scoreTileForAI(x,y,model,target){
       const dist = chebDist(x, y, target.tx, target.ty);
       let score = dist * 20;
       if (tileAt(x, y) === TILE_COVER) score -= 7;
       else if (nearTerrain(x, y)) score -= 3;
 
-      const fake = { ...model, tx: x, ty: y };
+      const fake = { ...model, tx:x, ty:y };
       const attackInfo = analyzeAttack(fake, target);
       if (attackInfo.ok) {
         if (attackInfo.mode === 'melee') score -= 8;
@@ -1280,7 +1153,7 @@ Selected: —</div>
       return score;
     }
 
-    function chooseAIStep(model, target) {
+    function chooseAIStep(model, target){
       const options = [];
       for (let oy = -1; oy <= 1; oy++) {
         for (let ox = -1; ox <= 1; ox++) {
@@ -1288,23 +1161,23 @@ Selected: —</div>
           const nx = model.tx + ox;
           const ny = model.ty + oy;
           if (!canStandOn(nx, ny, model.id)) continue;
-          options.push({ x: nx, y: ny, score: scoreTileForAI(nx, ny, model, target) });
+          options.push({ x:nx, y:ny, score:scoreTileForAI(nx, ny, model, target) });
         }
       }
       if (!options.length) return null;
-      options.sort((a, b) => a.score - b.score);
+      options.sort((a,b) => a.score - b.score);
       const best = options[0];
       const currentScore = scoreTileForAI(model.tx, model.ty, model, target);
       if (best.score > currentScore + 2) return null;
       return best;
     }
 
-    function queueRedAI() {
+    function queueRedAI(){
       clearAITimer();
       aiTimer = setTimeout(runRedAIStart, AI_DELAY);
     }
 
-    function runRedAIStart() {
+    function runRedAIStart(){
       clearAITimer();
       if (state.awaitingOrderChoice) return;
       if (state.activeTeam !== TEAM_RED) return;
@@ -1318,7 +1191,7 @@ Selected: —</div>
       aiTimer = setTimeout(() => runRedAIStand(aiModel), AI_DELAY);
     }
 
-    function runRedAIStand(aiModel) {
+    function runRedAIStand(aiModel){
       clearAITimer();
       if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
       if (aiModel.down && state.moveRemaining >= 1) {
@@ -1326,15 +1199,16 @@ Selected: —</div>
         aiModel.wounds = Math.max(aiModel.wounds, 1);
         state.moveRemaining -= 1;
         state.movedThisActivation = true;
-        logLine(`${aiModel.name} stands up.`);
+        logLine(aiModel.name + ' stands up.');
         renderAll();
       }
       aiTimer = setTimeout(() => runRedAIMove(aiModel), AI_DELAY);
     }
 
-    function runRedAIMove(aiModel) {
+    function runRedAIMove(aiModel){
       clearAITimer();
       if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
+
       if (state.moveRemaining <= 0 || aiModel.down) {
         state.phase = 'attack';
         renderAll();
@@ -1362,48 +1236,54 @@ Selected: —</div>
       aiModel.ty = step.y;
       state.moveRemaining -= 1;
       state.movedThisActivation = true;
-      logLine(`${aiModel.name} moves 5".`);
+      logLine(aiModel.name + ' moves 5".');
       renderAll();
       aiTimer = setTimeout(() => runRedAIMove(aiModel), AI_DELAY);
     }
 
-    function runRedAIAttack(aiModel) {
+    function runRedAIAttack(aiModel){
       clearAITimer();
       if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
+
       state.phase = 'attack';
       const target = chooseAttackTargetForAI(aiModel);
+
       if (!target) {
-        logLine(`${aiModel.name} has no legal attack.`);
+        logLine(aiModel.name + ' has no legal attack.');
         renderAll();
         aiTimer = setTimeout(() => endActivation('AI done'), AI_DELAY);
         return;
       }
 
       state.aiTargetId = target.id;
-      logLine(`${aiModel.name} lines up ${target.name}.`);
+      logLine(aiModel.name + ' lines up ' + target.name + '.');
       renderAll();
+
       aiTimer = setTimeout(() => {
         clearAITimer();
-        if (!getActive() || getActive().id !== aiModel.id) return;
+        const current = getActive();
+        if (!current || current.id !== aiModel.id) return;
         resolveAttack(aiModel, target, true);
         renderAll();
         aiTimer = setTimeout(() => endActivation('AI Attack'), AI_DELAY);
       }, AI_DELAY);
     }
 
-    function tileFromMouse(ev) {
+    function tileFromMouse(ev){
       const rect = canvas.getBoundingClientRect();
       const x = Math.floor((ev.clientX - rect.left) / TILE);
       const y = Math.floor((ev.clientY - rect.top) / TILE);
-      return { x, y };
+      return { x:x, y:y };
     }
 
-    function modelAt(x, y) {
+    function modelAt(x,y){
       return getLivingModels().find(m => m.tx === x && m.ty === y) || null;
     }
 
-    function handleBoardClick(ev) {
-      const { x, y } = tileFromMouse(ev);
+    function handleBoardClick(ev){
+      const pos = tileFromMouse(ev);
+      const x = pos.x;
+      const y = pos.y;
       if (!isWithinGrid(x, y)) return;
 
       const clickedModel = modelAt(x, y);
@@ -1432,7 +1312,6 @@ Selected: —</div>
         resolveMoveTo(x, y);
         return;
       }
-
       if (state.pendingAction === 'disengage') {
         resolveDisengageTo(x, y);
         return;
@@ -1442,8 +1321,8 @@ Selected: —</div>
     canvas.addEventListener('click', handleBoardClick);
 
     canvas.addEventListener('mousemove', (ev) => {
-      const { x, y } = tileFromMouse(ev);
-      const hovered = isWithinGrid(x, y) ? modelAt(x, y) : null;
+      const pos = tileFromMouse(ev);
+      const hovered = isWithinGrid(pos.x, pos.y) ? modelAt(pos.x, pos.y) : null;
       const nextHoverId = hovered ? hovered.id : null;
       if (nextHoverId !== state.hoverId) {
         state.hoverId = nextHoverId;
@@ -1458,26 +1337,9 @@ Selected: —</div>
       }
     });
 
-    function drawAttackHighlights(active) {
-      if (!active) return;
-      const enemies = getLivingModels(enemyTeam(active.team));
-      for (const enemy of enemies) {
-        const info = analyzeAttack(active, enemy);
-        if (!info.ok) continue;
-        const x = enemy.tx * TILE;
-        const y = enemy.ty * TILE;
-        const fill = (info.mode === 'ranged' && info.cover > 0) ? 'rgba(217,119,6,0.20)' : 'rgba(220,38,38,0.18)';
-        const stroke = (info.mode === 'ranged' && info.cover > 0) ? '#d97706' : '#dc2626';
-        ctx.fillStyle = fill;
-        ctx.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
-      }
-    }
-
-    function drawMoveHighlights(active) {
+    function drawMoveHighlights(active){
       if (!active || state.phase !== 'move') return;
+
       if (state.pendingAction === 'disengage') {
         ctx.fillStyle = 'rgba(37,99,235,0.16)';
         for (let yy = 0; yy < GRID_H; yy++) {
@@ -1492,8 +1354,7 @@ Selected: —</div>
         return;
       }
 
-      const strong = state.pendingAction === 'move';
-      ctx.fillStyle = strong ? 'rgba(22,163,74,0.18)' : 'rgba(22,163,74,0.08)';
+      ctx.fillStyle = state.pendingAction === 'move' ? 'rgba(22,163,74,0.18)' : 'rgba(22,163,74,0.08)';
       for (let yy = 0; yy < GRID_H; yy++) {
         for (let xx = 0; xx < GRID_W; xx++) {
           const dist = chebDist(active.tx, active.ty, xx, yy);
@@ -1504,7 +1365,24 @@ Selected: —</div>
       }
     }
 
-    function drawBoard() {
+    function drawAttackHighlights(active){
+      if (!active) return;
+      const enemies = getLivingModels(enemyTeam(active.team));
+      for (const enemy of enemies) {
+        const info = analyzeAttack(active, enemy);
+        if (!info.ok) continue;
+        const x = enemy.tx * TILE;
+        const y = enemy.ty * TILE;
+        const hasCover = info.mode === 'ranged' && info.cover > 0;
+        ctx.fillStyle = hasCover ? 'rgba(217,119,6,0.20)' : 'rgba(220,38,38,0.18)';
+        ctx.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
+        ctx.strokeStyle = hasCover ? '#d97706' : '#dc2626';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
+      }
+    }
+
+    function drawBoard(){
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1558,22 +1436,10 @@ Selected: —</div>
 
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = '#111111';
-        if (m.id === state.hoverId) {
-          ctx.lineWidth = 5;
-          ctx.strokeStyle = '#f59e0b';
-        }
-        if (m.id === state.selectedId) {
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = '#111111';
-        }
-        if (m.id === state.activeId) {
-          ctx.lineWidth = 5;
-          ctx.strokeStyle = '#16a34a';
-        }
-        if (m.id === state.aiTargetId) {
-          ctx.lineWidth = 5;
-          ctx.strokeStyle = '#d97706';
-        }
+        if (m.id === state.hoverId) { ctx.lineWidth = 5; ctx.strokeStyle = '#f59e0b'; }
+        if (m.id === state.selectedId) { ctx.lineWidth = 4; ctx.strokeStyle = '#111111'; }
+        if (m.id === state.activeId) { ctx.lineWidth = 5; ctx.strokeStyle = '#16a34a'; }
+        if (m.id === state.aiTargetId) { ctx.lineWidth = 5; ctx.strokeStyle = '#d97706'; }
         ctx.stroke();
 
         if (m.down) {
@@ -1616,21 +1482,21 @@ Selected: —</div>
       }
     }
 
-    function renderStatus() {
+    function renderStatus(){
       const active = getActive();
       const blueLeft = getLivingModels(TEAM_BLUE).filter(m => !m.exhausted).length;
       const redLeft = getLivingModels(TEAM_RED).filter(m => !m.exhausted).length;
 
       const lines = [];
-      lines.push(`Round ${state.round}`);
-      if (state.blueRoll !== null && state.redRoll !== null) lines.push(`Initiative: Blue ${state.blueRoll} / Red ${state.redRoll}`);
-      lines.push(`Active Team: ${state.activeTeam || 'Waiting'}`);
-      lines.push(`Blue Ready: ${blueLeft} | Red Ready: ${redLeft}`);
-      lines.push(`Phase: ${state.phase}`);
-      lines.push(`Pending: ${state.pendingAction || '—'}`);
+      lines.push('Round ' + state.round);
+      if (state.blueRoll !== null && state.redRoll !== null) lines.push('Initiative: Blue ' + state.blueRoll + ' / Red ' + state.redRoll);
+      lines.push('Active Team: ' + (state.activeTeam || 'Waiting'));
+      lines.push('Blue Ready: ' + blueLeft + ' | Red Ready: ' + redLeft);
+      lines.push('Phase: ' + state.phase);
+      lines.push('Pending: ' + (state.pendingAction || '—'));
       if (active) {
-        lines.push(`Active Model: ${active.name}`);
-        lines.push(`Move Remaining: ${state.moveRemaining * 5}"`);
+        lines.push('Active Model: ' + active.name);
+        lines.push('Move Remaining: ' + (state.moveRemaining * 5) + '"');
       } else {
         lines.push('Active Model: —');
       }
@@ -1640,7 +1506,7 @@ Selected: —</div>
       ui.orderChoice.style.display = state.awaitingOrderChoice ? 'block' : 'none';
     }
 
-    function renderSelected() {
+    function renderSelected(){
       const m = getSelected();
       if (!m) {
         ui.selected.textContent = '—';
@@ -1649,42 +1515,41 @@ Selected: —</div>
       const ranged = getRanged(m);
       const melee = getMelee(m);
       const abs = getAbilities(m);
+
       const lines = [];
-      lines.push(`${m.team} — ${m.name}`);
-      lines.push(`${m.role}`);
+      lines.push(m.team + ' — ' + m.name);
+      lines.push(m.role);
       lines.push('');
-      lines.push(`Move T${m.moveTier} (${moveTiles(m) * 5}")`);
-      lines.push(`Defense T${m.defenseTier} (${fmtSigned(defenseMod(m))})`);
-      lines.push(`Shoot T${m.shootTier} (${fmtSigned(shootMod(m))})`);
-      lines.push(`Fight T${m.fightTier} (${fmtSigned(fightMod(m))})`);
-      lines.push(`Wounds: ${m.wounds}/${woundsMax(m)}`);
-      lines.push(`Horror: ${m.horror}/${HORROR_MAX}`);
-      lines.push(`Down: ${m.down ? 'Yes' : 'No'}`);
-      lines.push(`Exhausted: ${m.exhausted ? 'Yes' : 'No'}`);
-      lines.push(`In Combat: ${inCombat(m) ? 'Yes' : 'No'}`);
-      lines.push(`Ability Used: ${m.abilityUsed ? 'Yes' : 'No'}`);
+      lines.push('Move T' + m.moveTier + ' (' + (moveTiles(m) * 5) + '")');
+      lines.push('Defense T' + m.defenseTier + ' (' + fmtSigned(defenseMod(m)) + ')');
+      lines.push('Shoot T' + m.shootTier + ' (' + fmtSigned(shootMod(m)) + ')');
+      lines.push('Fight T' + m.fightTier + ' (' + fmtSigned(fightMod(m)) + ')');
+      lines.push('Wounds: ' + m.wounds + '/' + woundsMax(m));
+      lines.push('Horror: ' + m.horror + '/' + HORROR_MAX);
+      lines.push('Down: ' + (m.down ? 'Yes' : 'No'));
+      lines.push('Exhausted: ' + (m.exhausted ? 'Yes' : 'No'));
+      lines.push('In Combat: ' + (inCombat(m) ? 'Yes' : 'No'));
+      lines.push('Ability Used: ' + (m.abilityUsed ? 'Yes' : 'No'));
       lines.push('');
-      lines.push(`Ranged: ${ranged ? `${ranged.name} (${ranged.attacks}A/${ranged.damage}D${ranged.effect ? `, ${ranged.effect}` : ''})` : '—'}`);
-      lines.push(`Melee: ${melee ? `${melee.name} (${melee.attacks}A/${melee.damage}D${melee.effect ? `, ${melee.effect}` : ''})` : '—'}`);
+      lines.push('Ranged: ' + (ranged ? (ranged.name + ' (' + ranged.attacks + 'A/' + ranged.damage + 'D' + (ranged.effect ? ', ' + ranged.effect : '') + ')') : '—'));
+      lines.push('Melee: ' + (melee ? (melee.name + ' (' + melee.attacks + 'A/' + melee.damage + 'D' + (melee.effect ? ', ' + melee.effect : '') + ')') : '—'));
       lines.push('');
-      lines.push(`Abilities: ${abs.length ? abs.map(a => a.name).join(', ') : '—'}`);
+      lines.push('Abilities: ' + (abs.length ? abs.map(a => a.name).join(', ') : '—'));
+
       ui.selected.textContent = lines.join('
 ');
     }
 
-    function renderHUD() {
+    function renderHUD(){
       const active = getActive();
       const selected = getSelected();
       const hover = state.hoverId ? getModel(state.hoverId) : null;
 
       const activeLines = [];
-      activeLines.push(`Active: ${active ? `${active.team} — ${active.name}` : '—'}`);
-      activeLines.push(`Selected: ${selected ? `${selected.team} — ${selected.name}` : '—'}`);
-      if (active) {
-        activeLines.push(`Phase: ${state.phase} | Move Left: ${state.moveRemaining * 5}" | Pending: ${state.pendingAction || '—'}`);
-      } else {
-        activeLines.push(`Phase: ${state.phase} | Pending: ${state.pendingAction || '—'}`);
-      }
+      activeLines.push('Active: ' + (active ? (active.team + ' — ' + active.name) : '—'));
+      activeLines.push('Selected: ' + (selected ? (selected.team + ' — ' + selected.name) : '—'));
+      if (active) activeLines.push('Phase: ' + state.phase + ' | Move Left: ' + (state.moveRemaining * 5) + '" | Pending: ' + (state.pendingAction || '—'));
+      else activeLines.push('Phase: ' + state.phase + ' | Pending: ' + (state.pendingAction || '—'));
       ui.activeSummary.textContent = activeLines.join('
 ');
 
@@ -1696,15 +1561,15 @@ Selected: —</div>
       const hoverRanged = getRanged(hover);
       const hoverMelee = getMelee(hover);
       const hoverLines = [];
-      hoverLines.push(`${hover.team} — ${hover.name}`);
-      hoverLines.push(`W ${hover.wounds}/${woundsMax(hover)} | H ${hover.horror}/${HORROR_MAX} | ${hover.down ? 'Down' : 'Up'}`);
-      hoverLines.push(`D ${fmtSigned(defenseMod(hover))} | S ${fmtSigned(shootMod(hover))} | F ${fmtSigned(fightMod(hover))}`);
-      hoverLines.push(`R: ${hoverRanged ? hoverRanged.name : '—'} | M: ${hoverMelee ? hoverMelee.name : '—'}`);
+      hoverLines.push(hover.team + ' — ' + hover.name);
+      hoverLines.push('W ' + hover.wounds + '/' + woundsMax(hover) + ' | H ' + hover.horror + '/' + HORROR_MAX + ' | ' + (hover.down ? 'Down' : 'Up'));
+      hoverLines.push('D ' + fmtSigned(defenseMod(hover)) + ' | S ' + fmtSigned(shootMod(hover)) + ' | F ' + fmtSigned(fightMod(hover)));
+      hoverLines.push('R: ' + (hoverRanged ? hoverRanged.name : '—') + ' | M: ' + (hoverMelee ? hoverMelee.name : '—'));
       ui.hoverCard.textContent = hoverLines.join('
 ');
     }
 
-    function updateButtons() {
+    function updateButtons(){
       const selected = getSelected();
       const active = getActive();
       const blueTurn = state.activeTeam === TEAM_BLUE && !state.awaitingOrderChoice;
@@ -1725,17 +1590,15 @@ Selected: —</div>
       ui.attackBtn.classList.toggle('is-selected', state.pendingAction === 'attack');
 
       if (active && active.team === TEAM_BLUE && state.phase === 'attack') {
-        if (inCombat(active)) {
-          ui.attackBtn.textContent = (getMelee(active)?.name || 'Unarmed');
-        } else {
-          ui.attackBtn.textContent = (getRanged(active)?.name || 'No Ranged');
-        }
+        ui.attackBtn.textContent = inCombat(active)
+          ? ((getMelee(active) && getMelee(active).name) || 'Unarmed')
+          : ((getRanged(active) && getRanged(active).name) || 'No Ranged');
       } else {
         ui.attackBtn.textContent = 'Attack';
       }
     }
 
-    function renderAll() {
+    function renderAll(){
       drawBoard();
       renderStatus();
       renderSelected();
@@ -1751,7 +1614,7 @@ Selected: —</div>
         loadTeamFromBuilderObject(TEAM_BLUE, wb);
         fullResetState();
       } catch (err) {
-        logLine(`Load failed: ${String(err.message || err)}`);
+        logLine('Load failed: ' + String(err.message || err));
         renderAll();
       }
     });
@@ -1762,7 +1625,7 @@ Selected: —</div>
         loadTeamFromBuilderObject(TEAM_BLUE, wb);
         fullResetState();
       } catch (err) {
-        logLine(`Load failed: ${String(err.message || err)}`);
+        logLine('Load failed: ' + String(err.message || err));
         renderAll();
       }
     });
@@ -1773,7 +1636,7 @@ Selected: —</div>
         loadTeamFromBuilderObject(TEAM_RED, wb);
         fullResetState();
       } catch (err) {
-        logLine(`Load failed: ${String(err.message || err)}`);
+        logLine('Load failed: ' + String(err.message || err));
         renderAll();
       }
     });
@@ -1826,13 +1689,13 @@ Selected: —</div>
     ui.blueFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_BLUE));
     ui.redFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_RED));
 
-    function boot() {
+    function boot(){
       newRandomMap();
       makeRandomTeam(TEAM_BLUE);
       makeRandomTeam(TEAM_RED);
       fullResetState();
       logLine('Sandbox ready.');
-      logLine('Hover works, action buttons stay pressed, move/attack targets highlight, and Red AI now steps through its turn more slowly.');
+      logLine('Fixed render pass. Hover works, action buttons stay pressed, move/attack targets highlight, and Red AI now steps through its turn.');
       renderAll();
     }
 
