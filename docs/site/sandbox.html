@@ -237,1469 +237,1586 @@
   </div>
 
   <script>
-    const DATA = {
-      stats: [
-        { stat: 'Move', tiers: [ { tier: 1, value: '5"', points: 0 }, { tier: 2, value: '10"', points: 2 }, { tier: 3, value: '15"', points: 4 } ] },
-        { stat: 'Defense', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
-        { stat: 'Shoot', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
-        { stat: 'Fight', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] }
-      ],
-      melee_weapons: [
-        { name: 'Unarmed', attacks: 1, damage: 1, effect: '', points: 1 },
-        { name: 'Spiked Bat', attacks: 1, damage: 2, effect: 'Down', points: 2 },
-        { name: 'Pocket Knife', attacks: 2, damage: 1, effect: '', points: 2 },
-        { name: 'Sledgehammer', attacks: 1, damage: 3, effect: 'Horror', points: 3 },
-        { name: 'Brass Knuckles', attacks: 3, damage: 1, effect: '', points: 3 },
-        { name: 'Axe', attacks: 2, damage: 2, effect: 'Down', points: 4 },
-        { name: 'Katana', attacks: 4, damage: 1, effect: '', points: 5 },
-        { name: 'Chainsaw', attacks: 1, damage: 4, effect: 'Down + Horror', points: 5 },
-        { name: 'Poisoned Dagger', attacks: 2, damage: 1, effect: 'Adds Horror', points: 3 }
-      ],
-      ranged_weapons: [
-        { name: 'Blow Dart', attacks: 1, damage: 1, effect: '', points: 2 },
-        { name: 'Slingshot', attacks: 2, damage: 1, effect: '', points: 3 },
-        { name: 'Pistol', attacks: 3, damage: 1, effect: '', points: 4 },
-        { name: 'Shotgun', attacks: 1, damage: 3, effect: 'Horror', points: 5 },
-        { name: 'Bow', attacks: 1, damage: 2, effect: 'Down', points: 3 },
-        { name: 'Sniper', attacks: 1, damage: 4, effect: 'Down + Horror', points: 5 },
-        { name: 'Rifle', attacks: 4, damage: 1, effect: '', points: 7 },
-        { name: 'Auto Crossbow', attacks: 2, damage: 2, effect: 'Down', points: 5 },
-        { name: 'Lightning Gun', attacks: 1, damage: 1, effect: 'Chains to models 5" away, adds Horror', points: 4 }
-      ],
-      abilities: [
-        { name: 'Berserker' }, { name: 'Relentless' }, { name: 'Reckless' }, { name: 'Undead' }, { name: 'Masochist' },
-        { name: 'Rupture' }, { name: 'Neural Chain' }, { name: 'Marked' }, { name: 'Stitcher' }, { name: 'Fade' },
-        { name: 'Phase' }, { name: 'First Blood' }, { name: 'Quick Draw' }
-      ]
-    };
+(function () {
+  var DATA = {
+    stats: [
+      { stat: 'Move', tiers: [ { tier: 1, value: '5"', points: 0 }, { tier: 2, value: '10"', points: 2 }, { tier: 3, value: '15"', points: 4 } ] },
+      { stat: 'Defense', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
+      { stat: 'Shoot', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] },
+      { stat: 'Fight', tiers: [ { tier: 1, value: -2, points: 0 }, { tier: 2, value: -1, points: 4 }, { tier: 3, value: 0, points: 7 } ] }
+    ],
+    melee_weapons: [
+      { name: 'Unarmed', attacks: 1, damage: 1, effect: '', points: 1 },
+      { name: 'Spiked Bat', attacks: 1, damage: 2, effect: 'Down', points: 2 },
+      { name: 'Pocket Knife', attacks: 2, damage: 1, effect: '', points: 2 },
+      { name: 'Sledgehammer', attacks: 1, damage: 3, effect: 'Horror', points: 3 },
+      { name: 'Brass Knuckles', attacks: 3, damage: 1, effect: '', points: 3 },
+      { name: 'Axe', attacks: 2, damage: 2, effect: 'Down', points: 4 },
+      { name: 'Katana', attacks: 4, damage: 1, effect: '', points: 5 },
+      { name: 'Chainsaw', attacks: 1, damage: 4, effect: 'Down + Horror', points: 5 },
+      { name: 'Poisoned Dagger', attacks: 2, damage: 1, effect: 'Adds Horror', points: 3 }
+    ],
+    ranged_weapons: [
+      { name: 'Blow Dart', attacks: 1, damage: 1, effect: '', points: 2 },
+      { name: 'Slingshot', attacks: 2, damage: 1, effect: '', points: 3 },
+      { name: 'Pistol', attacks: 3, damage: 1, effect: '', points: 4 },
+      { name: 'Shotgun', attacks: 1, damage: 3, effect: 'Horror', points: 5 },
+      { name: 'Bow', attacks: 1, damage: 2, effect: 'Down', points: 3 },
+      { name: 'Sniper', attacks: 1, damage: 4, effect: 'Down + Horror', points: 5 },
+      { name: 'Rifle', attacks: 4, damage: 1, effect: '', points: 7 },
+      { name: 'Auto Crossbow', attacks: 2, damage: 2, effect: 'Down', points: 5 },
+      { name: 'Lightning Gun', attacks: 1, damage: 1, effect: 'Chains to models 5" away, adds Horror', points: 4 }
+    ],
+    abilities: [
+      { name: 'Berserker' }, { name: 'Relentless' }, { name: 'Reckless' }, { name: 'Undead' }, { name: 'Masochist' },
+      { name: 'Rupture' }, { name: 'Neural Chain' }, { name: 'Marked' }, { name: 'Stitcher' }, { name: 'Fade' },
+      { name: 'Phase' }, { name: 'First Blood' }, { name: 'Quick Draw' }
+    ]
+  };
 
-    const canvas = document.getElementById('board');
-    const ctx = canvas.getContext('2d');
+  var canvas = document.getElementById('board');
+  var ctx = canvas.getContext('2d');
 
-    const ui = {
-      jsonInput: document.getElementById('jsonInput'),
-      loadBlueSavedBtn: document.getElementById('loadBlueSavedBtn'),
-      loadBluePasteBtn: document.getElementById('loadBluePasteBtn'),
-      loadRedPasteBtn: document.getElementById('loadRedPasteBtn'),
-      randomRedBtn: document.getElementById('randomRedBtn'),
-      randomBothBtn: document.getElementById('randomBothBtn'),
-      newMapBtn: document.getElementById('newMapBtn'),
-      resetBtn: document.getElementById('resetBtn'),
-      beginBtn: document.getElementById('beginBtn'),
-      endBtn: document.getElementById('endBtn'),
-      moveBtn: document.getElementById('moveBtn'),
-      disengageBtn: document.getElementById('disengageBtn'),
-      doneMoveBtn: document.getElementById('doneMoveBtn'),
-      standBtn: document.getElementById('standBtn'),
-      recoverBtn: document.getElementById('recoverBtn'),
-      attackBtn: document.getElementById('attackBtn'),
-      abilityBtn: document.getElementById('abilityBtn'),
-      nextRoundBtn: document.getElementById('nextRoundBtn'),
-      status: document.getElementById('status'),
-      selected: document.getElementById('selected'),
-      log: document.getElementById('log'),
-      orderChoice: document.getElementById('orderChoice'),
-      blueFirstBtn: document.getElementById('blueFirstBtn'),
-      redFirstBtn: document.getElementById('redFirstBtn'),
-      lastLogBar: document.getElementById('lastLogBar'),
-      activeSummary: document.getElementById('activeSummary'),
-      hoverCard: document.getElementById('hoverCard')
-    };
+  var ui = {
+    jsonInput: document.getElementById('jsonInput'),
+    loadBlueSavedBtn: document.getElementById('loadBlueSavedBtn'),
+    loadBluePasteBtn: document.getElementById('loadBluePasteBtn'),
+    loadRedPasteBtn: document.getElementById('loadRedPasteBtn'),
+    randomRedBtn: document.getElementById('randomRedBtn'),
+    randomBothBtn: document.getElementById('randomBothBtn'),
+    newMapBtn: document.getElementById('newMapBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    beginBtn: document.getElementById('beginBtn'),
+    endBtn: document.getElementById('endBtn'),
+    moveBtn: document.getElementById('moveBtn'),
+    disengageBtn: document.getElementById('disengageBtn'),
+    doneMoveBtn: document.getElementById('doneMoveBtn'),
+    standBtn: document.getElementById('standBtn'),
+    recoverBtn: document.getElementById('recoverBtn'),
+    attackBtn: document.getElementById('attackBtn'),
+    abilityBtn: document.getElementById('abilityBtn'),
+    nextRoundBtn: document.getElementById('nextRoundBtn'),
+    status: document.getElementById('status'),
+    selected: document.getElementById('selected'),
+    log: document.getElementById('log'),
+    orderChoice: document.getElementById('orderChoice'),
+    blueFirstBtn: document.getElementById('blueFirstBtn'),
+    redFirstBtn: document.getElementById('redFirstBtn'),
+    lastLogBar: document.getElementById('lastLogBar'),
+    activeSummary: document.getElementById('activeSummary'),
+    hoverCard: document.getElementById('hoverCard')
+  };
 
-    const STORAGE_KEY = 'chimera_warband_v5';
-    const GRID_W = 9;
-    const GRID_H = 7;
-    const TILE = 84;
-    const TEAM_BLUE = 'Blue';
-    const TEAM_RED = 'Red';
-    const TILE_EMPTY = 0;
-    const TILE_COVER = 1;
-    const TILE_WALL = 2;
-    const HORROR_MAX = 3;
-    const ABILITY_LIMIT = 2;
-    const AI_DELAY = 420;
+  var STORAGE_KEY = 'chimera_warband_v5';
+  var GRID_W = 9;
+  var GRID_H = 7;
+  var TILE = 84;
+  var TEAM_BLUE = 'Blue';
+  var TEAM_RED = 'Red';
+  var TILE_EMPTY = 0;
+  var TILE_COVER = 1;
+  var TILE_WALL = 2;
+  var HORROR_MAX = 3;
+  var ABILITY_LIMIT = 2;
+  var AI_DELAY = 420;
 
-    const STAT_TABLE = Object.fromEntries(DATA.stats.map(s => [String(s.stat).toLowerCase(), s]));
-    const rangedWeapons = DATA.ranged_weapons.slice();
-    const meleeWeapons = DATA.melee_weapons.slice();
-    const abilities = DATA.abilities.slice();
+  var STAT_TABLE = {};
+  var i;
+  for (i = 0; i < DATA.stats.length; i++) {
+    STAT_TABLE[String(DATA.stats[i].stat).toLowerCase()] = DATA.stats[i];
+  }
 
-    let nextId = 1;
-    let logCount = 0;
-    let aiTimer = null;
+  var rangedWeapons = DATA.ranged_weapons.slice();
+  var meleeWeapons = DATA.melee_weapons.slice();
+  var abilities = DATA.abilities.slice();
 
-    const state = {
-      board: [],
-      round: 1,
-      blueRoll: null,
-      redRoll: null,
-      activeTeam: null,
-      awaitingOrderChoice: false,
-      selectedId: null,
-      activeId: null,
-      hoverId: null,
-      phase: 'idle',
-      pendingAction: null,
-      moveRemaining: 0,
-      movedThisActivation: false,
-      phaseSerial: 1,
-      lastLogLine: '—',
-      aiTargetId: null,
-      teams: {
-        Blue: { name: 'Blue Warband', models: [] },
-        Red: { name: 'Red Warband', models: [] }
-      }
-    };
+  var nextId = 1;
+  var logCount = 0;
+  var aiTimer = null;
 
-    function toIntOrNull(v){
-      if (v === null || v === undefined) return null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
+  var state = {
+    board: [],
+    round: 1,
+    blueRoll: null,
+    redRoll: null,
+    activeTeam: null,
+    awaitingOrderChoice: false,
+    selectedId: null,
+    activeId: null,
+    hoverId: null,
+    phase: 'idle',
+    pendingAction: null,
+    moveRemaining: 0,
+    movedThisActivation: false,
+    phaseSerial: 1,
+    aiTargetId: null,
+    teams: {
+      Blue: { name: 'Blue Warband', models: [] },
+      Red: { name: 'Red Warband', models: [] }
     }
+  };
 
-    function clamp(n, min, max){
-      return Math.max(min, Math.min(max, n));
-    }
-
-    function rollD6(){
-      return Math.floor(Math.random() * 6) + 1;
-    }
-
-    function pick(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function shuffle(arr){
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
-    function itemPoints(obj){
-      return toIntOrNull(obj && obj.points) || 0;
-    }
-
-    function fmtSigned(n){
-      return n >= 0 ? '+' + n : String(n);
-    }
-
-    function getStatTierEntry(statKey, tier){
-      const table = STAT_TABLE[String(statKey).toLowerCase()];
-      if (!table) return null;
-      return table.tiers.find(t => Number(t.tier) === Number(tier)) || table.tiers[0] || null;
-    }
-
-    function moveTiles(model){
-      return clamp(Number(model.moveTier) || 1, 1, 3);
-    }
-
-    function defenseMod(model){
-      const e = getStatTierEntry('defense', model.defenseTier);
-      return Number(e ? e.value : -2);
-    }
-
-    function shootMod(model){
-      const e = getStatTierEntry('shoot', model.shootTier);
-      return Number(e ? e.value : -2);
-    }
-
-    function fightMod(model){
-      const e = getStatTierEntry('fight', model.fightTier);
-      return Number(e ? e.value : -2);
-    }
-
-    function woundsMax(model){
-      return 4 + clamp(Number(model.defenseTier) || 1, 1, 3);
-    }
-
-    function horrorPenalty(model){
-      return clamp(Number(model.horror) || 0, 0, HORROR_MAX);
-    }
-
-    function statPointsCost(memberLike){
-      return (
-        itemPoints(getStatTierEntry('move', memberLike.moveTier)) +
-        itemPoints(getStatTierEntry('defense', memberLike.defenseTier)) +
-        itemPoints(getStatTierEntry('shoot', memberLike.shootTier)) +
-        itemPoints(getStatTierEntry('fight', memberLike.fightTier))
-      );
-    }
-
-    function getRanged(model){
-      return model.rangedIdx === '' || model.rangedIdx == null ? null : (rangedWeapons[Number(model.rangedIdx)] || null);
-    }
-
-    function getMelee(model){
-      return model.meleeIdx === '' || model.meleeIdx == null ? null : (meleeWeapons[Number(model.meleeIdx)] || null);
-    }
-
-    function getAbilities(model){
-      return (model.abilityIdx || []).map(i => abilities[Number(i)]).filter(Boolean);
-    }
-
-    function createModel(team, payload, index){
-      const m = {
-        id: 'm' + (nextId++),
-        team: team,
-        role: payload && payload.role ? payload.role : ('Model ' + (index + 1)),
-        name: String((payload && payload.name) || (team + ' ' + (index + 1))),
-        moveTier: clamp(toIntOrNull(payload && (payload.move ?? payload.moveTier)) || 1, 1, 3),
-        defenseTier: clamp(toIntOrNull(payload && (payload.defense ?? payload.defenseTier)) || 1, 1, 3),
-        shootTier: clamp(toIntOrNull(payload && (payload.shoot ?? payload.shootTier)) || 1, 1, 3),
-        fightTier: clamp(toIntOrNull(payload && (payload.fight ?? payload.fightTier)) || 1, 1, 3),
-        rangedIdx: payload && !(payload.rangedIdx === '' || payload.rangedIdx == null) ? String(payload.rangedIdx) : '',
-        meleeIdx: payload && !(payload.meleeIdx === '' || payload.meleeIdx == null) ? String(payload.meleeIdx) : '',
-        abilityIdx: Array.isArray(payload && payload.abilityIdx) ? payload.abilityIdx.map(Number).filter(Number.isFinite).slice(0, ABILITY_LIMIT) : [],
-        wounds: 0,
-        horror: clamp(toIntOrNull(payload && payload.horror) || 0, 0, HORROR_MAX),
-        down: false,
-        removed: false,
-        exhausted: false,
-        abilityUsed: false,
-        tx: 0,
-        ty: 0,
-        phaseTag: 0
-      };
-      const importedWounds = toIntOrNull(payload && payload.woundsCurrent);
-      const maxW = woundsMax(m);
-      m.wounds = importedWounds === null ? maxW : clamp(importedWounds, 0, maxW);
-      m.down = m.wounds <= 0;
-      return m;
-    }
-
-    const SILLY_FIRST = ['Bob','Smokey','Gummy','Fizzy','Cranky','Spicy','Wobble','Soggy','Porkchop','Mister','Doctor','Grub','Biscuit','Doodle','Noodle','Pickle','Beans','Honk','Goober','Zappy','Moldy','Captain'];
-    const SILLY_LAST = ['the Blob','the Bear','the Unwise','the Damp','the Loud','the Unforgiven','the Greasy','the Gentle','the Infinite','the Suspicious','the Mildly Haunted','the Crunchy','the Misplaced','the Wretched','of Westchester','of the Sewer','from Accounting','the Knife-Collector','the Rust King','the Moon-Licker'];
-    const WARBAND_PREFIX = ['The','The Honorable','The Questionable','The Blessed','The Cursed','The Extremely Normal'];
-    const WARBAND_ADJ = ['Quawb','Sewer','Gutter','Moon','Rust','Mold','Neon','Bone','Goo','Ferret','Goblin','Liminal'];
-    const WARBAND_NOUN = ['Cult','Union','Cabal','Choir','Committee','Collective','Crew','Squad','Coven','Congregation','Society'];
-
-    function randomWarbandName(){
-      return pick(WARBAND_PREFIX) + ' ' + pick(WARBAND_ADJ) + ' ' + pick(WARBAND_NOUN);
-    }
-
-    function randomModelName(){
-      return pick(SILLY_FIRST) + ' ' + pick(SILLY_LAST);
-    }
-
-    function randomizeMemberLoadout(member, budget){
-      member.moveTier = 1;
-      member.defenseTier = 1;
-      member.shootTier = 1;
-      member.fightTier = 1;
-      member.rangedIdx = '';
-      member.meleeIdx = '';
-      member.abilityIdx = [];
-      member.name = randomModelName();
-
-      const remaining = () => budget - (statPointsCost(member) + itemPoints(getRanged(member)) + itemPoints(getMelee(member)));
-
-      const rangedChoices = rangedWeapons.map((w,i) => ({w,i})).filter(x => itemPoints(x.w) <= remaining());
-      if (rangedChoices.length) member.rangedIdx = String(pick(rangedChoices).i);
-
-      const meleeChoices = meleeWeapons.map((w,i) => ({w,i})).filter(x => itemPoints(x.w) <= remaining());
-      if (meleeChoices.length) member.meleeIdx = String(pick(meleeChoices).i);
-
-      member.abilityIdx = shuffle(abilities.map((_,i) => i)).slice(0, ABILITY_LIMIT);
-
-      const upgrades = ['moveTier','defenseTier','shootTier','fightTier'];
-      let safety = 40;
-      while (safety-- > 0) {
-        const valid = shuffle(upgrades).filter(key => {
-          const statKey = key.replace('Tier','');
-          const cur = Number(member[key]) || 1;
-          if (cur >= 3) return false;
-          const nowPts = itemPoints(getStatTierEntry(statKey, cur));
-          const nextPts = itemPoints(getStatTierEntry(statKey, cur + 1));
-          return (nextPts - nowPts) <= remaining();
-        });
-        if (!valid.length) break;
-        const key = pick(valid);
-        member[key] = (Number(member[key]) || 1) + 1;
-      }
-
-      member.wounds = woundsMax(member);
-      member.horror = 0;
-      member.down = false;
-      member.removed = false;
-      member.exhausted = false;
-      member.abilityUsed = false;
-    }
-
-    function makeRandomTeam(team){
-      const models = Array.from({length:5}, (_,i) => createModel(team, {}, i));
-      models.forEach(m => randomizeMemberLoadout(m, 15));
-      state.teams[team].name = randomWarbandName();
-      state.teams[team].models = models;
-    }
-
-    function parseWarbandJson(raw){
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.members)) {
-        throw new Error('Expected a builder warband object with members[].');
-      }
-      return parsed;
-    }
-
-    function loadTeamFromBuilderObject(team, wb){
-      const visibleMembers = wb.members.filter(Boolean).filter(m => !m.hidden).slice(0, 5);
-      if (!visibleMembers.length) throw new Error('No visible members found in warband.');
-      const models = visibleMembers.map((m,i) => createModel(team, m, i));
-      state.teams[team].name = String(wb.name || (team + ' Warband'));
-      state.teams[team].models = models;
-      logLine(team + ' loaded: ' + state.teams[team].name + ' (' + models.length + ' models).');
-    }
-
-    function getAllModels(){
-      return state.teams.Blue.models.concat(state.teams.Red.models);
-    }
-
-    function getLivingModels(team){
-      return getAllModels().filter(m => !m.removed && (!team || m.team === team));
-    }
-
-    function getModel(id){
-      return getAllModels().find(m => m.id === id) || null;
-    }
-
-    function getSelected(){
-      return getModel(state.selectedId);
-    }
-
-    function getActive(){
-      return getModel(state.activeId);
-    }
-
-    function hasUnexhausted(team){
-      return getLivingModels(team).some(m => !m.exhausted);
-    }
-
-    function firstUnexhausted(team){
-      return getLivingModels(team).find(m => !m.exhausted) || null;
-    }
-
-    function enemyTeam(team){
-      return team === TEAM_BLUE ? TEAM_RED : TEAM_BLUE;
-    }
-
-    function isWithinGrid(x,y){
-      return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
-    }
-
-    function chebDist(ax, ay, bx, by){
-      return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
-    }
-
-    function tileAt(x,y){
-      return (state.board[y] && state.board[y][x]) || TILE_EMPTY;
-    }
-
-    function isOccupied(x,y,ignoreId){
-      return getLivingModels().some(m => m.id !== ignoreId && m.tx === x && m.ty === y);
-    }
-
-    function isAdjacent(a,b){
-      return chebDist(a.tx, a.ty, b.tx, b.ty) === 1;
-    }
-
-    function inCombat(model){
-      if (!model || model.removed) return false;
-      return getLivingModels(enemyTeam(model.team)).some(e => isAdjacent(model, e));
-    }
-
-    function canStandOn(x,y,ignoreId){
-      if (!isWithinGrid(x,y)) return false;
-      if (tileAt(x,y) === TILE_WALL) return false;
-      if (isOccupied(x,y,ignoreId)) return false;
-      return true;
-    }
-
-    function bresenham(x0,y0,x1,y1){
-      const pts = [];
-      let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-      let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-      let err = dx + dy;
-      let x = x0, y = y0;
-      while (true) {
-        pts.push([x,y]);
-        if (x === x1 && y === y1) break;
-        const e2 = 2 * err;
-        if (e2 >= dy) { err += dy; x += sx; }
-        if (e2 <= dx) { err += dx; y += sy; }
-      }
-      return pts;
-    }
-
-    function lineOfSight(ax, ay, bx, by){
-      const pts = bresenham(ax, ay, bx, by);
-      let passesCover = false;
-      for (let i = 1; i < pts.length - 1; i++) {
-        const x = pts[i][0];
-        const y = pts[i][1];
-        const t = tileAt(x, y);
-        if (t === TILE_WALL) return { ok:false, passesCover:false };
-        if (t === TILE_COVER) passesCover = true;
-      }
-      return { ok:true, passesCover:passesCover };
-    }
-
-    function nearTerrain(x,y){
-      for (let oy = -1; oy <= 1; oy++) {
-        for (let ox = -1; ox <= 1; ox++) {
-          if (ox === 0 && oy === 0) continue;
-          const nx = x + ox;
-          const ny = y + oy;
-          if (!isWithinGrid(nx, ny)) continue;
-          const t = tileAt(nx, ny);
-          if (t === TILE_COVER || t === TILE_WALL) return true;
-        }
-      }
-      return false;
-    }
-
-    function targetHasPartialConcealment(defender, attacker){
-      if (tileAt(defender.tx, defender.ty) === TILE_COVER) return true;
-      if (nearTerrain(defender.tx, defender.ty)) return true;
-      const los = lineOfSight(attacker.tx, attacker.ty, defender.tx, defender.ty);
-      return los.passesCover;
-    }
-
-    function coverBonus(defender, attacker, mode){
-      if (mode !== 'ranged') return 0;
-      const longRange = chebDist(attacker.tx, attacker.ty, defender.tx, defender.ty) > 3;
-      const partial = targetHasPartialConcealment(defender, attacker);
-      return (longRange || partial) ? 1 : 0;
-    }
-
-    function analyzeAttack(attacker, target){
-      if (!attacker || !target || attacker.removed || target.removed) return { ok:false, reason:'invalid' };
-      if (attacker.team === target.team) return { ok:false, reason:'friendly' };
-
-      const melee = getMelee(attacker) || { name:'Unarmed', attacks:1, damage:1, effect:'' };
-      const ranged = getRanged(attacker);
-      const attackerInCombat = inCombat(attacker);
-      const targetInCombat = inCombat(target);
-      const adjacent = isAdjacent(attacker, target);
-
-      if (adjacent) {
-        return { ok:true, mode:'melee', weapon:melee, cover:0 };
-      }
-      if (attackerInCombat || targetInCombat) return { ok:false, reason:'combat-lock' };
-      if (!ranged) return { ok:false, reason:'no-ranged' };
-      const los = lineOfSight(attacker.tx, attacker.ty, target.tx, target.ty);
-      if (!los.ok) return { ok:false, reason:'no-los' };
-      const cover = coverBonus(target, attacker, 'ranged');
-      return { ok:true, mode:'ranged', weapon:ranged, cover:cover };
-    }
-
-    function newRandomMap(){
-      state.board = Array.from({length:GRID_H}, () => Array.from({length:GRID_W}, () => TILE_EMPTY));
-      for (let y = 0; y < GRID_H; y++) {
-        for (let x = 1; x < GRID_W - 1; x++) {
-          const r = Math.random();
-          if (r < 0.07) state.board[y][x] = TILE_WALL;
-          else if (r < 0.20) state.board[y][x] = TILE_COVER;
-        }
-      }
-      logLine('New map generated.');
-    }
-
-    function deployTeam(team){
-      const models = state.teams[team].models;
-      const rows = shuffle(Array.from({length:GRID_H}, (_,i) => i));
-      const col = team === TEAM_BLUE ? 0 : GRID_W - 1;
-      let idx = 0;
-      for (const model of models) {
-        let placed = false;
-        for (const y of rows) {
-          if (canStandOn(col, y, model.id)) {
-            model.tx = col;
-            model.ty = y;
-            placed = true;
-            break;
-          }
-        }
-        if (!placed) {
-          model.tx = col;
-          model.ty = idx % GRID_H;
-        }
-        idx++;
-      }
-    }
-
-    function clearAITimer(){
-      clearTimeout(aiTimer);
-      aiTimer = null;
-      state.aiTargetId = null;
-    }
-
-    function fullResetState(){
-      clearAITimer();
-      logCount = 0;
-      ui.log.textContent = '';
-
-      if (!state.teams.Blue.models.length) makeRandomTeam(TEAM_BLUE);
-      if (!state.teams.Red.models.length) makeRandomTeam(TEAM_RED);
-
-      getAllModels().forEach(m => {
-        m.wounds = woundsMax(m);
-        m.horror = 0;
-        m.down = false;
-        m.removed = false;
-        m.exhausted = false;
-        m.abilityUsed = false;
-        m.phaseTag = 0;
-      });
-
-      state.round = 1;
-      state.blueRoll = null;
-      state.redRoll = null;
-      state.activeTeam = null;
-      state.awaitingOrderChoice = false;
-      state.selectedId = null;
-      state.activeId = null;
-      state.hoverId = null;
-      state.phase = 'idle';
-      state.pendingAction = null;
-      state.moveRemaining = 0;
-      state.movedThisActivation = false;
-      state.phaseSerial = 1;
-      state.lastLogLine = '—';
-      state.aiTargetId = null;
-
-      deployTeam(TEAM_BLUE);
-      deployTeam(TEAM_RED);
-      rollInitiativeForRound();
-      renderAll();
-    }
-
-    function logLine(msg){
-      logCount += 1;
-      state.lastLogLine = msg;
-      ui.log.textContent += String(logCount).padStart(3,'0') + '. ' + msg + '
+  function showError(msg) {
+    if (ui.lastLogBar) ui.lastLogBar.textContent = msg;
+    if (ui.log) ui.log.textContent += 'ERROR: ' + msg + '
 ';
-      ui.log.scrollTop = ui.log.scrollHeight;
-      ui.lastLogBar.textContent = msg;
+  }
+
+  window.onerror = function (message, source, lineno) {
+    showError('JS error: ' + message + ' (line ' + lineno + ')');
+    return false;
+  };
+
+  function toIntOrNull(v) {
+    if (v === null || v === undefined) return null;
+    var n = Number(v);
+    return isFinite(n) ? n : null;
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function rollD6() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    var j, t;
+    for (var k = a.length - 1; k > 0; k--) {
+      j = Math.floor(Math.random() * (k + 1));
+      t = a[k];
+      a[k] = a[j];
+      a[j] = t;
+    }
+    return a;
+  }
+
+  function itemPoints(obj) {
+    return toIntOrNull(obj && obj.points) || 0;
+  }
+
+  function fmtSigned(n) {
+    return n >= 0 ? ('+' + n) : String(n);
+  }
+
+  function getStatTierEntry(statKey, tier) {
+    var table = STAT_TABLE[String(statKey).toLowerCase()];
+    var t;
+    if (!table) return null;
+    for (t = 0; t < table.tiers.length; t++) {
+      if (Number(table.tiers[t].tier) === Number(tier)) return table.tiers[t];
+    }
+    return table.tiers[0] || null;
+  }
+
+  function moveTiles(model) {
+    return clamp(Number(model.moveTier) || 1, 1, 3);
+  }
+
+  function defenseMod(model) {
+    var e = getStatTierEntry('defense', model.defenseTier);
+    return Number(e ? e.value : -2);
+  }
+
+  function shootMod(model) {
+    var e = getStatTierEntry('shoot', model.shootTier);
+    return Number(e ? e.value : -2);
+  }
+
+  function fightMod(model) {
+    var e = getStatTierEntry('fight', model.fightTier);
+    return Number(e ? e.value : -2);
+  }
+
+  function woundsMax(model) {
+    return 4 + clamp(Number(model.defenseTier) || 1, 1, 3);
+  }
+
+  function horrorPenalty(model) {
+    return clamp(Number(model.horror) || 0, 0, HORROR_MAX);
+  }
+
+  function statPointsCost(model) {
+    return itemPoints(getStatTierEntry('move', model.moveTier)) +
+      itemPoints(getStatTierEntry('defense', model.defenseTier)) +
+      itemPoints(getStatTierEntry('shoot', model.shootTier)) +
+      itemPoints(getStatTierEntry('fight', model.fightTier));
+  }
+
+  function getRanged(model) {
+    if (!model || model.rangedIdx === '' || model.rangedIdx === null || model.rangedIdx === undefined) return null;
+    return rangedWeapons[Number(model.rangedIdx)] || null;
+  }
+
+  function getMelee(model) {
+    if (!model || model.meleeIdx === '' || model.meleeIdx === null || model.meleeIdx === undefined) return null;
+    return meleeWeapons[Number(model.meleeIdx)] || null;
+  }
+
+  function getAbilities(model) {
+    var out = [];
+    var arr = model && model.abilityIdx ? model.abilityIdx : [];
+    for (var k = 0; k < arr.length; k++) {
+      if (abilities[Number(arr[k])]) out.push(abilities[Number(arr[k])]);
+    }
+    return out;
+  }
+
+  function makeDefaultBoard() {
+    var y, x, row, board = [];
+    for (y = 0; y < GRID_H; y++) {
+      row = [];
+      for (x = 0; x < GRID_W; x++) row.push(TILE_EMPTY);
+      board.push(row);
+    }
+    return board;
+  }
+
+  function createModel(team, payload, index) {
+    var moveVal = payload && payload.move !== undefined && payload.move !== null ? payload.move : (payload ? payload.moveTier : null);
+    var defVal = payload && payload.defense !== undefined && payload.defense !== null ? payload.defense : (payload ? payload.defenseTier : null);
+    var shootVal = payload && payload.shoot !== undefined && payload.shoot !== null ? payload.shoot : (payload ? payload.shootTier : null);
+    var fightVal = payload && payload.fight !== undefined && payload.fight !== null ? payload.fight : (payload ? payload.fightTier : null);
+    var m = {
+      id: 'm' + (nextId++),
+      team: team,
+      role: payload && payload.role ? payload.role : ('Model ' + (index + 1)),
+      name: String((payload && payload.name) || (team + ' ' + (index + 1))),
+      moveTier: clamp(toIntOrNull(moveVal) || 1, 1, 3),
+      defenseTier: clamp(toIntOrNull(defVal) || 1, 1, 3),
+      shootTier: clamp(toIntOrNull(shootVal) || 1, 1, 3),
+      fightTier: clamp(toIntOrNull(fightVal) || 1, 1, 3),
+      rangedIdx: (payload && !(payload.rangedIdx === '' || payload.rangedIdx === null || payload.rangedIdx === undefined)) ? String(payload.rangedIdx) : '',
+      meleeIdx: (payload && !(payload.meleeIdx === '' || payload.meleeIdx === null || payload.meleeIdx === undefined)) ? String(payload.meleeIdx) : '',
+      abilityIdx: Array.isArray(payload && payload.abilityIdx) ? payload.abilityIdx.map(Number).filter(function (n) { return isFinite(n); }).slice(0, ABILITY_LIMIT) : [],
+      wounds: 0,
+      horror: clamp(toIntOrNull(payload && payload.horror) || 0, 0, HORROR_MAX),
+      down: false,
+      removed: false,
+      exhausted: false,
+      abilityUsed: false,
+      tx: 0,
+      ty: 0,
+      phaseTag: 0
+    };
+    var importedWounds = toIntOrNull(payload && payload.woundsCurrent);
+    var maxW = woundsMax(m);
+    m.wounds = importedWounds === null ? maxW : clamp(importedWounds, 0, maxW);
+    m.down = m.wounds <= 0;
+    return m;
+  }
+
+  var SILLY_FIRST = ['Bob','Smokey','Gummy','Fizzy','Cranky','Spicy','Wobble','Soggy','Porkchop','Mister','Doctor','Grub','Biscuit','Doodle','Noodle','Pickle','Beans','Honk','Goober','Zappy','Moldy','Captain'];
+  var SILLY_LAST = ['the Blob','the Bear','the Unwise','the Damp','the Loud','the Unforgiven','the Greasy','the Gentle','the Infinite','the Suspicious','the Mildly Haunted','the Crunchy','the Misplaced','the Wretched','of Westchester','of the Sewer','from Accounting','the Knife-Collector','the Rust King','the Moon-Licker'];
+  var WARBAND_PREFIX = ['The','The Honorable','The Questionable','The Blessed','The Cursed','The Extremely Normal'];
+  var WARBAND_ADJ = ['Quawb','Sewer','Gutter','Moon','Rust','Mold','Neon','Bone','Goo','Ferret','Goblin','Liminal'];
+  var WARBAND_NOUN = ['Cult','Union','Cabal','Choir','Committee','Collective','Crew','Squad','Coven','Congregation','Society'];
+
+  function randomWarbandName() {
+    return pick(WARBAND_PREFIX) + ' ' + pick(WARBAND_ADJ) + ' ' + pick(WARBAND_NOUN);
+  }
+
+  function randomModelName() {
+    return pick(SILLY_FIRST) + ' ' + pick(SILLY_LAST);
+  }
+
+  function randomizeMemberLoadout(member, budget) {
+    member.moveTier = 1;
+    member.defenseTier = 1;
+    member.shootTier = 1;
+    member.fightTier = 1;
+    member.rangedIdx = '';
+    member.meleeIdx = '';
+    member.abilityIdx = [];
+    member.name = randomModelName();
+
+    function remaining() {
+      return budget - (statPointsCost(member) + itemPoints(getRanged(member)) + itemPoints(getMelee(member)));
     }
 
-    function rollInitiativeForRound(){
-      let blue = 0;
-      let red = 0;
-      while (blue === red) {
-        blue = rollD6();
-        red = rollD6();
-        if (blue === red) logLine('Round ' + state.round + ': Initiative tie (' + blue + '-' + red + '), reroll.');
+    var rangedChoices = [];
+    var meleeChoices = [];
+    var k, choice, upgrades, valid, key, statKey, cur, nowPts, nextPts;
+
+    for (k = 0; k < rangedWeapons.length; k++) {
+      if (itemPoints(rangedWeapons[k]) <= remaining()) rangedChoices.push({ i: k, w: rangedWeapons[k] });
+    }
+    if (rangedChoices.length) member.rangedIdx = String(pick(rangedChoices).i);
+
+    for (k = 0; k < meleeWeapons.length; k++) {
+      if (itemPoints(meleeWeapons[k]) <= remaining()) meleeChoices.push({ i: k, w: meleeWeapons[k] });
+    }
+    if (meleeChoices.length) member.meleeIdx = String(pick(meleeChoices).i);
+
+    var abilityPool = [];
+    for (k = 0; k < abilities.length; k++) abilityPool.push(k);
+    member.abilityIdx = shuffle(abilityPool).slice(0, ABILITY_LIMIT);
+
+    upgrades = ['moveTier','defenseTier','shootTier','fightTier'];
+    var safety = 40;
+    while (safety-- > 0) {
+      valid = [];
+      var shuffled = shuffle(upgrades);
+      for (k = 0; k < shuffled.length; k++) {
+        key = shuffled[k];
+        statKey = key.replace('Tier', '');
+        cur = Number(member[key]) || 1;
+        if (cur >= 3) continue;
+        nowPts = itemPoints(getStatTierEntry(statKey, cur));
+        nextPts = itemPoints(getStatTierEntry(statKey, cur + 1));
+        if ((nextPts - nowPts) <= remaining()) valid.push(key);
       }
-      state.blueRoll = blue;
-      state.redRoll = red;
-      state.activeId = null;
-      state.phase = 'idle';
-      state.pendingAction = null;
-      state.moveRemaining = 0;
-      state.movedThisActivation = false;
-      state.awaitingOrderChoice = false;
+      if (!valid.length) break;
+      choice = pick(valid);
+      member[choice] = (Number(member[choice]) || 1) + 1;
+    }
 
-      if (blue > red) {
-        state.awaitingOrderChoice = true;
-        state.activeTeam = null;
-        logLine('Round ' + state.round + ': Blue wins initiative (' + blue + ' vs ' + red + ') and may choose activation order.');
-      } else {
-        state.activeTeam = TEAM_RED;
-        logLine('Round ' + state.round + ': Red wins initiative (' + red + ' vs ' + blue + ') and goes first.');
-        queueRedAI();
+    member.wounds = woundsMax(member);
+    member.horror = 0;
+    member.down = false;
+    member.removed = false;
+    member.exhausted = false;
+    member.abilityUsed = false;
+  }
+
+  function makeRandomTeam(team) {
+    var models = [];
+    var k;
+    for (k = 0; k < 5; k++) models.push(createModel(team, {}, k));
+    for (k = 0; k < models.length; k++) randomizeMemberLoadout(models[k], 15);
+    state.teams[team].name = randomWarbandName();
+    state.teams[team].models = models;
+  }
+
+  function parseWarbandJson(raw) {
+    var parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.members)) {
+      throw new Error('Expected a builder warband object with members[].');
+    }
+    return parsed;
+  }
+
+  function loadTeamFromBuilderObject(team, wb) {
+    var visibleMembers = [];
+    var k, m, models = [];
+    for (k = 0; k < wb.members.length; k++) {
+      m = wb.members[k];
+      if (!m) continue;
+      if (m.hidden) continue;
+      visibleMembers.push(m);
+      if (visibleMembers.length >= 5) break;
+    }
+    if (!visibleMembers.length) throw new Error('No visible members found in warband.');
+    for (k = 0; k < visibleMembers.length; k++) models.push(createModel(team, visibleMembers[k], k));
+    state.teams[team].name = String(wb.name || (team + ' Warband'));
+    state.teams[team].models = models;
+    logLine(team + ' loaded: ' + state.teams[team].name + ' (' + models.length + ' models).');
+  }
+
+  function getAllModels() {
+    return state.teams.Blue.models.concat(state.teams.Red.models);
+  }
+
+  function getLivingModels(team) {
+    var arr = getAllModels();
+    var out = [];
+    var k, m;
+    for (k = 0; k < arr.length; k++) {
+      m = arr[k];
+      if (m.removed) continue;
+      if (team && m.team !== team) continue;
+      out.push(m);
+    }
+    return out;
+  }
+
+  function getModel(id) {
+    var arr = getAllModels();
+    for (var k = 0; k < arr.length; k++) {
+      if (arr[k].id === id) return arr[k];
+    }
+    return null;
+  }
+
+  function getSelected() { return getModel(state.selectedId); }
+  function getActive() { return getModel(state.activeId); }
+
+  function hasUnexhausted(team) {
+    var arr = getLivingModels(team);
+    for (var k = 0; k < arr.length; k++) if (!arr[k].exhausted) return true;
+    return false;
+  }
+
+  function firstUnexhausted(team) {
+    var arr = getLivingModels(team);
+    for (var k = 0; k < arr.length; k++) if (!arr[k].exhausted) return arr[k];
+    return null;
+  }
+
+  function enemyTeam(team) {
+    return team === TEAM_BLUE ? TEAM_RED : TEAM_BLUE;
+  }
+
+  function isWithinGrid(x, y) {
+    return x >= 0 && y >= 0 && x < GRID_W && y < GRID_H;
+  }
+
+  function chebDist(ax, ay, bx, by) {
+    return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+  }
+
+  function tileAt(x, y) {
+    if (!state.board[y]) return TILE_EMPTY;
+    return state.board[y][x];
+  }
+
+  function isOccupied(x, y, ignoreId) {
+    var arr = getLivingModels();
+    var k, m;
+    for (k = 0; k < arr.length; k++) {
+      m = arr[k];
+      if (m.id === ignoreId) continue;
+      if (m.tx === x && m.ty === y) return true;
+    }
+    return false;
+  }
+
+  function isAdjacent(a, b) {
+    return chebDist(a.tx, a.ty, b.tx, b.ty) === 1;
+  }
+
+  function inCombat(model) {
+    if (!model || model.removed) return false;
+    var enemies = getLivingModels(enemyTeam(model.team));
+    for (var k = 0; k < enemies.length; k++) {
+      if (isAdjacent(model, enemies[k])) return true;
+    }
+    return false;
+  }
+
+  function canStandOn(x, y, ignoreId) {
+    if (!isWithinGrid(x, y)) return false;
+    if (tileAt(x, y) === TILE_WALL) return false;
+    if (isOccupied(x, y, ignoreId)) return false;
+    return true;
+  }
+
+  function bresenham(x0, y0, x1, y1) {
+    var pts = [];
+    var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    var dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    var err = dx + dy;
+    var x = x0, y = y0, e2;
+    while (true) {
+      pts.push([x, y]);
+      if (x === x1 && y === y1) break;
+      e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x += sx; }
+      if (e2 <= dx) { err += dx; y += sy; }
+    }
+    return pts;
+  }
+
+  function lineOfSight(ax, ay, bx, by) {
+    var pts = bresenham(ax, ay, bx, by);
+    var passesCover = false;
+    var k, x, y, t;
+    for (k = 1; k < pts.length - 1; k++) {
+      x = pts[k][0];
+      y = pts[k][1];
+      t = tileAt(x, y);
+      if (t === TILE_WALL) return { ok: false, passesCover: false };
+      if (t === TILE_COVER) passesCover = true;
+    }
+    return { ok: true, passesCover: passesCover };
+  }
+
+  function nearTerrain(x, y) {
+    var ox, oy, nx, ny, t;
+    for (oy = -1; oy <= 1; oy++) {
+      for (ox = -1; ox <= 1; ox++) {
+        if (ox === 0 && oy === 0) continue;
+        nx = x + ox;
+        ny = y + oy;
+        if (!isWithinGrid(nx, ny)) continue;
+        t = tileAt(nx, ny);
+        if (t === TILE_COVER || t === TILE_WALL) return true;
       }
     }
+    return false;
+  }
 
-    function chooseFirstTeam(team){
-      state.awaitingOrderChoice = false;
-      state.activeTeam = team;
-      logLine('Round ' + state.round + ': ' + team + ' activates first.');
-      renderAll();
-      if (team === TEAM_RED) queueRedAI();
-    }
+  function targetHasPartialConcealment(defender, attacker) {
+    if (tileAt(defender.tx, defender.ty) === TILE_COVER) return true;
+    if (nearTerrain(defender.tx, defender.ty)) return true;
+    return lineOfSight(attacker.tx, attacker.ty, defender.tx, defender.ty).passesCover;
+  }
 
-    function nextRound(){
-      state.round += 1;
-      state.phaseSerial += 1;
-      getLivingModels().forEach(m => {
-        m.exhausted = false;
-        m.abilityUsed = false;
-        m.phaseTag = 0;
-      });
-      logLine('--- New Round: ' + state.round + ' ---');
-      rollInitiativeForRound();
-      renderAll();
-    }
+  function coverBonus(defender, attacker, mode) {
+    if (mode !== 'ranged') return 0;
+    var longRange = chebDist(attacker.tx, attacker.ty, defender.tx, defender.ty) > 3;
+    var partial = targetHasPartialConcealment(defender, attacker);
+    return (longRange || partial) ? 1 : 0;
+  }
 
-    function advanceTurnAfterActivation(endedTeam){
-      const other = enemyTeam(endedTeam);
-      const otherReady = hasUnexhausted(other);
-      const sameReady = hasUnexhausted(endedTeam);
+  function analyzeAttack(attacker, target) {
+    var melee, ranged, attackerInCombat, targetInCombat, adjacent, los, cover;
+    if (!attacker || !target || attacker.removed || target.removed) return { ok: false, reason: 'invalid' };
+    if (attacker.team === target.team) return { ok: false, reason: 'friendly' };
 
-      state.activeId = null;
-      state.phase = 'idle';
-      state.pendingAction = null;
-      state.moveRemaining = 0;
-      state.movedThisActivation = false;
-      state.aiTargetId = null;
+    melee = getMelee(attacker) || { name: 'Unarmed', attacks: 1, damage: 1, effect: '' };
+    ranged = getRanged(attacker);
+    attackerInCombat = inCombat(attacker);
+    targetInCombat = inCombat(target);
+    adjacent = isAdjacent(attacker, target);
 
-      if (getLivingModels(TEAM_BLUE).length === 0 || getLivingModels(TEAM_RED).length === 0) {
-        const winner = getLivingModels(TEAM_BLUE).length > 0 ? TEAM_BLUE : TEAM_RED;
-        logLine('*** ' + winner + ' wins. ***');
-        state.activeTeam = null;
-        renderAll();
-        return;
-      }
+    if (adjacent) return { ok: true, mode: 'melee', weapon: melee, cover: 0 };
+    if (attackerInCombat || targetInCombat) return { ok: false, reason: 'combat-lock' };
+    if (!ranged) return { ok: false, reason: 'no-ranged' };
+    los = lineOfSight(attacker.tx, attacker.ty, target.tx, target.ty);
+    if (!los.ok) return { ok: false, reason: 'no-los' };
+    cover = coverBonus(target, attacker, 'ranged');
+    return { ok: true, mode: 'ranged', weapon: ranged, cover: cover };
+  }
 
-      if (otherReady) {
-        state.activeTeam = other;
-      } else if (sameReady) {
-        state.activeTeam = endedTeam;
-      } else {
-        nextRound();
-        return;
-      }
+  function logLine(msg) {
+    logCount += 1;
+    ui.log.textContent += ('00' + logCount).slice(-3) + '. ' + msg + '
+';
+    ui.log.scrollTop = ui.log.scrollHeight;
+    ui.lastLogBar.textContent = msg;
+  }
 
-      renderAll();
-      if (state.activeTeam === TEAM_RED) queueRedAI();
-    }
-
-    function beginActivation(model){
-      if (!model || model.removed) return false;
-      if (state.awaitingOrderChoice) {
-        logLine('Choose first team before activating.');
-        return false;
-      }
-      if (state.activeTeam !== model.team) {
-        logLine('It is ' + (state.activeTeam || 'no one') + '\'s turn.');
-        return false;
-      }
-      if (state.activeId) {
-        logLine('Finish the current activation first.');
-        return false;
-      }
-      if (model.exhausted) {
-        logLine(model.name + ' is exhausted.');
-        return false;
-      }
-      state.activeId = model.id;
-      state.phase = 'move';
-      state.pendingAction = null;
-      state.moveRemaining = moveTiles(model);
-      state.movedThisActivation = false;
-      state.aiTargetId = null;
-      logLine(model.team + ' activates ' + model.name + ' (' + (state.moveRemaining * 5) + '" move).');
-      renderAll();
-      return true;
-    }
-
-    function endActivation(reason){
-      const active = getActive();
-      if (!active) return;
-      active.exhausted = true;
-      logLine(active.name + ' is exhausted' + (reason ? ' (' + reason + ')' : '') + '.');
-      advanceTurnAfterActivation(active.team);
-    }
-
-    function markAbilityUsed(){
-      const active = getActive();
-      if (!active) { logLine('No active model.'); return; }
-      if (active.abilityUsed) { logLine(active.name + ' already used an ability this round.'); return; }
-      active.abilityUsed = true;
-      const names = getAbilities(active).map(a => a.name).join(', ') || 'No listed abilities';
-      logLine(active.name + ' marks an ability as used. Tracked only (' + names + ').');
-      renderAll();
-    }
-
-    function standUpActive(){
-      const active = getActive();
-      if (!active) { logLine('No active model.'); return; }
-      if (state.phase !== 'move') { logLine('Stand Up must happen during the Move phase.'); return; }
-      if (!active.down) { logLine(active.name + ' is not Down.'); return; }
-      if (state.moveRemaining < 1) { logLine(active.name + ' does not have 5" left to stand up.'); return; }
-      active.down = false;
-      active.wounds = Math.max(active.wounds, 1);
-      state.moveRemaining -= 1;
-      state.movedThisActivation = true;
-      logLine(active.name + ' stands up, goes to 1 Wound, and spends 5" of Move.');
-      renderAll();
-    }
-
-    function recoverActive(){
-      const active = getActive();
-      if (!active) { logLine('No active model.'); return; }
-      if (state.phase !== 'move') { logLine('Recover must be chosen during the Move phase.'); return; }
-      if (state.movedThisActivation) { logLine('Recover cannot be used after moving this activation.'); return; }
-      active.horror = Math.max(0, active.horror - 1);
-      logLine(active.name + ' uses Recover and reduces Horror to ' + active.horror + '.');
-      endActivation('Recover');
-    }
-
-    function setPendingAction(action){
-      const active = getActive();
-      if (!active || active.team !== TEAM_BLUE) { logLine('Blue must have an active model first.'); return; }
-      if (state.phase === 'move' && (action === 'move' || action === 'disengage')) {
-        state.pendingAction = action;
-        logLine(action === 'move' ? 'Click a tile to move.' : 'Click a tile to disengage to.');
-        renderAll();
-        return;
-      }
-      if (state.phase === 'attack' && action === 'attack') {
-        if (active.down) { logLine(active.name + ' is Down and cannot attack.'); return; }
-        state.pendingAction = 'attack';
-        logLine('Click an enemy model to attack.');
-        renderAll();
-        return;
-      }
-      logLine('That action is not available right now.');
-    }
-
-    function doneMoving(){
-      const active = getActive();
-      if (!active) { logLine('No active model.'); return; }
-      if (state.phase !== 'move') { logLine('You are already past the Move phase.'); return; }
-      state.phase = 'attack';
-      state.pendingAction = null;
-      logLine(active.name + ' ends the Move phase.');
-      renderAll();
-    }
-
-    function resolveMoveTo(x,y){
-      const active = getActive();
-      if (!active) return;
-      if (state.phase !== 'move' || state.pendingAction !== 'move') return;
-      if (active.down) { logLine(active.name + ' is Down and cannot move until it stands.'); return; }
-      const dist = chebDist(active.tx, active.ty, x, y);
-      if (dist < 1) { logLine('Pick a different tile.'); return; }
-      if (dist > state.moveRemaining) { logLine('Too far. ' + active.name + ' has ' + (state.moveRemaining * 5) + '" left.'); return; }
-      if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
-      active.tx = x;
-      active.ty = y;
-      state.moveRemaining -= dist;
-      state.movedThisActivation = true;
-      state.pendingAction = null;
-      logLine(active.name + ' moves ' + (dist * 5) + '".');
-      renderAll();
-    }
-
-    function resolveDisengageTo(x,y){
-      const active = getActive();
-      if (!active) return;
-      if (state.phase !== 'move' || state.pendingAction !== 'disengage') return;
-      if (!inCombat(active)) { logLine(active.name + ' is not in combat.'); return; }
-      if (moveTiles(active) < 2) { logLine('Disengage requires Move Tier 2.'); return; }
-      if (state.moveRemaining < 2) { logLine('Need 10" of Move left to Disengage.'); return; }
-      const dist = chebDist(active.tx, active.ty, x, y);
-      if (dist !== 1) { logLine('Disengage moves exactly 5" (1 tile).'); return; }
-      if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
-      const stillEngaged = getLivingModels(enemyTeam(active.team)).some(e => chebDist(x, y, e.tx, e.ty) === 1);
-      if (stillEngaged) { logLine('Disengage must end out of combat.'); return; }
-      active.tx = x;
-      active.ty = y;
-      state.moveRemaining -= 2;
-      state.movedThisActivation = true;
-      state.pendingAction = null;
-      logLine(active.name + ' disengages 5" and spends 10" of Move.');
-      renderAll();
-    }
-
-    function removeModel(model){
-      model.removed = true;
-      logLine(model.name + ' is removed from play.');
-      if (state.selectedId === model.id) state.selectedId = null;
-      if (state.hoverId === model.id) state.hoverId = null;
-    }
-
-    function applyDamage(target, amount){
-      if (target.removed || amount <= 0) return;
-      if (target.down && target.wounds === 0) {
-        logLine(target.name + ' was hit while Down.');
-        removeModel(target);
-        return;
-      }
-      const before = target.wounds;
-      target.wounds = Math.max(0, target.wounds - amount);
-      logLine(target.name + ' takes ' + amount + ' damage (' + before + ' → ' + target.wounds + ').');
-      if (target.wounds <= 0) {
-        target.wounds = 0;
-        target.down = true;
-        logLine(target.name + ' becomes Down at 0 Wounds.');
+  function newRandomMap() {
+    var y, x, r;
+    state.board = makeDefaultBoard();
+    for (y = 0; y < GRID_H; y++) {
+      for (x = 1; x < GRID_W - 1; x++) {
+        r = Math.random();
+        if (r < 0.07) state.board[y][x] = TILE_WALL;
+        else if (r < 0.20) state.board[y][x] = TILE_COVER;
       }
     }
+    logLine('New map generated.');
+  }
 
-    function applyHitEffects(attacker, target, weapon){
-      const txt = String((weapon && weapon.effect) || '').toLowerCase();
-      if (!txt) return;
-      if (txt.includes('down') && !target.removed) {
-        target.down = true;
-        logLine(target.name + ' is knocked Down by ' + weapon.name + '.');
+  function deployTeam(team) {
+    var models = state.teams[team].models;
+    var rows = [];
+    var col = team === TEAM_BLUE ? 0 : GRID_W - 1;
+    var k, y, placed, idx = 0;
+    for (y = 0; y < GRID_H; y++) rows.push(y);
+    rows = shuffle(rows);
+
+    for (k = 0; k < models.length; k++) {
+      placed = false;
+      for (var r = 0; r < rows.length; r++) {
+        y = rows[r];
+        if (canStandOn(col, y, models[k].id)) {
+          models[k].tx = col;
+          models[k].ty = y;
+          placed = true;
+          break;
+        }
       }
-      if (txt.includes('horror') && !target.removed) {
-        if (target.phaseTag !== state.phaseSerial) {
-          target.phaseTag = state.phaseSerial;
-          const before = target.horror;
-          target.horror = Math.min(HORROR_MAX, target.horror + 1);
-          if (target.horror > before) logLine(target.name + ' gains 1 Horror (' + target.horror + '/' + HORROR_MAX + ').');
-          else logLine(target.name + ' would gain Horror, but is already at the cap.');
-        } else {
-          logLine(target.name + ' cannot gain more than 1 Horror this phase.');
+      if (!placed) {
+        models[k].tx = col;
+        models[k].ty = idx % GRID_H;
+      }
+      idx++;
+    }
+  }
+
+  function clearAITimer() {
+    clearTimeout(aiTimer);
+    aiTimer = null;
+    state.aiTargetId = null;
+  }
+
+  function drawBoard() {
+    var x, y, t, active, models, m, cx, cy, r, p;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'rgba(37,99,235,0.06)';
+    ctx.fillRect(0, 0, TILE, GRID_H * TILE);
+    ctx.fillStyle = 'rgba(220,38,38,0.06)';
+    ctx.fillRect((GRID_W - 1) * TILE, 0, TILE, GRID_H * TILE);
+
+    for (y = 0; y < GRID_H; y++) {
+      for (x = 0; x < GRID_W; x++) {
+        t = tileAt(x, y);
+        if (t === TILE_COVER) {
+          ctx.fillStyle = '#dddddd';
+          ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+        } else if (t === TILE_WALL) {
+          ctx.fillStyle = '#7a7a7a';
+          ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
         }
       }
     }
 
-    function resolveAttack(attacker, target, fromAI){
-      if (!attacker || !target || attacker.removed || target.removed) return false;
-      const info = analyzeAttack(attacker, target);
-      if (!info.ok) {
-        const reasonMap = {
-          'combat-lock':'Cannot shoot into or out of combat.',
-          'no-ranged': attacker.name + ' has no ranged weapon.',
-          'no-los': attacker.name + ' does not have line of sight.'
-        };
-        logLine(reasonMap[info.reason] || 'Illegal attack.');
-        return false;
-      }
-      if (state.phase !== 'attack' && !fromAI) { logLine('You are not in the Attack phase.'); return false; }
-      if (attacker.down) { logLine(attacker.name + ' is Down and cannot attack.'); return false; }
+    active = getActive();
+    if (active && state.phase === 'move') drawMoveHighlights(active);
+    if (active && state.phase === 'attack' && state.pendingAction === 'attack' && active.team === TEAM_BLUE) drawAttackHighlights(active);
 
-      const weapon = info.weapon;
-      const attackCount = Math.max(1, Number(weapon.attacks) || 1);
-      const damage = Math.max(1, Number(weapon.damage) || 1);
-      const attackMod = (info.mode === 'ranged' ? shootMod(attacker) : fightMod(attacker)) - horrorPenalty(attacker);
-      const defenseBase = defenseMod(target) + (target.down ? -1 : 0) + info.cover;
-
-      logLine(attacker.name + ' attacks ' + target.name + ' with ' + weapon.name + ' (' + info.mode + ', ' + attackCount + 'A/' + damage + 'D).');
-      if (info.cover) logLine(target.name + ' gets +' + info.cover + ' Defense from cover.');
-
-      for (let i = 1; i <= attackCount; i++) {
-        if (target.removed) break;
-
-        const atkRaw = rollD6();
-        if (atkRaw === 1) {
-          logLine('  Attack ' + i + ': natural 1 miss.');
-          continue;
-        }
-        if (atkRaw === 6) {
-          logLine('  Attack ' + i + ': natural 6 critical hit. No defense roll.');
-          applyDamage(target, damage);
-          applyHitEffects(attacker, target, weapon);
-          continue;
-        }
-
-        const atkTotal = atkRaw + attackMod;
-        const defRaw = rollD6();
-
-        if (defRaw === 6) {
-          logLine('  Attack ' + i + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + '. Defense natural 6 auto-saves.');
-          continue;
-        }
-
-        const defTotal = defRaw + defenseBase;
-        logLine('  Attack ' + i + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + ' vs defense ' + defRaw + fmtSigned(defenseBase) + ' = ' + defTotal + '.');
-
-        if (defTotal > atkTotal) {
-          logLine('    Saved.');
-          continue;
-        }
-
-        logLine('    Hit.');
-        applyDamage(target, damage);
-        applyHitEffects(attacker, target, weapon);
-      }
-
-      if (!fromAI) {
-        state.pendingAction = null;
-        endActivation('Attack complete');
-      }
-      return true;
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 1;
+    for (x = 0; x <= GRID_W; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * TILE, 0);
+      ctx.lineTo(x * TILE, GRID_H * TILE);
+      ctx.stroke();
+    }
+    for (y = 0; y <= GRID_H; y++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y * TILE);
+      ctx.lineTo(GRID_W * TILE, y * TILE);
+      ctx.stroke();
     }
 
-    function nearestEnemy(model){
-      const enemies = getLivingModels(enemyTeam(model.team));
-      if (!enemies.length) return null;
-      return enemies.slice().sort((a,b) => chebDist(model.tx, model.ty, a.tx, a.ty) - chebDist(model.tx, model.ty, b.tx, b.ty))[0] || null;
-    }
+    models = getLivingModels();
+    for (p = 0; p < models.length; p++) {
+      m = models[p];
+      cx = m.tx * TILE + TILE / 2;
+      cy = m.ty * TILE + TILE / 2;
+      r = TILE * 0.27;
 
-    function chooseAttackTargetForAI(attacker){
-      const enemies = getLivingModels(enemyTeam(attacker.team));
-      if (!enemies.length) return null;
-      const legal = enemies.map(e => ({e:e, info:analyzeAttack(attacker, e)})).filter(x => x.info.ok);
-      if (!legal.length) return null;
-      legal.sort((a,b) => {
-        if (a.info.mode !== b.info.mode) return a.info.mode === 'melee' ? -1 : 1;
-        const aw = a.e.down ? 0 : a.e.wounds;
-        const bw = b.e.down ? 0 : b.e.wounds;
-        if (aw !== bw) return aw - bw;
-        return chebDist(attacker.tx, attacker.ty, a.e.tx, a.e.ty) - chebDist(attacker.tx, attacker.ty, b.e.tx, b.e.ty);
-      });
-      return legal[0].e;
-    }
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = m.team === TEAM_BLUE ? '#2563eb' : '#dc2626';
+      ctx.fill();
 
-    function scoreTileForAI(x,y,model,target){
-      const dist = chebDist(x, y, target.tx, target.ty);
-      let score = dist * 20;
-      if (tileAt(x, y) === TILE_COVER) score -= 7;
-      else if (nearTerrain(x, y)) score -= 3;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#111111';
+      if (m.id === state.hoverId) { ctx.lineWidth = 5; ctx.strokeStyle = '#f59e0b'; }
+      if (m.id === state.selectedId) { ctx.lineWidth = 4; ctx.strokeStyle = '#111111'; }
+      if (m.id === state.activeId) { ctx.lineWidth = 5; ctx.strokeStyle = '#16a34a'; }
+      if (m.id === state.aiTargetId) { ctx.lineWidth = 5; ctx.strokeStyle = '#d97706'; }
+      ctx.stroke();
 
-      const fake = { ...model, tx:x, ty:y };
-      const attackInfo = analyzeAttack(fake, target);
-      if (attackInfo.ok) {
-        if (attackInfo.mode === 'melee') score -= 8;
-        if (attackInfo.mode === 'ranged') score -= 5;
-        if (attackInfo.cover > 0) score -= 2;
+      if (m.down) {
+        ctx.strokeStyle = '#111111';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx - 14, cy - 14);
+        ctx.lineTo(cx + 14, cy + 14);
+        ctx.moveTo(cx + 14, cy - 14);
+        ctx.lineTo(cx - 14, cy + 14);
+        ctx.stroke();
       }
-      return score;
-    }
 
-    function chooseAIStep(model, target){
-      const options = [];
-      for (let oy = -1; oy <= 1; oy++) {
-        for (let ox = -1; ox <= 1; ox++) {
-          if (ox === 0 && oy === 0) continue;
-          const nx = model.tx + ox;
-          const ny = model.ty + oy;
-          if (!canStandOn(nx, ny, model.id)) continue;
-          options.push({ x:nx, y:ny, score:scoreTileForAI(nx, ny, model, target) });
+      if (m.exhausted) {
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(cx - 14, cy - r - 12, 28, 4);
+      }
+
+      if (m.abilityUsed) {
+        ctx.fillStyle = 'rgba(245,158,11,0.95)';
+        ctx.beginPath();
+        ctx.arc(cx + 18, cy - 18, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (m.horror > 0) {
+        ctx.fillStyle = 'rgba(139,92,246,0.95)';
+        for (var h = 0; h < m.horror; h++) {
+          ctx.beginPath();
+          ctx.arc(cx - 10 + h * 10, cy + r + 11, 3.4, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
-      if (!options.length) return null;
-      options.sort((a,b) => a.score - b.score);
-      const best = options[0];
-      const currentScore = scoreTileForAI(model.tx, model.ty, model, target);
-      if (best.score > currentScore + 2) return null;
-      return best;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(m.wounds), cx, cy);
     }
+  }
 
-    function queueRedAI(){
-      clearAITimer();
-      aiTimer = setTimeout(runRedAIStart, AI_DELAY);
-    }
-
-    function runRedAIStart(){
-      clearAITimer();
-      if (state.awaitingOrderChoice) return;
-      if (state.activeTeam !== TEAM_RED) return;
-      if (state.activeId) return;
-
-      const aiModel = firstUnexhausted(TEAM_RED);
-      if (!aiModel) return;
-      beginActivation(aiModel);
-      state.selectedId = aiModel.id;
-      renderAll();
-      aiTimer = setTimeout(() => runRedAIStand(aiModel), AI_DELAY);
-    }
-
-    function runRedAIStand(aiModel){
-      clearAITimer();
-      if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
-      if (aiModel.down && state.moveRemaining >= 1) {
-        aiModel.down = false;
-        aiModel.wounds = Math.max(aiModel.wounds, 1);
-        state.moveRemaining -= 1;
-        state.movedThisActivation = true;
-        logLine(aiModel.name + ' stands up.');
-        renderAll();
-      }
-      aiTimer = setTimeout(() => runRedAIMove(aiModel), AI_DELAY);
-    }
-
-    function runRedAIMove(aiModel){
-      clearAITimer();
-      if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
-
-      if (state.moveRemaining <= 0 || aiModel.down) {
-        state.phase = 'attack';
-        renderAll();
-        aiTimer = setTimeout(() => runRedAIAttack(aiModel), AI_DELAY);
-        return;
-      }
-
-      const target = nearestEnemy(aiModel);
-      if (!target) {
-        state.phase = 'attack';
-        renderAll();
-        aiTimer = setTimeout(() => runRedAIAttack(aiModel), AI_DELAY);
-        return;
-      }
-
-      const step = chooseAIStep(aiModel, target);
-      if (!step) {
-        state.phase = 'attack';
-        renderAll();
-        aiTimer = setTimeout(() => runRedAIAttack(aiModel), AI_DELAY);
-        return;
-      }
-
-      aiModel.tx = step.x;
-      aiModel.ty = step.y;
-      state.moveRemaining -= 1;
-      state.movedThisActivation = true;
-      logLine(aiModel.name + ' moves 5".');
-      renderAll();
-      aiTimer = setTimeout(() => runRedAIMove(aiModel), AI_DELAY);
-    }
-
-    function runRedAIAttack(aiModel){
-      clearAITimer();
-      if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
-
-      state.phase = 'attack';
-      const target = chooseAttackTargetForAI(aiModel);
-
-      if (!target) {
-        logLine(aiModel.name + ' has no legal attack.');
-        renderAll();
-        aiTimer = setTimeout(() => endActivation('AI done'), AI_DELAY);
-        return;
-      }
-
-      state.aiTargetId = target.id;
-      logLine(aiModel.name + ' lines up ' + target.name + '.');
-      renderAll();
-
-      aiTimer = setTimeout(() => {
-        clearAITimer();
-        const current = getActive();
-        if (!current || current.id !== aiModel.id) return;
-        resolveAttack(aiModel, target, true);
-        renderAll();
-        aiTimer = setTimeout(() => endActivation('AI Attack'), AI_DELAY);
-      }, AI_DELAY);
-    }
-
-    function tileFromMouse(ev){
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.floor((ev.clientX - rect.left) / TILE);
-      const y = Math.floor((ev.clientY - rect.top) / TILE);
-      return { x:x, y:y };
-    }
-
-    function modelAt(x,y){
-      return getLivingModels().find(m => m.tx === x && m.ty === y) || null;
-    }
-
-    function handleBoardClick(ev){
-      const pos = tileFromMouse(ev);
-      const x = pos.x;
-      const y = pos.y;
-      if (!isWithinGrid(x, y)) return;
-
-      const clickedModel = modelAt(x, y);
-      const active = getActive();
-
-      if (clickedModel) {
-        if (state.pendingAction === 'attack' && active && active.team === TEAM_BLUE && clickedModel.team !== active.team) {
-          resolveAttack(active, clickedModel, false);
-          renderAll();
-          return;
-        }
-
-        state.selectedId = clickedModel.id;
-
-        if (!active && !state.awaitingOrderChoice && state.activeTeam === TEAM_BLUE && clickedModel.team === TEAM_BLUE && !clickedModel.exhausted) {
-          beginActivation(clickedModel);
-          renderAll();
-          return;
-        }
-
-        renderAll();
-        return;
-      }
-
-      if (state.pendingAction === 'move') {
-        resolveMoveTo(x, y);
-        return;
-      }
-      if (state.pendingAction === 'disengage') {
-        resolveDisengageTo(x, y);
-        return;
-      }
-    }
-
-    canvas.addEventListener('click', handleBoardClick);
-
-    canvas.addEventListener('mousemove', (ev) => {
-      const pos = tileFromMouse(ev);
-      const hovered = isWithinGrid(pos.x, pos.y) ? modelAt(pos.x, pos.y) : null;
-      const nextHoverId = hovered ? hovered.id : null;
-      if (nextHoverId !== state.hoverId) {
-        state.hoverId = nextHoverId;
-        renderAll();
-      }
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      if (state.hoverId !== null) {
-        state.hoverId = null;
-        renderAll();
-      }
-    });
-
-    function drawMoveHighlights(active){
-      if (!active || state.phase !== 'move') return;
-
-      if (state.pendingAction === 'disengage') {
-        ctx.fillStyle = 'rgba(37,99,235,0.16)';
-        for (let yy = 0; yy < GRID_H; yy++) {
-          for (let xx = 0; xx < GRID_W; xx++) {
-            const dist = chebDist(active.tx, active.ty, xx, yy);
-            const stillEngaged = getLivingModels(enemyTeam(active.team)).some(e => chebDist(xx, yy, e.tx, e.ty) === 1);
-            if (dist === 1 && canStandOn(xx, yy, active.id) && !stillEngaged) {
-              ctx.fillRect(xx * TILE + 6, yy * TILE + 6, TILE - 12, TILE - 12);
-            }
+  function drawMoveHighlights(active) {
+    var xx, yy, dist, enemies, engaged, e;
+    if (state.pendingAction === 'disengage') {
+      ctx.fillStyle = 'rgba(37,99,235,0.16)';
+      enemies = getLivingModels(enemyTeam(active.team));
+      for (yy = 0; yy < GRID_H; yy++) {
+        for (xx = 0; xx < GRID_W; xx++) {
+          dist = chebDist(active.tx, active.ty, xx, yy);
+          engaged = false;
+          for (e = 0; e < enemies.length; e++) {
+            if (chebDist(xx, yy, enemies[e].tx, enemies[e].ty) === 1) { engaged = true; break; }
           }
-        }
-        return;
-      }
-
-      ctx.fillStyle = state.pendingAction === 'move' ? 'rgba(22,163,74,0.18)' : 'rgba(22,163,74,0.08)';
-      for (let yy = 0; yy < GRID_H; yy++) {
-        for (let xx = 0; xx < GRID_W; xx++) {
-          const dist = chebDist(active.tx, active.ty, xx, yy);
-          if (dist >= 1 && dist <= state.moveRemaining && canStandOn(xx, yy, active.id)) {
+          if (dist === 1 && canStandOn(xx, yy, active.id) && !engaged) {
             ctx.fillRect(xx * TILE + 6, yy * TILE + 6, TILE - 12, TILE - 12);
           }
         }
       }
+      return;
     }
 
-    function drawAttackHighlights(active){
-      if (!active) return;
-      const enemies = getLivingModels(enemyTeam(active.team));
-      for (const enemy of enemies) {
-        const info = analyzeAttack(active, enemy);
-        if (!info.ok) continue;
-        const x = enemy.tx * TILE;
-        const y = enemy.ty * TILE;
-        const hasCover = info.mode === 'ranged' && info.cover > 0;
-        ctx.fillStyle = hasCover ? 'rgba(217,119,6,0.20)' : 'rgba(220,38,38,0.18)';
-        ctx.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
-        ctx.strokeStyle = hasCover ? '#d97706' : '#dc2626';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
+    ctx.fillStyle = state.pendingAction === 'move' ? 'rgba(22,163,74,0.18)' : 'rgba(22,163,74,0.08)';
+    for (yy = 0; yy < GRID_H; yy++) {
+      for (xx = 0; xx < GRID_W; xx++) {
+        dist = chebDist(active.tx, active.ty, xx, yy);
+        if (dist >= 1 && dist <= state.moveRemaining && canStandOn(xx, yy, active.id)) {
+          ctx.fillRect(xx * TILE + 6, yy * TILE + 6, TILE - 12, TILE - 12);
+        }
       }
     }
+  }
 
-    function drawBoard(){
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = 'rgba(37,99,235,0.06)';
-      ctx.fillRect(0, 0, TILE, GRID_H * TILE);
-      ctx.fillStyle = 'rgba(220,38,38,0.06)';
-      ctx.fillRect((GRID_W - 1) * TILE, 0, TILE, GRID_H * TILE);
-
-      for (let y = 0; y < GRID_H; y++) {
-        for (let x = 0; x < GRID_W; x++) {
-          const t = tileAt(x, y);
-          if (t === TILE_COVER) {
-            ctx.fillStyle = '#dddddd';
-            ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-          } else if (t === TILE_WALL) {
-            ctx.fillStyle = '#7a7a7a';
-            ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-          }
-        }
-      }
-
-      const active = getActive();
-      if (active) drawMoveHighlights(active);
-      if (state.pendingAction === 'attack' && active && active.team === TEAM_BLUE && state.phase === 'attack') drawAttackHighlights(active);
-
-      ctx.strokeStyle = '#e8e8e8';
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= GRID_W; x++) {
-        ctx.beginPath();
-        ctx.moveTo(x * TILE, 0);
-        ctx.lineTo(x * TILE, GRID_H * TILE);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= GRID_H; y++) {
-        ctx.beginPath();
-        ctx.moveTo(0, y * TILE);
-        ctx.lineTo(GRID_W * TILE, y * TILE);
-        ctx.stroke();
-      }
-
-      for (const m of getLivingModels()) {
-        const cx = m.tx * TILE + TILE / 2;
-        const cy = m.ty * TILE + TILE / 2;
-        const r = TILE * 0.27;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = m.team === TEAM_BLUE ? '#2563eb' : '#dc2626';
-        ctx.fill();
-
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = '#111111';
-        if (m.id === state.hoverId) { ctx.lineWidth = 5; ctx.strokeStyle = '#f59e0b'; }
-        if (m.id === state.selectedId) { ctx.lineWidth = 4; ctx.strokeStyle = '#111111'; }
-        if (m.id === state.activeId) { ctx.lineWidth = 5; ctx.strokeStyle = '#16a34a'; }
-        if (m.id === state.aiTargetId) { ctx.lineWidth = 5; ctx.strokeStyle = '#d97706'; }
-        ctx.stroke();
-
-        if (m.down) {
-          ctx.strokeStyle = '#111111';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(cx - 14, cy - 14);
-          ctx.lineTo(cx + 14, cy + 14);
-          ctx.moveTo(cx + 14, cy - 14);
-          ctx.lineTo(cx - 14, cy + 14);
-          ctx.stroke();
-        }
-
-        if (m.exhausted) {
-          ctx.fillStyle = 'rgba(0,0,0,0.65)';
-          ctx.fillRect(cx - 14, cy - r - 12, 28, 4);
-        }
-
-        if (m.abilityUsed) {
-          ctx.fillStyle = 'rgba(245,158,11,0.95)';
-          ctx.beginPath();
-          ctx.arc(cx + 18, cy - 18, 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        if (m.horror > 0) {
-          ctx.fillStyle = 'rgba(139,92,246,0.95)';
-          for (let i = 0; i < m.horror; i++) {
-            ctx.beginPath();
-            ctx.arc(cx - 10 + i * 10, cy + r + 11, 3.4, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(m.wounds), cx, cy);
-      }
+  function drawAttackHighlights(active) {
+    var enemies = getLivingModels(enemyTeam(active.team));
+    var k, enemy, info, x, y, hasCover;
+    for (k = 0; k < enemies.length; k++) {
+      enemy = enemies[k];
+      info = analyzeAttack(active, enemy);
+      if (!info.ok) continue;
+      x = enemy.tx * TILE;
+      y = enemy.ty * TILE;
+      hasCover = info.mode === 'ranged' && info.cover > 0;
+      ctx.fillStyle = hasCover ? 'rgba(217,119,6,0.20)' : 'rgba(220,38,38,0.18)';
+      ctx.fillRect(x + 4, y + 4, TILE - 8, TILE - 8);
+      ctx.strokeStyle = hasCover ? '#d97706' : '#dc2626';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
     }
+  }
 
-    function renderStatus(){
-      const active = getActive();
-      const blueLeft = getLivingModels(TEAM_BLUE).filter(m => !m.exhausted).length;
-      const redLeft = getLivingModels(TEAM_RED).filter(m => !m.exhausted).length;
-
-      const lines = [];
-      lines.push('Round ' + state.round);
-      if (state.blueRoll !== null && state.redRoll !== null) lines.push('Initiative: Blue ' + state.blueRoll + ' / Red ' + state.redRoll);
-      lines.push('Active Team: ' + (state.activeTeam || 'Waiting'));
-      lines.push('Blue Ready: ' + blueLeft + ' | Red Ready: ' + redLeft);
-      lines.push('Phase: ' + state.phase);
-      lines.push('Pending: ' + (state.pendingAction || '—'));
-      if (active) {
-        lines.push('Active Model: ' + active.name);
-        lines.push('Move Remaining: ' + (state.moveRemaining * 5) + '"');
-      } else {
-        lines.push('Active Model: —');
-      }
-
-      ui.status.textContent = lines.join('
+  function renderStatus() {
+    var active = getActive();
+    var blueLeft = getLivingModels(TEAM_BLUE).filter(function (m) { return !m.exhausted; }).length;
+    var redLeft = getLivingModels(TEAM_RED).filter(function (m) { return !m.exhausted; }).length;
+    var lines = [];
+    lines.push('Round ' + state.round);
+    if (state.blueRoll !== null && state.redRoll !== null) lines.push('Initiative: Blue ' + state.blueRoll + ' / Red ' + state.redRoll);
+    lines.push('Active Team: ' + (state.activeTeam || 'Waiting'));
+    lines.push('Blue Ready: ' + blueLeft + ' | Red Ready: ' + redLeft);
+    lines.push('Phase: ' + state.phase);
+    lines.push('Pending: ' + (state.pendingAction || '—'));
+    if (active) {
+      lines.push('Active Model: ' + active.name);
+      lines.push('Move Remaining: ' + (state.moveRemaining * 5) + '"');
+    } else {
+      lines.push('Active Model: —');
+    }
+    ui.status.textContent = lines.join('
 ');
-      ui.orderChoice.style.display = state.awaitingOrderChoice ? 'block' : 'none';
-    }
+    ui.orderChoice.style.display = state.awaitingOrderChoice ? 'block' : 'none';
+  }
 
-    function renderSelected(){
-      const m = getSelected();
-      if (!m) {
-        ui.selected.textContent = '—';
-        return;
-      }
-      const ranged = getRanged(m);
-      const melee = getMelee(m);
-      const abs = getAbilities(m);
-
-      const lines = [];
-      lines.push(m.team + ' — ' + m.name);
-      lines.push(m.role);
-      lines.push('');
-      lines.push('Move T' + m.moveTier + ' (' + (moveTiles(m) * 5) + '")');
-      lines.push('Defense T' + m.defenseTier + ' (' + fmtSigned(defenseMod(m)) + ')');
-      lines.push('Shoot T' + m.shootTier + ' (' + fmtSigned(shootMod(m)) + ')');
-      lines.push('Fight T' + m.fightTier + ' (' + fmtSigned(fightMod(m)) + ')');
-      lines.push('Wounds: ' + m.wounds + '/' + woundsMax(m));
-      lines.push('Horror: ' + m.horror + '/' + HORROR_MAX);
-      lines.push('Down: ' + (m.down ? 'Yes' : 'No'));
-      lines.push('Exhausted: ' + (m.exhausted ? 'Yes' : 'No'));
-      lines.push('In Combat: ' + (inCombat(m) ? 'Yes' : 'No'));
-      lines.push('Ability Used: ' + (m.abilityUsed ? 'Yes' : 'No'));
-      lines.push('');
-      lines.push('Ranged: ' + (ranged ? (ranged.name + ' (' + ranged.attacks + 'A/' + ranged.damage + 'D' + (ranged.effect ? ', ' + ranged.effect : '') + ')') : '—'));
-      lines.push('Melee: ' + (melee ? (melee.name + ' (' + melee.attacks + 'A/' + melee.damage + 'D' + (melee.effect ? ', ' + melee.effect : '') + ')') : '—'));
-      lines.push('');
-      lines.push('Abilities: ' + (abs.length ? abs.map(a => a.name).join(', ') : '—'));
-
-      ui.selected.textContent = lines.join('
+  function renderSelected() {
+    var m = getSelected();
+    var lines, ranged, melee, abs;
+    if (!m) { ui.selected.textContent = '—'; return; }
+    ranged = getRanged(m);
+    melee = getMelee(m);
+    abs = getAbilities(m);
+    lines = [];
+    lines.push(m.team + ' — ' + m.name);
+    lines.push(m.role);
+    lines.push('');
+    lines.push('Move T' + m.moveTier + ' (' + (moveTiles(m) * 5) + '")');
+    lines.push('Defense T' + m.defenseTier + ' (' + fmtSigned(defenseMod(m)) + ')');
+    lines.push('Shoot T' + m.shootTier + ' (' + fmtSigned(shootMod(m)) + ')');
+    lines.push('Fight T' + m.fightTier + ' (' + fmtSigned(fightMod(m)) + ')');
+    lines.push('Wounds: ' + m.wounds + '/' + woundsMax(m));
+    lines.push('Horror: ' + m.horror + '/' + HORROR_MAX);
+    lines.push('Down: ' + (m.down ? 'Yes' : 'No'));
+    lines.push('Exhausted: ' + (m.exhausted ? 'Yes' : 'No'));
+    lines.push('In Combat: ' + (inCombat(m) ? 'Yes' : 'No'));
+    lines.push('Ability Used: ' + (m.abilityUsed ? 'Yes' : 'No'));
+    lines.push('');
+    lines.push('Ranged: ' + (ranged ? (ranged.name + ' (' + ranged.attacks + 'A/' + ranged.damage + 'D' + (ranged.effect ? ', ' + ranged.effect : '') + ')') : '—'));
+    lines.push('Melee: ' + (melee ? (melee.name + ' (' + melee.attacks + 'A/' + melee.damage + 'D' + (melee.effect ? ', ' + melee.effect : '') + ')') : '—'));
+    lines.push('');
+    lines.push('Abilities: ' + (abs.length ? abs.map(function (a) { return a.name; }).join(', ') : '—'));
+    ui.selected.textContent = lines.join('
 ');
-    }
+  }
 
-    function renderHUD(){
-      const active = getActive();
-      const selected = getSelected();
-      const hover = state.hoverId ? getModel(state.hoverId) : null;
+  function renderHUD() {
+    var active = getActive();
+    var selected = getSelected();
+    var hover = state.hoverId ? getModel(state.hoverId) : null;
+    var lines = [];
+    var hr, hm;
 
-      const activeLines = [];
-      activeLines.push('Active: ' + (active ? (active.team + ' — ' + active.name) : '—'));
-      activeLines.push('Selected: ' + (selected ? (selected.team + ' — ' + selected.name) : '—'));
-      if (active) activeLines.push('Phase: ' + state.phase + ' | Move Left: ' + (state.moveRemaining * 5) + '" | Pending: ' + (state.pendingAction || '—'));
-      else activeLines.push('Phase: ' + state.phase + ' | Pending: ' + (state.pendingAction || '—'));
-      ui.activeSummary.textContent = activeLines.join('
+    lines.push('Active: ' + (active ? (active.team + ' — ' + active.name) : '—'));
+    lines.push('Selected: ' + (selected ? (selected.team + ' — ' + selected.name) : '—'));
+    if (active) lines.push('Phase: ' + state.phase + ' | Move Left: ' + (state.moveRemaining * 5) + '" | Pending: ' + (state.pendingAction || '—'));
+    else lines.push('Phase: ' + state.phase + ' | Pending: ' + (state.pendingAction || '—'));
+    ui.activeSummary.textContent = lines.join('
 ');
 
-      if (!hover) {
-        ui.hoverCard.textContent = 'Hover a model to see quick stats.';
-        return;
-      }
+    if (!hover) {
+      ui.hoverCard.textContent = 'Hover a model to see quick stats.';
+      return;
+    }
+    hr = getRanged(hover);
+    hm = getMelee(hover);
+    ui.hoverCard.textContent =
+      hover.team + ' — ' + hover.name + '
+' +
+      'W ' + hover.wounds + '/' + woundsMax(hover) + ' | H ' + hover.horror + '/' + HORROR_MAX + ' | ' + (hover.down ? 'Down' : 'Up') + '
+' +
+      'D ' + fmtSigned(defenseMod(hover)) + ' | S ' + fmtSigned(shootMod(hover)) + ' | F ' + fmtSigned(fightMod(hover)) + '
+' +
+      'R: ' + (hr ? hr.name : '—') + ' | M: ' + (hm ? hm.name : '—');
+  }
 
-      const hoverRanged = getRanged(hover);
-      const hoverMelee = getMelee(hover);
-      const hoverLines = [];
-      hoverLines.push(hover.team + ' — ' + hover.name);
-      hoverLines.push('W ' + hover.wounds + '/' + woundsMax(hover) + ' | H ' + hover.horror + '/' + HORROR_MAX + ' | ' + (hover.down ? 'Down' : 'Up'));
-      hoverLines.push('D ' + fmtSigned(defenseMod(hover)) + ' | S ' + fmtSigned(shootMod(hover)) + ' | F ' + fmtSigned(fightMod(hover)));
-      hoverLines.push('R: ' + (hoverRanged ? hoverRanged.name : '—') + ' | M: ' + (hoverMelee ? hoverMelee.name : '—'));
-      ui.hoverCard.textContent = hoverLines.join('
-');
+  function updateButtons() {
+    var selected = getSelected();
+    var active = getActive();
+    var blueTurn = state.activeTeam === TEAM_BLUE && !state.awaitingOrderChoice;
+    var canBegin = !!selected && selected.team === TEAM_BLUE && !active && blueTurn && !selected.exhausted && !selected.removed;
+
+    ui.beginBtn.disabled = !canBegin;
+    ui.endBtn.disabled = !(active && active.team === TEAM_BLUE);
+    ui.moveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !active.down && state.moveRemaining > 0);
+    ui.disengageBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && inCombat(active) && moveTiles(active) >= 2 && state.moveRemaining >= 2);
+    ui.doneMoveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move');
+    ui.standBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && active.down && state.moveRemaining >= 1);
+    ui.recoverBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !state.movedThisActivation);
+    ui.attackBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'attack' && !active.down);
+    ui.abilityBtn.disabled = !(active && active.team === TEAM_BLUE && !active.abilityUsed);
+
+    ui.moveBtn.classList.toggle('is-selected', state.pendingAction === 'move');
+    ui.disengageBtn.classList.toggle('is-selected', state.pendingAction === 'disengage');
+    ui.attackBtn.classList.toggle('is-selected', state.pendingAction === 'attack');
+
+    if (active && active.team === TEAM_BLUE && state.phase === 'attack') {
+      if (inCombat(active)) ui.attackBtn.textContent = (getMelee(active) ? getMelee(active).name : 'Unarmed');
+      else ui.attackBtn.textContent = (getRanged(active) ? getRanged(active).name : 'No Ranged');
+    } else {
+      ui.attackBtn.textContent = 'Attack';
+    }
+  }
+
+  function renderAll() {
+    drawBoard();
+    renderStatus();
+    renderSelected();
+    renderHUD();
+    updateButtons();
+  }
+
+  function rollInitiativeForRound() {
+    var blue = 0;
+    var red = 0;
+    while (blue === red) {
+      blue = rollD6();
+      red = rollD6();
+      if (blue === red) logLine('Round ' + state.round + ': Initiative tie (' + blue + '-' + red + '), reroll.');
+    }
+    state.blueRoll = blue;
+    state.redRoll = red;
+    state.activeId = null;
+    state.phase = 'idle';
+    state.pendingAction = null;
+    state.moveRemaining = 0;
+    state.movedThisActivation = false;
+    state.awaitingOrderChoice = false;
+
+    if (blue > red) {
+      state.awaitingOrderChoice = true;
+      state.activeTeam = null;
+      logLine('Round ' + state.round + ': Blue wins initiative (' + blue + ' vs ' + red + ') and may choose activation order.');
+    } else {
+      state.activeTeam = TEAM_RED;
+      logLine('Round ' + state.round + ': Red wins initiative (' + red + ' vs ' + blue + ') and goes first.');
+      queueRedAI();
+    }
+  }
+
+  function fullResetState() {
+    var arr, k;
+    clearAITimer();
+    logCount = 0;
+    ui.log.textContent = '';
+
+    if (!state.teams.Blue.models.length) makeRandomTeam(TEAM_BLUE);
+    if (!state.teams.Red.models.length) makeRandomTeam(TEAM_RED);
+
+    arr = getAllModels();
+    for (k = 0; k < arr.length; k++) {
+      arr[k].wounds = woundsMax(arr[k]);
+      arr[k].horror = 0;
+      arr[k].down = false;
+      arr[k].removed = false;
+      arr[k].exhausted = false;
+      arr[k].abilityUsed = false;
+      arr[k].phaseTag = 0;
     }
 
-    function updateButtons(){
-      const selected = getSelected();
-      const active = getActive();
-      const blueTurn = state.activeTeam === TEAM_BLUE && !state.awaitingOrderChoice;
-      const canBegin = !!selected && selected.team === TEAM_BLUE && !active && blueTurn && !selected.exhausted && !selected.removed;
+    state.round = 1;
+    state.blueRoll = null;
+    state.redRoll = null;
+    state.activeTeam = null;
+    state.awaitingOrderChoice = false;
+    state.selectedId = null;
+    state.activeId = null;
+    state.hoverId = null;
+    state.phase = 'idle';
+    state.pendingAction = null;
+    state.moveRemaining = 0;
+    state.movedThisActivation = false;
+    state.phaseSerial = 1;
+    state.aiTargetId = null;
 
-      ui.beginBtn.disabled = !canBegin;
-      ui.endBtn.disabled = !(active && active.team === TEAM_BLUE);
-      ui.moveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !active.down && state.moveRemaining > 0);
-      ui.disengageBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && inCombat(active) && moveTiles(active) >= 2 && state.moveRemaining >= 2);
-      ui.doneMoveBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move');
-      ui.standBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && active.down && state.moveRemaining >= 1);
-      ui.recoverBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'move' && !state.movedThisActivation);
-      ui.attackBtn.disabled = !(active && active.team === TEAM_BLUE && state.phase === 'attack' && !active.down);
-      ui.abilityBtn.disabled = !(active && active.team === TEAM_BLUE && !active.abilityUsed);
+    deployTeam(TEAM_BLUE);
+    deployTeam(TEAM_RED);
+    rollInitiativeForRound();
+    renderAll();
+  }
 
-      ui.moveBtn.classList.toggle('is-selected', state.pendingAction === 'move');
-      ui.disengageBtn.classList.toggle('is-selected', state.pendingAction === 'disengage');
-      ui.attackBtn.classList.toggle('is-selected', state.pendingAction === 'attack');
+  function chooseFirstTeam(team) {
+    state.awaitingOrderChoice = false;
+    state.activeTeam = team;
+    logLine('Round ' + state.round + ': ' + team + ' activates first.');
+    renderAll();
+    if (team === TEAM_RED) queueRedAI();
+  }
 
-      if (active && active.team === TEAM_BLUE && state.phase === 'attack') {
-        ui.attackBtn.textContent = inCombat(active)
-          ? ((getMelee(active) && getMelee(active).name) || 'Unarmed')
-          : ((getRanged(active) && getRanged(active).name) || 'No Ranged');
-      } else {
-        ui.attackBtn.textContent = 'Attack';
-      }
+  function nextRound() {
+    var arr = getLivingModels();
+    var k;
+    state.round += 1;
+    state.phaseSerial += 1;
+    for (k = 0; k < arr.length; k++) {
+      arr[k].exhausted = false;
+      arr[k].abilityUsed = false;
+      arr[k].phaseTag = 0;
     }
+    logLine('--- New Round: ' + state.round + ' ---');
+    rollInitiativeForRound();
+    renderAll();
+  }
 
-    function renderAll(){
-      drawBoard();
-      renderStatus();
-      renderSelected();
-      renderHUD();
-      updateButtons();
-    }
+  function advanceTurnAfterActivation(endedTeam) {
+    var other = enemyTeam(endedTeam);
+    var otherReady = hasUnexhausted(other);
+    var sameReady = hasUnexhausted(endedTeam);
+    var winner;
 
-    ui.loadBlueSavedBtn.addEventListener('click', () => {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) throw new Error('No saved builder warband found in localStorage.');
-        const wb = parseWarbandJson(raw);
-        loadTeamFromBuilderObject(TEAM_BLUE, wb);
-        fullResetState();
-      } catch (err) {
-        logLine('Load failed: ' + String(err.message || err));
-        renderAll();
-      }
-    });
+    state.activeId = null;
+    state.phase = 'idle';
+    state.pendingAction = null;
+    state.moveRemaining = 0;
+    state.movedThisActivation = false;
+    state.aiTargetId = null;
 
-    ui.loadBluePasteBtn.addEventListener('click', () => {
-      try {
-        const wb = parseWarbandJson(ui.jsonInput.value.trim());
-        loadTeamFromBuilderObject(TEAM_BLUE, wb);
-        fullResetState();
-      } catch (err) {
-        logLine('Load failed: ' + String(err.message || err));
-        renderAll();
-      }
-    });
-
-    ui.loadRedPasteBtn.addEventListener('click', () => {
-      try {
-        const wb = parseWarbandJson(ui.jsonInput.value.trim());
-        loadTeamFromBuilderObject(TEAM_RED, wb);
-        fullResetState();
-      } catch (err) {
-        logLine('Load failed: ' + String(err.message || err));
-        renderAll();
-      }
-    });
-
-    ui.randomRedBtn.addEventListener('click', () => {
-      makeRandomTeam(TEAM_RED);
-      fullResetState();
-    });
-
-    ui.randomBothBtn.addEventListener('click', () => {
-      makeRandomTeam(TEAM_BLUE);
-      makeRandomTeam(TEAM_RED);
-      fullResetState();
-    });
-
-    ui.newMapBtn.addEventListener('click', () => {
-      newRandomMap();
-      deployTeam(TEAM_BLUE);
-      deployTeam(TEAM_RED);
+    if (!getLivingModels(TEAM_BLUE).length || !getLivingModels(TEAM_RED).length) {
+      winner = getLivingModels(TEAM_BLUE).length ? TEAM_BLUE : TEAM_RED;
+      logLine('*** ' + winner + ' wins. ***');
+      state.activeTeam = null;
       renderAll();
-    });
+      return;
+    }
 
-    ui.resetBtn.addEventListener('click', () => {
-      fullResetState();
-    });
-
-    ui.beginBtn.addEventListener('click', () => {
-      const selected = getSelected();
-      if (!selected) { logLine('Select a blue model first.'); return; }
-      beginActivation(selected);
-    });
-
-    ui.endBtn.addEventListener('click', () => {
-      const active = getActive();
-      if (!active || active.team !== TEAM_BLUE) return;
-      endActivation('Player ended activation');
-    });
-
-    ui.moveBtn.addEventListener('click', () => setPendingAction('move'));
-    ui.disengageBtn.addEventListener('click', () => setPendingAction('disengage'));
-    ui.doneMoveBtn.addEventListener('click', doneMoving);
-    ui.standBtn.addEventListener('click', standUpActive);
-    ui.recoverBtn.addEventListener('click', recoverActive);
-    ui.attackBtn.addEventListener('click', () => setPendingAction('attack'));
-    ui.abilityBtn.addEventListener('click', markAbilityUsed);
-    ui.nextRoundBtn.addEventListener('click', () => {
-      logLine('Round advanced manually.');
+    if (otherReady) state.activeTeam = other;
+    else if (sameReady) state.activeTeam = endedTeam;
+    else {
       nextRound();
-    });
-    ui.blueFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_BLUE));
-    ui.redFirstBtn.addEventListener('click', () => chooseFirstTeam(TEAM_RED));
+      return;
+    }
 
-    function boot(){
+    renderAll();
+    if (state.activeTeam === TEAM_RED) queueRedAI();
+  }
+
+  function beginActivation(model) {
+    if (!model || model.removed) return false;
+    if (state.awaitingOrderChoice) { logLine('Choose first team before activating.'); return false; }
+    if (state.activeTeam !== model.team) { logLine('It is ' + (state.activeTeam || 'no one') + '\'s turn.'); return false; }
+    if (state.activeId) { logLine('Finish the current activation first.'); return false; }
+    if (model.exhausted) { logLine(model.name + ' is exhausted.'); return false; }
+    state.activeId = model.id;
+    state.phase = 'move';
+    state.pendingAction = null;
+    state.moveRemaining = moveTiles(model);
+    state.movedThisActivation = false;
+    state.aiTargetId = null;
+    logLine(model.team + ' activates ' + model.name + ' (' + (state.moveRemaining * 5) + '" move).');
+    renderAll();
+    return true;
+  }
+
+  function endActivation(reason) {
+    var active = getActive();
+    if (!active) return;
+    active.exhausted = true;
+    logLine(active.name + ' is exhausted' + (reason ? ' (' + reason + ')' : '') + '.');
+    advanceTurnAfterActivation(active.team);
+  }
+
+  function markAbilityUsed() {
+    var active = getActive();
+    if (!active) { logLine('No active model.'); return; }
+    if (active.abilityUsed) { logLine(active.name + ' already used an ability this round.'); return; }
+    active.abilityUsed = true;
+    var names = getAbilities(active).map(function (a) { return a.name; }).join(', ');
+    if (!names) names = 'No listed abilities';
+    logLine(active.name + ' marks an ability as used. Tracked only (' + names + ').');
+    renderAll();
+  }
+
+  function standUpActive() {
+    var active = getActive();
+    if (!active) { logLine('No active model.'); return; }
+    if (state.phase !== 'move') { logLine('Stand Up must happen during the Move phase.'); return; }
+    if (!active.down) { logLine(active.name + ' is not Down.'); return; }
+    if (state.moveRemaining < 1) { logLine(active.name + ' does not have 5" left to stand up.'); return; }
+    active.down = false;
+    active.wounds = Math.max(active.wounds, 1);
+    state.moveRemaining -= 1;
+    state.movedThisActivation = true;
+    logLine(active.name + ' stands up, goes to 1 Wound, and spends 5" of Move.');
+    renderAll();
+  }
+
+  function recoverActive() {
+    var active = getActive();
+    if (!active) { logLine('No active model.'); return; }
+    if (state.phase !== 'move') { logLine('Recover must be chosen during the Move phase.'); return; }
+    if (state.movedThisActivation) { logLine('Recover cannot be used after moving this activation.'); return; }
+    active.horror = Math.max(0, active.horror - 1);
+    logLine(active.name + ' uses Recover and reduces Horror to ' + active.horror + '.');
+    endActivation('Recover');
+  }
+
+  function setPendingAction(action) {
+    var active = getActive();
+    if (!active || active.team !== TEAM_BLUE) { logLine('Blue must have an active model first.'); return; }
+    if (state.phase === 'move' && (action === 'move' || action === 'disengage')) {
+      state.pendingAction = action;
+      logLine(action === 'move' ? 'Click a tile to move.' : 'Click a tile to disengage to.');
+      renderAll();
+      return;
+    }
+    if (state.phase === 'attack' && action === 'attack') {
+      if (active.down) { logLine(active.name + ' is Down and cannot attack.'); return; }
+      state.pendingAction = 'attack';
+      logLine('Click an enemy model to attack.');
+      renderAll();
+      return;
+    }
+    logLine('That action is not available right now.');
+  }
+
+  function doneMoving() {
+    var active = getActive();
+    if (!active) { logLine('No active model.'); return; }
+    if (state.phase !== 'move') { logLine('You are already past the Move phase.'); return; }
+    state.phase = 'attack';
+    state.pendingAction = null;
+    logLine(active.name + ' ends the Move phase.');
+    renderAll();
+  }
+
+  function resolveMoveTo(x, y) {
+    var active = getActive();
+    var dist;
+    if (!active) return;
+    if (state.phase !== 'move' || state.pendingAction !== 'move') return;
+    if (active.down) { logLine(active.name + ' is Down and cannot move until it stands.'); return; }
+    dist = chebDist(active.tx, active.ty, x, y);
+    if (dist < 1) { logLine('Pick a different tile.'); return; }
+    if (dist > state.moveRemaining) { logLine('Too far. ' + active.name + ' has ' + (state.moveRemaining * 5) + '" left.'); return; }
+    if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
+    active.tx = x;
+    active.ty = y;
+    state.moveRemaining -= dist;
+    state.movedThisActivation = true;
+    state.pendingAction = null;
+    logLine(active.name + ' moves ' + (dist * 5) + '".');
+    renderAll();
+  }
+
+  function resolveDisengageTo(x, y) {
+    var active = getActive();
+    var enemies, k;
+    if (!active) return;
+    if (state.phase !== 'move' || state.pendingAction !== 'disengage') return;
+    if (!inCombat(active)) { logLine(active.name + ' is not in combat.'); return; }
+    if (moveTiles(active) < 2) { logLine('Disengage requires Move Tier 2.'); return; }
+    if (state.moveRemaining < 2) { logLine('Need 10" of Move left to Disengage.'); return; }
+    if (chebDist(active.tx, active.ty, x, y) !== 1) { logLine('Disengage moves exactly 5" (1 tile).'); return; }
+    if (!canStandOn(x, y, active.id)) { logLine('That tile is blocked.'); return; }
+    enemies = getLivingModels(enemyTeam(active.team));
+    for (k = 0; k < enemies.length; k++) {
+      if (chebDist(x, y, enemies[k].tx, enemies[k].ty) === 1) { logLine('Disengage must end out of combat.'); return; }
+    }
+    active.tx = x;
+    active.ty = y;
+    state.moveRemaining -= 2;
+    state.movedThisActivation = true;
+    state.pendingAction = null;
+    logLine(active.name + ' disengages 5" and spends 10" of Move.');
+    renderAll();
+  }
+
+  function removeModel(model) {
+    model.removed = true;
+    logLine(model.name + ' is removed from play.');
+    if (state.selectedId === model.id) state.selectedId = null;
+    if (state.hoverId === model.id) state.hoverId = null;
+  }
+
+  function applyDamage(target, amount) {
+    var before;
+    if (target.removed || amount <= 0) return;
+    if (target.down && target.wounds === 0) {
+      logLine(target.name + ' was hit while Down.');
+      removeModel(target);
+      return;
+    }
+    before = target.wounds;
+    target.wounds = Math.max(0, target.wounds - amount);
+    logLine(target.name + ' takes ' + amount + ' damage (' + before + ' → ' + target.wounds + ').');
+    if (target.wounds <= 0) {
+      target.wounds = 0;
+      target.down = true;
+      logLine(target.name + ' becomes Down at 0 Wounds.');
+    }
+  }
+
+  function applyHitEffects(target, weapon) {
+    var txt = String((weapon && weapon.effect) || '').toLowerCase();
+    var before;
+    if (!txt) return;
+    if (txt.indexOf('down') !== -1 && !target.removed) {
+      target.down = true;
+      logLine(target.name + ' is knocked Down by ' + weapon.name + '.');
+    }
+    if (txt.indexOf('horror') !== -1 && !target.removed) {
+      if (target.phaseTag !== state.phaseSerial) {
+        target.phaseTag = state.phaseSerial;
+        before = target.horror;
+        target.horror = Math.min(HORROR_MAX, target.horror + 1);
+        if (target.horror > before) logLine(target.name + ' gains 1 Horror (' + target.horror + '/' + HORROR_MAX + ').');
+        else logLine(target.name + ' would gain Horror, but is already at the cap.');
+      } else {
+        logLine(target.name + ' cannot gain more than 1 Horror this phase.');
+      }
+    }
+  }
+
+  function resolveAttack(attacker, target, fromAI) {
+    var info = analyzeAttack(attacker, target);
+    var weapon, attackCount, damage, attackMod, defenseBase;
+    var atkRaw, atkTotal, defRaw, defTotal;
+    var a;
+
+    if (!attacker || !target || attacker.removed || target.removed) return false;
+    if (!info.ok) {
+      if (info.reason === 'combat-lock') logLine('Cannot shoot into or out of combat.');
+      else if (info.reason === 'no-ranged') logLine(attacker.name + ' has no ranged weapon.');
+      else if (info.reason === 'no-los') logLine(attacker.name + ' does not have line of sight.');
+      else logLine('Illegal attack.');
+      return false;
+    }
+    if (state.phase !== 'attack' && !fromAI) { logLine('You are not in the Attack phase.'); return false; }
+    if (attacker.down) { logLine(attacker.name + ' is Down and cannot attack.'); return false; }
+
+    weapon = info.weapon;
+    attackCount = Math.max(1, Number(weapon.attacks) || 1);
+    damage = Math.max(1, Number(weapon.damage) || 1);
+    attackMod = (info.mode === 'ranged' ? shootMod(attacker) : fightMod(attacker)) - horrorPenalty(attacker);
+    defenseBase = defenseMod(target) + (target.down ? -1 : 0) + info.cover;
+
+    logLine(attacker.name + ' attacks ' + target.name + ' with ' + weapon.name + ' (' + info.mode + ', ' + attackCount + 'A/' + damage + 'D).');
+    if (info.cover) logLine(target.name + ' gets +' + info.cover + ' Defense from cover.');
+
+    for (a = 1; a <= attackCount; a++) {
+      if (target.removed) break;
+      atkRaw = rollD6();
+      if (atkRaw === 1) {
+        logLine('  Attack ' + a + ': natural 1 miss.');
+        continue;
+      }
+      if (atkRaw === 6) {
+        logLine('  Attack ' + a + ': natural 6 critical hit. No defense roll.');
+        applyDamage(target, damage);
+        applyHitEffects(target, weapon);
+        continue;
+      }
+
+      atkTotal = atkRaw + attackMod;
+      defRaw = rollD6();
+      if (defRaw === 6) {
+        logLine('  Attack ' + a + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + '. Defense natural 6 auto-saves.');
+        continue;
+      }
+      defTotal = defRaw + defenseBase;
+      logLine('  Attack ' + a + ': attack ' + atkRaw + fmtSigned(attackMod) + ' = ' + atkTotal + ' vs defense ' + defRaw + fmtSigned(defenseBase) + ' = ' + defTotal + '.');
+
+      if (defTotal > atkTotal) {
+        logLine('    Saved.');
+        continue;
+      }
+
+      logLine('    Hit.');
+      applyDamage(target, damage);
+      applyHitEffects(target, weapon);
+    }
+
+    if (!fromAI) {
+      state.pendingAction = null;
+      endActivation('Attack complete');
+    }
+    return true;
+  }
+
+  function nearestEnemy(model) {
+    var enemies = getLivingModels(enemyTeam(model.team));
+    var best = null;
+    var bestDist = 999;
+    var k, d;
+    for (k = 0; k < enemies.length; k++) {
+      d = chebDist(model.tx, model.ty, enemies[k].tx, enemies[k].ty);
+      if (d < bestDist) { bestDist = d; best = enemies[k]; }
+    }
+    return best;
+  }
+
+  function chooseAttackTargetForAI(attacker) {
+    var enemies = getLivingModels(enemyTeam(attacker.team));
+    var best = null;
+    var bestScore = 99999;
+    var k, enemy, info, score;
+    for (k = 0; k < enemies.length; k++) {
+      enemy = enemies[k];
+      info = analyzeAttack(attacker, enemy);
+      if (!info.ok) continue;
+      score = (info.mode === 'melee' ? 0 : 100) + (enemy.down ? 0 : enemy.wounds) + chebDist(attacker.tx, attacker.ty, enemy.tx, enemy.ty);
+      if (score < bestScore) { bestScore = score; best = enemy; }
+    }
+    return best;
+  }
+
+  function scoreTileForAI(x, y, model, target) {
+    var dist = chebDist(x, y, target.tx, target.ty);
+    var score = dist * 20;
+    var fake, attackInfo;
+    if (tileAt(x, y) === TILE_COVER) score -= 7;
+    else if (nearTerrain(x, y)) score -= 3;
+
+    fake = {
+      tx: x,
+      ty: y,
+      team: model.team,
+      removed: model.removed,
+      rangedIdx: model.rangedIdx,
+      meleeIdx: model.meleeIdx,
+      moveTier: model.moveTier,
+      defenseTier: model.defenseTier,
+      shootTier: model.shootTier,
+      fightTier: model.fightTier,
+      horror: model.horror,
+      down: model.down
+    };
+    attackInfo = analyzeAttack(fake, target);
+    if (attackInfo.ok) {
+      if (attackInfo.mode === 'melee') score -= 8;
+      if (attackInfo.mode === 'ranged') score -= 5;
+      if (attackInfo.cover > 0) score -= 2;
+    }
+    return score;
+  }
+
+  function chooseAIStep(model, target) {
+    var best = null;
+    var bestScore = 99999;
+    var currentScore = scoreTileForAI(model.tx, model.ty, model, target);
+    var ox, oy, nx, ny, score;
+    for (oy = -1; oy <= 1; oy++) {
+      for (ox = -1; ox <= 1; ox++) {
+        if (ox === 0 && oy === 0) continue;
+        nx = model.tx + ox;
+        ny = model.ty + oy;
+        if (!canStandOn(nx, ny, model.id)) continue;
+        score = scoreTileForAI(nx, ny, model, target);
+        if (score < bestScore) {
+          bestScore = score;
+          best = { x: nx, y: ny };
+        }
+      }
+    }
+    if (!best) return null;
+    if (bestScore > currentScore + 2) return null;
+    return best;
+  }
+
+  function queueRedAI() {
+    clearAITimer();
+    aiTimer = setTimeout(runRedAIStart, AI_DELAY);
+  }
+
+  function runRedAIStart() {
+    var aiModel;
+    clearAITimer();
+    if (state.awaitingOrderChoice) return;
+    if (state.activeTeam !== TEAM_RED) return;
+    if (state.activeId) return;
+    aiModel = firstUnexhausted(TEAM_RED);
+    if (!aiModel) return;
+    beginActivation(aiModel);
+    state.selectedId = aiModel.id;
+    renderAll();
+    aiTimer = setTimeout(function () { runRedAIStand(aiModel); }, AI_DELAY);
+  }
+
+  function runRedAIStand(aiModel) {
+    clearAITimer();
+    if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
+    if (aiModel.down && state.moveRemaining >= 1) {
+      aiModel.down = false;
+      aiModel.wounds = Math.max(aiModel.wounds, 1);
+      state.moveRemaining -= 1;
+      state.movedThisActivation = true;
+      logLine(aiModel.name + ' stands up.');
+      renderAll();
+    }
+    aiTimer = setTimeout(function () { runRedAIMove(aiModel); }, AI_DELAY);
+  }
+
+  function runRedAIMove(aiModel) {
+    var target, step;
+    clearAITimer();
+    if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
+
+    if (state.moveRemaining <= 0 || aiModel.down) {
+      state.phase = 'attack';
+      renderAll();
+      aiTimer = setTimeout(function () { runRedAIAttack(aiModel); }, AI_DELAY);
+      return;
+    }
+
+    target = nearestEnemy(aiModel);
+    if (!target) {
+      state.phase = 'attack';
+      renderAll();
+      aiTimer = setTimeout(function () { runRedAIAttack(aiModel); }, AI_DELAY);
+      return;
+    }
+
+    step = chooseAIStep(aiModel, target);
+    if (!step) {
+      state.phase = 'attack';
+      renderAll();
+      aiTimer = setTimeout(function () { runRedAIAttack(aiModel); }, AI_DELAY);
+      return;
+    }
+
+    aiModel.tx = step.x;
+    aiModel.ty = step.y;
+    state.moveRemaining -= 1;
+    state.movedThisActivation = true;
+    logLine(aiModel.name + ' moves 5".');
+    renderAll();
+    aiTimer = setTimeout(function () { runRedAIMove(aiModel); }, AI_DELAY);
+  }
+
+  function runRedAIAttack(aiModel) {
+    var target;
+    clearAITimer();
+    if (!aiModel || aiModel.removed || state.activeId !== aiModel.id) return;
+
+    state.phase = 'attack';
+    target = chooseAttackTargetForAI(aiModel);
+    if (!target) {
+      logLine(aiModel.name + ' has no legal attack.');
+      renderAll();
+      aiTimer = setTimeout(function () { endActivation('AI done'); }, AI_DELAY);
+      return;
+    }
+
+    state.aiTargetId = target.id;
+    logLine(aiModel.name + ' lines up ' + target.name + '.');
+    renderAll();
+
+    aiTimer = setTimeout(function () {
+      var current;
+      clearAITimer();
+      current = getActive();
+      if (!current || current.id !== aiModel.id) return;
+      resolveAttack(aiModel, target, true);
+      renderAll();
+      aiTimer = setTimeout(function () { endActivation('AI Attack'); }, AI_DELAY);
+    }, AI_DELAY);
+  }
+
+  function tileFromMouse(ev) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor((ev.clientX - rect.left) / TILE),
+      y: Math.floor((ev.clientY - rect.top) / TILE)
+    };
+  }
+
+  function modelAt(x, y) {
+    var arr = getLivingModels();
+    for (var k = 0; k < arr.length; k++) {
+      if (arr[k].tx === x && arr[k].ty === y) return arr[k];
+    }
+    return null;
+  }
+
+  function handleBoardClick(ev) {
+    var pos = tileFromMouse(ev);
+    var x = pos.x;
+    var y = pos.y;
+    var clickedModel, active;
+    if (!isWithinGrid(x, y)) return;
+    clickedModel = modelAt(x, y);
+    active = getActive();
+
+    if (clickedModel) {
+      if (state.pendingAction === 'attack' && active && active.team === TEAM_BLUE && clickedModel.team !== active.team) {
+        resolveAttack(active, clickedModel, false);
+        renderAll();
+        return;
+      }
+
+      state.selectedId = clickedModel.id;
+      if (!active && !state.awaitingOrderChoice && state.activeTeam === TEAM_BLUE && clickedModel.team === TEAM_BLUE && !clickedModel.exhausted) {
+        beginActivation(clickedModel);
+        renderAll();
+        return;
+      }
+      renderAll();
+      return;
+    }
+
+    if (state.pendingAction === 'move') { resolveMoveTo(x, y); return; }
+    if (state.pendingAction === 'disengage') { resolveDisengageTo(x, y); return; }
+  }
+
+  canvas.addEventListener('click', handleBoardClick);
+
+  canvas.addEventListener('mousemove', function (ev) {
+    var pos = tileFromMouse(ev);
+    var hovered = isWithinGrid(pos.x, pos.y) ? modelAt(pos.x, pos.y) : null;
+    var nextHoverId = hovered ? hovered.id : null;
+    if (nextHoverId !== state.hoverId) {
+      state.hoverId = nextHoverId;
+      renderAll();
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function () {
+    if (state.hoverId !== null) {
+      state.hoverId = null;
+      renderAll();
+    }
+  });
+
+  ui.loadBlueSavedBtn.addEventListener('click', function () {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) throw new Error('No saved builder warband found in localStorage.');
+      loadTeamFromBuilderObject(TEAM_BLUE, parseWarbandJson(raw));
+      fullResetState();
+    } catch (err) {
+      logLine('Load failed: ' + String(err.message || err));
+      renderAll();
+    }
+  });
+
+  ui.loadBluePasteBtn.addEventListener('click', function () {
+    try {
+      loadTeamFromBuilderObject(TEAM_BLUE, parseWarbandJson(ui.jsonInput.value.trim()));
+      fullResetState();
+    } catch (err) {
+      logLine('Load failed: ' + String(err.message || err));
+      renderAll();
+    }
+  });
+
+  ui.loadRedPasteBtn.addEventListener('click', function () {
+    try {
+      loadTeamFromBuilderObject(TEAM_RED, parseWarbandJson(ui.jsonInput.value.trim()));
+      fullResetState();
+    } catch (err) {
+      logLine('Load failed: ' + String(err.message || err));
+      renderAll();
+    }
+  });
+
+  ui.randomRedBtn.addEventListener('click', function () {
+    makeRandomTeam(TEAM_RED);
+    fullResetState();
+  });
+
+  ui.randomBothBtn.addEventListener('click', function () {
+    makeRandomTeam(TEAM_BLUE);
+    makeRandomTeam(TEAM_RED);
+    fullResetState();
+  });
+
+  ui.newMapBtn.addEventListener('click', function () {
+    newRandomMap();
+    deployTeam(TEAM_BLUE);
+    deployTeam(TEAM_RED);
+    renderAll();
+  });
+
+  ui.resetBtn.addEventListener('click', function () {
+    fullResetState();
+  });
+
+  ui.beginBtn.addEventListener('click', function () {
+    var selected = getSelected();
+    if (!selected) { logLine('Select a blue model first.'); return; }
+    beginActivation(selected);
+  });
+
+  ui.endBtn.addEventListener('click', function () {
+    var active = getActive();
+    if (!active || active.team !== TEAM_BLUE) return;
+    endActivation('Player ended activation');
+  });
+
+  ui.moveBtn.addEventListener('click', function () { setPendingAction('move'); });
+  ui.disengageBtn.addEventListener('click', function () { setPendingAction('disengage'); });
+  ui.doneMoveBtn.addEventListener('click', doneMoving);
+  ui.standBtn.addEventListener('click', standUpActive);
+  ui.recoverBtn.addEventListener('click', recoverActive);
+  ui.attackBtn.addEventListener('click', function () { setPendingAction('attack'); });
+  ui.abilityBtn.addEventListener('click', markAbilityUsed);
+  ui.nextRoundBtn.addEventListener('click', function () {
+    logLine('Round advanced manually.');
+    nextRound();
+  });
+  ui.blueFirstBtn.addEventListener('click', function () { chooseFirstTeam(TEAM_BLUE); });
+  ui.redFirstBtn.addEventListener('click', function () { chooseFirstTeam(TEAM_RED); });
+
+  function boot() {
+    try {
+      state.board = makeDefaultBoard();
       newRandomMap();
       makeRandomTeam(TEAM_BLUE);
       makeRandomTeam(TEAM_RED);
       fullResetState();
       logLine('Sandbox ready.');
-      logLine('Fixed render pass. Hover works, action buttons stay pressed, move/attack targets highlight, and Red AI now steps through its turn.');
+      logLine('Compatibility-safe script loaded. If the board was blank before, it should now render on older Mac browsers too.');
       renderAll();
+    } catch (err) {
+      showError('Boot failed: ' + String(err.message || err));
     }
+  }
 
-    boot();
-  </script>
+  boot();
+})();
+</script>
 </body>
 </html>
